@@ -18,7 +18,7 @@ defmodule Xgit.Lib.PersonIdent do
   def sanitized(s) when is_binary(s) do
     s
     |> String.trim()
-    |> String.replace(~r/[<>\0-\x1F]/, "")
+    |> String.replace(~r/[<>\x00-\x0C\x0E-\x1F]/, "")
   end
 
   @doc ~S"""
@@ -36,4 +36,12 @@ defmodule Xgit.Lib.PersonIdent do
 
     "#{sign}#{hours_prefix}#{offset_hours}#{mins_prefix}#{offset_mins}"
   end
+
+  @doc ~S"""
+  Formats the person identity for Git storage.
+  """
+  def to_external_string(%__MODULE__{name: name, email: email, when: whxn, tz_offset: tz_offset})
+    when is_binary(name) and is_binary(email) and is_integer(whxn) and is_integer(tz_offset) do
+      "#{sanitized(name)} <#{sanitized(email)}> #{div(whxn, 1000)} #{format_timezone(tz_offset)}"
+    end
 end
