@@ -5,24 +5,39 @@ defmodule Xgit.MixProject do
     [
       app: :xgit,
       version: "0.1.0",
+      name: "Xgit",
       elixir: "~> 1.8",
+      elixirc_options: [warnings_as_errors: true],
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      elixirc_paths: elixirc_paths(Mix.env()),
+      build_per_environment: false,
+      test_coverage: [tool: Coverex.Task, coveralls: true],
+      description: description(),
+      package: package()
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
-  def application do
-    [
-      extra_applications: [:logger]
-    ]
-  end
+  def application, do: [extra_applications: [:logger]]
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
+      {:coverex, "~> 1.5", only: :test},
+      {:credo, "~> 1.0", only: [:dev, :test]},
+      {:ex_doc, "~> 0.19", only: :dev}
     ]
   end
+
+  defp description, do: "Pure Elixir native implementation of git"
+
+  defp package do
+    [
+      maintainers: ["Eric Scouten"],
+      licenses: ["Apache2"],
+      links: %{"Github" => "https://github.com/scouten/xgit"}
+    ]
+  end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 end
