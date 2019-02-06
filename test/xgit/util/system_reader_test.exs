@@ -3,16 +3,14 @@ defmodule Xgit.Util.SystemReaderTest do
 
   alias Xgit.Util.SystemReader
 
-  @default_reader Xgit.Util.SystemReader.Default.instance()
-
   test "hostname/1" do
-    hostname = SystemReader.hostname(@default_reader)
+    hostname = SystemReader.hostname(nil)
     assert is_binary(hostname)
     refute hostname == ""
   end
 
   test "get_env/2" do
-    user_env = SystemReader.get_env(@default_reader, "USER")
+    user_env = SystemReader.get_env(nil, "USER")
 
     unless user_env == nil do
       assert is_binary(user_env)
@@ -21,7 +19,7 @@ defmodule Xgit.Util.SystemReaderTest do
   end
 
   test "current_time/1" do
-    time = SystemReader.current_time(@default_reader)
+    time = SystemReader.current_time(nil)
     assert is_integer(time)
   end
 end

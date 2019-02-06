@@ -6,6 +6,7 @@ defprotocol Xgit.Util.SystemReader do
   will allow the test code to simululate specific system variable values or
   other aspects of the user's global configuration.
   """
+  @fallback_to_any true
 
   @doc ~S"""
   Gets the hostname of the local host. If no hostname can be found, the
@@ -184,23 +185,12 @@ defprotocol Xgit.Util.SystemReader do
   # }
 end
 
-defmodule Xgit.Util.SystemReader.Default do
-  @moduledoc ~S"""
-  This instance reads and writes the actual system values.
-
-  It should be used in all cases outside of unit tests.
-  """
-  defstruct []
-
-  def instance, do: %__MODULE__{}
-end
-
-defimpl Xgit.Util.SystemReader, for: Xgit.Util.SystemReader.Default do
-  def hostname(_reader) do
+defimpl Xgit.Util.SystemReader, for: Any do
+  def hostname(_) do
     {:ok, hostname} = :inet.gethostname()
     to_string(hostname)
   end
 
-  def get_env(_reader, variable), do: System.get_env(variable)
-  def current_time(_reader), do: System.os_time(:millisecond)
+  def get_env(_, variable), do: System.get_env(variable)
+  def current_time(_), do: System.os_time(:millisecond)
 end
