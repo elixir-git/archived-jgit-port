@@ -1,6 +1,6 @@
 # Xgit
 
-Pure Elixir native implementation of git
+Pure Elixir native implementation of git [![Coverage Status](https://coveralls.io/repos/github/scouten/xgit/badge.svg?t=xE9sgP)](https://coveralls.io/github/scouten/xgit)
 
 
 ## Why an all-Elixir implementation?
