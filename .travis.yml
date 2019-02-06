@@ -10,6 +10,7 @@ script:
   - mix deps.get
   - mix format --check-formatted
   - mix test --cover
+  - mix credo
 
 branches:
   only:
