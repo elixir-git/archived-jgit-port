@@ -41,7 +41,7 @@ defmodule Xgit.Lib.PersonIdent do
   Formats the person identity for Git storage.
   """
   def to_external_string(%__MODULE__{name: name, email: email, when: whxn, tz_offset: tz_offset})
-    when is_binary(name) and is_binary(email) and is_integer(whxn) and is_integer(tz_offset) do
-      "#{sanitized(name)} <#{sanitized(email)}> #{div(whxn, 1000)} #{format_timezone(tz_offset)}"
-    end
+      when is_binary(name) and is_binary(email) and is_integer(whxn) and is_integer(tz_offset) do
+    "#{sanitized(name)} <#{sanitized(email)}> #{div(whxn, 1000)} #{format_timezone(tz_offset)}"
+  end
 end

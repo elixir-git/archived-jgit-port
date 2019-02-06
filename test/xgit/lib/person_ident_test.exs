@@ -34,8 +34,6 @@ defmodule Xgit.Lib.PersonIdentTest do
         tz_offset: 150
       }
 
-      IO.inspect(pi, label: "pi")
-
       assert PersonIdent.to_external_string(pi) ==
                "A U Thor <author@example.com> 1142878501 +0230"
     end
