@@ -11,6 +11,7 @@ defmodule Xgit.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
+      compilers: [:gettext] ++ Mix.compilers(),
       build_per_environment: false,
       test_coverage: [tool: ExCoveralls],
       description: description(),
@@ -24,7 +25,8 @@ defmodule Xgit.MixProject do
     [
       {:credo, "~> 1.0", only: [:dev, :test]},
       {:excoveralls, "~> 0.10", only: :test},
-      {:ex_doc, "~> 0.19", only: :dev}
+      {:ex_doc, "~> 0.19", only: :dev},
+      {:gettext, "~> 0.16"}
     ]
   end
 

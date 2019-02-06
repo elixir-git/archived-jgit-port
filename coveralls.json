@@ -1,6 +1,7 @@
 {
   "skip_files": [
     "lib/xgit.ex",
+    "lib/xgit/gettext.ex",
     "test/support"
   ]
 }
