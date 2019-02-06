@@ -12,7 +12,7 @@ defmodule Xgit.MixProject do
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       build_per_environment: false,
-      test_coverage: [tool: Coverex.Task, coveralls: true],
+      test_coverage: [tool: ExCoveralls],
       description: description(),
       package: package()
     ]
@@ -22,8 +22,8 @@ defmodule Xgit.MixProject do
 
   defp deps do
     [
-      {:coverex, "~> 1.5", only: :test},
       {:credo, "~> 1.0", only: [:dev, :test]},
+      {:excoveralls, "~> 0.10", only: :test},
       {:ex_doc, "~> 0.19", only: :dev}
     ]
   end
