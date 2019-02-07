@@ -377,13 +377,17 @@ defmodule Xgit.Lib.Constants do
   """
   def decode_type_string(id, type_string, end_mark)
 
-  def decode_type_string(_id, [?b, ?l, ?o, ?b, end_mark | r], end_mark), do: {obj_blob(), r}
-
   def decode_type_string(_id, [?c, ?o, ?m, ?m, ?i, ?t, end_mark | r], end_mark),
     do: {obj_commit(), r}
 
-  def decode_type_string(_id, [?t, ?a, ?g, end_mark | r], end_mark), do: {obj_tag(), r}
-  def decode_type_string(_id, [?t, ?r, ?e, ?e, end_mark | r], end_mark), do: {obj_tree(), r}
+  def decode_type_string(_id, [?t, ?r, ?e, ?e, end_mark | r], end_mark),
+    do: {obj_tree(), r}
+
+  def decode_type_string(_id, [?b, ?l, ?o, ?b, end_mark | r], end_mark),
+    do: {obj_blob(), r}
+
+  def decode_type_string(_id, [?t, ?a, ?g, end_mark | r], end_mark),
+    do: {obj_tag(), r}
 
   def decode_type_string(id, _type_string, _end_mark),
     do: raise(Xgit.Errors.CorruptObjectError, id: id, why: "invalid type")
