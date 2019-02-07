@@ -7,3 +7,7 @@ While I've chosen to follow many of the design patterns present in jgit, in my o
 ## Localization
 
 jgit has its own localization mechanism (see class `JGitText`). I've decided not to port that mechanism, but rather to use the Elixir module [`gettext`](https://github.com/elixir-lang/gettext).
+
+## Exceptions vs errors
+
+In keeping with Elixir convention, jgit class names that end with `Exception` are renamed to Elixir modules that end with `Error`.
