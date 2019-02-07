@@ -6,7 +6,7 @@ While I've chosen to follow many of the design patterns present in jgit, in my o
 
 ## Localization
 
-jgit has its own localization mechanism (see class `JGitText`). I've decided not to port that mechanism, but rather to use the Elixir module [`gettext`](https://github.com/elixir-lang/gettext).
+jgit has its own localization mechanism (see class `JGitText`). I've decided not to port that mechanism, but rather to use the Elixir module [`gettext`](https://github.com/elixir-lang/gettext). Unlike jgit, we do not localize internal exception messages, only the publicly-facing interface.
 
 ## Exceptions vs errors
 
