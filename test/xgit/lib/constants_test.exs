@@ -42,6 +42,28 @@ defmodule Xgit.Lib.ConstantsTest do
     end
   end
 
+  describe "encoded_type_string/1" do
+    test "commit" do
+      assert Constants.encoded_type_string(1) == 'commit'
+    end
+
+    test "tree" do
+      assert Constants.encoded_type_string(2) == 'tree'
+    end
+
+    test "blob" do
+      assert Constants.encoded_type_string(3) == 'blob'
+    end
+
+    test "tag" do
+      assert Constants.encoded_type_string(4) == 'tag'
+    end
+
+    test "error" do
+      assert_raise FunctionClauseError, fn -> Constants.encoded_type_string(5) end
+    end
+  end
+
   describe "decode_type_string/3" do
     test "commit" do
       assert Constants.decode_type_string(nil, 'commit\nmumble', ?\n) == {1, 'mumble'}
