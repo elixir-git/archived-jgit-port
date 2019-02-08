@@ -191,21 +191,13 @@ defmodule Xgit.Util.RawParseUtils do
   def next([_ | b], char) when is_integer(char), do: next(b, char)
   def next([], char) when is_integer(char), do: []
 
-  # /**
-  # * Locate the first position after the next LF.
-  # * <p>
-  # * This method stops on the first '\n' it finds.
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @param ptr
-  # *            position within buffer to start looking for LF at.
-  # * @return new position just after the first LF found.
-  # */
-  # public static final int nextLF(byte[] b, int ptr) {
-  # return next(b, ptr, '\n');
-  # }
-  #
+  @doc ~S"""
+  Locate the first position after the next LF.
+
+  This method stops on the first '\n' it finds.
+  """
+  def next_lf(b), do: next(b, ?\n)
+
   # /**
   # * Locate the first position after either the given character or LF.
   # * <p>

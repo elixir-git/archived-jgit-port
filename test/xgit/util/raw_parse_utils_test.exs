@@ -45,4 +45,9 @@ defmodule Xgit.Util.RawParseUtilsTest do
     assert RPU.next('abcd', ?d) == ''
     assert RPU.next('abcd', ?x) == ''
   end
+
+  test "next_lf/1" do
+    assert RPU.next_lf('abc\ndef') == 'def'
+    assert RPU.next_lf('xyz') == ''
+  end
 end
