@@ -81,4 +81,12 @@ defmodule Xgit.Util.RawParseUtilsTest do
       Enum.drop(actual, 1)
     end)
   end
+
+  test "header_start/2" do
+    assert RPU.header_start('some', @commit) == Enum.drop(@commit, 625)
+    assert RPU.header_start('missing', @commit) == nil
+    assert RPU.header_start('other', Enum.drop(@commit, 629)) == nil
+    assert RPU.header_start('parens', @commit) == nil
+    assert RPU.header_start('commit', @commit) == 'message'
+  end
 end

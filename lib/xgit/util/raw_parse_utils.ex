@@ -219,40 +219,32 @@ defmodule Xgit.Util.RawParseUtils do
   def header_end([]), do: []
   def header_end([_ | b]), do: header_end(b)
 
-  # /**
-  # * Find the start of the contents of a given header.
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @param headerName
-  # *            header to search for
-  # * @param ptr
-  # *            position within buffer to start looking for header at.
-  # * @return new position at the start of the header's contents, -1 for
-  # *         not found
-  # * @since 5.1
-  # */
-  # public static final int headerStart(byte[] headerName, byte[] b, int ptr) {
-  # // Start by advancing to just past a LF or buffer start
-  # if (ptr != 0) {
-  # ptr = nextLF(b, ptr - 1);
-  # }
-  # while (ptr < b.length - (headerName.length + 1)) {
-  # boolean found = true;
-  # for (int i = 0; i < headerName.length; i++) {
-  # if (headerName[i] != b[ptr++]) {
-  # found = false;
-  # break;
-  # }
-  # }
-  # if (found && b[ptr++] == ' ') {
-  # return ptr;
-  # }
-  # ptr = nextLF(b, ptr);
-  # }
-  # return -1;
-  # }
-  #
+  @doc ~S"""
+  Find the start of the contents of a given header in the given charlist.
+
+  Returns charlist beginning at the start of the header's contents or `nil`
+  if not found.
+
+  *IMPORTANT:* Unlike the git version of this function, it does not advance
+  to the beginning of the next line. Because the API speaks in charlists, we cannot
+  differentiate between the beginning of the initial string buffer and a subsequent
+  internal portion of the buffer. Clients may need to add their own call to `next_lf/1`
+  where it would not have been necessary in git.
+  """
+  def header_start([_ | _] = header_name, b) when is_list(b),
+    do: possible_header_match(header_name, header_name, b, b)
+
+  def possible_header_match(header_name, [c | rest_of_header], match_start, [c | rest_of_match]),
+    do: possible_header_match(header_name, rest_of_header, match_start, rest_of_match)
+
+  def possible_header_match(_header_name, [], _match_start, [?\s | header_content]),
+    do: header_content
+
+  def possible_header_match(_header_name, _, [], _), do: nil
+
+  def possible_header_match(header_name, _, [_ | b], _),
+    do: possible_header_match(header_name, header_name, b, b)
+
   # /**
   # * Locate the first position before a given character.
   # *
