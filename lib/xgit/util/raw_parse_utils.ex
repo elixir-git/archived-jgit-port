@@ -198,29 +198,16 @@ defmodule Xgit.Util.RawParseUtils do
   """
   def next_lf(b), do: next(b, ?\n)
 
-  # /**
-  # * Locate the first position after either the given character or LF.
-  # * <p>
-  # * This method stops on the first match it finds from either chrA or '\n'.
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @param ptr
-  # *            position within buffer to start looking for chrA or LF at.
-  # * @param chrA
-  # *            character to find.
-  # * @return new position just after the first chrA or LF to be found.
-  # */
-  # public static final int nextLF(byte[] b, int ptr, char chrA) {
-  # final int sz = b.length;
-  # while (ptr < sz) {
-  # final byte c = b[ptr++];
-  # if (c == chrA || c == '\n')
-  # return ptr;
-  # }
-  # return ptr;
-  # }
-  #
+  @doc ~S"""
+  Locate the first position after either the given character or LF.
+
+  This method stops on the first match it finds from either `char` or `\n`.
+  """
+  def next_lf([char | b], char) when is_integer(char), do: b
+  def next_lf([?\n | b], char) when is_integer(char), do: b
+  def next_lf([_ | b], char) when is_integer(char), do: next_lf(b, char)
+  def next_lf([], char) when is_integer(char), do: []
+
   # /**
   # * Locate the end of the header.  Note that headers may be
   # * more than one line long.
