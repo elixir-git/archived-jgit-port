@@ -247,7 +247,7 @@ defmodule Xgit.Util.RawParseUtils do
 
   # Holding off on implementing prev and prev_lf. These are not feasible with the
   # current design using charlists.
-  
+
   # /**
   # * Locate the first position before a given character.
   # *
@@ -308,86 +308,7 @@ defmodule Xgit.Util.RawParseUtils do
   # }
   # return ptr;
   # }
-  #
-  # /**
-  # * Index the region between <code>[ptr, end)</code> to find line starts.
-  # * <p>
-  # * The returned list is 1 indexed. Index 0 contains
-  # * {@link java.lang.Integer#MIN_VALUE} to pad the list out.
-  # * <p>
-  # * Using a 1 indexed list means that line numbers can be directly accessed
-  # * from the list, so <code>list.get(1)</code> (aka get line 1) returns
-  # * <code>ptr</code>.
-  # * <p>
-  # * The last element (index <code>map.size()-1</code>) always contains
-  # * <code>end</code>.
-  # *
-  # * @param buf
-  # *            buffer to scan.
-  # * @param ptr
-  # *            position within the buffer corresponding to the first byte of
-  # *            line 1.
-  # * @param end
-  # *            1 past the end of the content within <code>buf</code>.
-  # * @return a line map indicating the starting position of each line.
-  # */
-  # public static final IntList lineMap(byte[] buf, int ptr, int end) {
-  # IntList map = new IntList((end - ptr) / 36);
-  # map.fillTo(1, Integer.MIN_VALUE);
-  # for (; ptr < end; ptr = nextLF(buf, ptr)) {
-  # map.add(ptr);
-  # }
-  # map.add(end);
-  # return map;
-  # }
-  #
-  # /**
-  # * Like {@link #lineMap(byte[], int, int)} but throw
-  # * {@link BinaryBlobException} if a NUL byte is encountered.
-  # *
-  # * @param buf
-  # *            buffer to scan.
-  # * @param ptr
-  # *            position within the buffer corresponding to the first byte of
-  # *            line 1.
-  # * @param end
-  # *            1 past the end of the content within <code>buf</code>.
-  # * @return a line map indicating the starting position of each line.
-  # * @throws BinaryBlobException
-  # *            if a NUL byte is found.
-  # * @since 5.0
-  # */
-  # public static final IntList lineMapOrBinary(byte[] buf, int ptr, int end)
-  # throws BinaryBlobException {
-  # IntList map = lineMapOrNull(buf, ptr, end);
-  # if (map == null) {
-  # throw new BinaryBlobException();
-  # }
-  # return map;
-  # }
-  #
-  # @Nullable
-  # private static IntList lineMapOrNull(byte[] buf, int ptr, int end) {
-  # // Experimentally derived from multiple source repositories
-  # // the average number of bytes/line is 36. Its a rough guess
-  # // to initially size our map close to the target.
-  # IntList map = new IntList((end - ptr) / 36);
-  # map.add(Integer.MIN_VALUE);
-  # boolean foundLF = true;
-  # for (; ptr < end; ptr++) {
-  # if (foundLF) {
-  # map.add(ptr);
-  # }
-  #
-  # if (buf[ptr] == '\0') {
-  # return null;
-  # }
-  #
-  # foundLF = (buf[ptr] == '\n');
-  # }
-  # map.add(end);
-  # return map;
-  # }
+
   #
   # /**
   # * Locate the "author " header line data.
