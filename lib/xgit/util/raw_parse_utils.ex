@@ -116,7 +116,7 @@ defmodule Xgit.Util.RawParseUtils do
   found (or 0 if no number found there) and `new_buffer` is the charlist
   following the number that was parsed.
   """
-  def parse_hex_int16(b), do: parse_hex_digits(b, 0, 4)
+  def parse_hex_int16(b) when is_list(b), do: parse_hex_digits(b, 0, 4)
 
   @doc ~S"""
   Parse 8 character base 16 (hex) formatted string to integer.
@@ -128,7 +128,7 @@ defmodule Xgit.Util.RawParseUtils do
   found (or 0 if no number found there) and `new_buffer` is the charlist
   following the number that was parsed.
   """
-  def parse_hex_int32(b), do: parse_hex_digits(b, 0, 8)
+  def parse_hex_int32(b) when is_list(b), do: parse_hex_digits(b, 0, 8)
 
   @doc ~S"""
   Parse 16 character base 16 (hex) formatted string to integer.
@@ -140,7 +140,7 @@ defmodule Xgit.Util.RawParseUtils do
   found (or 0 if no number found there) and `new_buffer` is the charlist
   following the number that was parsed.
   """
-  def parse_hex_int64(b), do: parse_hex_digits(b, 0, 16)
+  def parse_hex_int64(b) when is_list(b), do: parse_hex_digits(b, 0, 16)
 
   @doc ~S"""
   Parse a single hex digitto unsigned integer.
@@ -152,7 +152,7 @@ defmodule Xgit.Util.RawParseUtils do
   found (or 0 if no number found there) and `new_buffer` is the charlist
   following the number that was parsed.
   """
-  def parse_hex_int4(b), do: parse_hex_digits(b, 0, 1)
+  def parse_hex_int4(b) when is_list(b), do: parse_hex_digits(b, 0, 1)
 
   defp parse_hex_digits(b, n, 0), do: {n, b}
 
@@ -175,7 +175,7 @@ defmodule Xgit.Util.RawParseUtils do
   that was found (or 0 if no number found there) and `new_buffer` is the charlist
   following the number that was parsed.
   """
-  def parse_timezone_offset(b) do
+  def parse_timezone_offset(b) when is_list(b) do
     {v, b} = parse_base_10(b)
 
     tz_min = rem(v, 100)
