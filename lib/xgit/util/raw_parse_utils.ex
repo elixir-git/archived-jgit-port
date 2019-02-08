@@ -245,6 +245,9 @@ defmodule Xgit.Util.RawParseUtils do
   def possible_header_match(header_name, _, [_ | b], _),
     do: possible_header_match(header_name, header_name, b, b)
 
+  # Holding off on implementing prev and prev_lf. These are not feasible with the
+  # current design using charlists.
+  
   # /**
   # * Locate the first position before a given character.
   # *
@@ -265,7 +268,7 @@ defmodule Xgit.Util.RawParseUtils do
   # }
   # return ptr;
   # }
-  #
+
   # /**
   # * Locate the first position before the previous LF.
   # * <p>
