@@ -106,159 +106,65 @@ defmodule Xgit.Util.RawParseUtils do
   defp parse_digits(n, [d | b]) when d >= ?0 and d <= ?9, do: parse_digits(n * 10 + (d - ?0), b)
   defp parse_digits(n, b), do: {n, b}
 
-  # /**
-  # * Parse 4 character base 16 (hex) formatted string to unsigned integer.
-  # * <p>
-  # * The number is read in network byte order, that is, most significant
-  # * nybble first.
-  # *
-  # * @param bs
-  # *            buffer to parse digits from; positions {@code [p, p+4)} will
-  # *            be parsed.
-  # * @param p
-  # *            first position within the buffer to parse.
-  # * @return the integer value.
-  # * @throws java.lang.ArrayIndexOutOfBoundsException
-  # *             if the string is not hex formatted.
-  # */
-  # public static final int parseHexInt16(final byte[] bs, final int p) {
-  # int r = digits16[bs[p]] << 4;
-  #
-  # r |= digits16[bs[p + 1]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 2]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 3]];
-  # if (r < 0)
-  # throw new ArrayIndexOutOfBoundsException();
-  # return r;
-  # }
-  #
-  # /**
-  # * Parse 8 character base 16 (hex) formatted string to unsigned integer.
-  # * <p>
-  # * The number is read in network byte order, that is, most significant
-  # * nybble first.
-  # *
-  # * @param bs
-  # *            buffer to parse digits from; positions {@code [p, p+8)} will
-  # *            be parsed.
-  # * @param p
-  # *            first position within the buffer to parse.
-  # * @return the integer value.
-  # * @throws java.lang.ArrayIndexOutOfBoundsException
-  # *             if the string is not hex formatted.
-  # */
-  # public static final int parseHexInt32(final byte[] bs, final int p) {
-  # int r = digits16[bs[p]] << 4;
-  #
-  # r |= digits16[bs[p + 1]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 2]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 3]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 4]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 5]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 6]];
-  #
-  # final int last = digits16[bs[p + 7]];
-  # if (r < 0 || last < 0)
-  # throw new ArrayIndexOutOfBoundsException();
-  # return (r << 4) | last;
-  # }
-  #
-  # /**
-  # * Parse 16 character base 16 (hex) formatted string to unsigned long.
-  # * <p>
-  # * The number is read in network byte order, that is, most significant
-  # * nibble first.
-  # *
-  # * @param bs
-  # *            buffer to parse digits from; positions {@code [p, p+16)} will
-  # *            be parsed.
-  # * @param p
-  # *            first position within the buffer to parse.
-  # * @return the integer value.
-  # * @throws java.lang.ArrayIndexOutOfBoundsException
-  # *             if the string is not hex formatted.
-  # * @since 4.3
-  # */
-  # public static final long parseHexInt64(final byte[] bs, final int p) {
-  # long r = digits16[bs[p]] << 4;
-  #
-  # r |= digits16[bs[p + 1]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 2]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 3]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 4]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 5]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 6]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 7]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 8]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 9]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 10]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 11]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 12]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 13]];
-  # r <<= 4;
-  #
-  # r |= digits16[bs[p + 14]];
-  #
-  # final int last = digits16[bs[p + 15]];
-  # if (r < 0 || last < 0)
-  # throw new ArrayIndexOutOfBoundsException();
-  # return (r << 4) | last;
-  # }
-  #
-  # /**
-  # * Parse a single hex digit to its numeric value (0-15).
-  # *
-  # * @param digit
-  # *            hex character to parse.
-  # * @return numeric value, in the range 0-15.
-  # * @throws java.lang.ArrayIndexOutOfBoundsException
-  # *             if the input digit is not a valid hex digit.
-  # */
-  # public static final int parseHexInt4(final byte digit) {
-  # final byte r = digits16[digit];
-  # if (r < 0)
-  # throw new ArrayIndexOutOfBoundsException();
-  # return r;
-  # }
-  #
+  @doc ~S"""
+  Parse 4 character base 16 (hex) formatted string to integer.
+
+  The number is read in network byte order, that is, most significant
+  nybble first.
+
+  Returns `{number, new_buffer}` where `number` is the integer that was
+  found (or 0 if no number found there) and `new_buffer` is the charlist
+  following the number that was parsed.
+  """
+  def parse_hex_int16(b), do: parse_hex_digits(b, 0, 4)
+
+  @doc ~S"""
+  Parse 8 character base 16 (hex) formatted string to integer.
+
+  The number is read in network byte order, that is, most significant
+  nybble first.
+
+  Returns `{number, new_buffer}` where `number` is the integer that was
+  found (or 0 if no number found there) and `new_buffer` is the charlist
+  following the number that was parsed.
+  """
+  def parse_hex_int32(b), do: parse_hex_digits(b, 0, 8)
+
+  @doc ~S"""
+  Parse 16 character base 16 (hex) formatted string to integer.
+
+  The number is read in network byte order, that is, most significant
+  nybble first.
+
+  Returns `{number, new_buffer}` where `number` is the integer that was
+  found (or 0 if no number found there) and `new_buffer` is the charlist
+  following the number that was parsed.
+  """
+  def parse_hex_int64(b), do: parse_hex_digits(b, 0, 16)
+
+  @doc ~S"""
+  Parse a single hex digitto unsigned integer.
+
+  The number is read in network byte order, that is, most significant
+  nybble first.
+
+  Returns `{number, new_buffer}` where `number` is the integer that was
+  found (or 0 if no number found there) and `new_buffer` is the charlist
+  following the number that was parsed.
+  """
+  def parse_hex_int4(b), do: parse_hex_digits(b, 0, 1)
+
+  defp parse_hex_digits(b, n, 0), do: {n, b}
+
+  defp parse_hex_digits([d | b], n, rem) when d >= ?0 and d <= ?9,
+    do: parse_hex_digits(b, n * 16 + (d - ?0), rem - 1)
+
+  defp parse_hex_digits([d | b], n, rem) when d >= ?A and d <= ?F,
+    do: parse_hex_digits(b, n * 16 + (d - ?A + 10), rem - 1)
+
+  defp parse_hex_digits([d | b], n, rem) when d >= ?a and d <= ?f,
+    do: parse_hex_digits(b, n * 16 + (d - ?a + 10), rem - 1)
+
   # /**
   # * Parse a Git style timezone string.
   # * <p>
