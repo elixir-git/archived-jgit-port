@@ -184,26 +184,13 @@ defmodule Xgit.Util.RawParseUtils do
     {tz_hour * 60 + tz_min, b}
   end
 
-  # /**
-  # * Locate the first position after a given character.
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @param ptr
-  # *            position within buffer to start looking for chrA at.
-  # * @param chrA
-  # *            character to find.
-  # * @return new position just after chrA.
-  # */
-  # public static final int next(byte[] b, int ptr, char chrA) {
-  # final int sz = b.length;
-  # while (ptr < sz) {
-  # if (b[ptr++] == chrA)
-  # return ptr;
-  # }
-  # return ptr;
-  # }
-  #
+  @doc ~S"""
+  Locate the first position after a given character.
+  """
+  def next([char | b], char) when is_integer(char), do: b
+  def next([_ | b], char) when is_integer(char), do: next(b, char)
+  def next([], char) when is_integer(char), do: []
+
   # /**
   # * Locate the first position after the next LF.
   # * <p>

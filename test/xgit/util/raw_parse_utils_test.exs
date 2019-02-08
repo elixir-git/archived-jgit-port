@@ -39,4 +39,10 @@ defmodule Xgit.Util.RawParseUtilsTest do
     assert RPU.parse_timezone_offset('-0315X') == {-195, 'X'}
     assert RPU.parse_timezone_offset('+0400abc') == {240, 'abc'}
   end
+
+  test "next/2" do
+    assert RPU.next('abcddef', ?d) == 'def'
+    assert RPU.next('abcd', ?d) == ''
+    assert RPU.next('abcd', ?x) == ''
+  end
 end
