@@ -208,28 +208,17 @@ defmodule Xgit.Util.RawParseUtils do
   def next_lf([_ | b], char) when is_integer(char), do: next_lf(b, char)
   def next_lf([], char) when is_integer(char), do: []
 
-  # /**
-  # * Locate the end of the header.  Note that headers may be
-  # * more than one line long.
-  # * @param b
-  # *            buffer to scan.
-  # * @param ptr
-  # *            position within buffer to start looking for the end-of-header.
-  # * @return new position just after the header.  This is either
-  # * b.length, or the index of the header's terminating newline.
-  # * @since 5.1
-  # */
-  # public static final int headerEnd(final byte[] b, int ptr) {
-  # final int sz = b.length;
-  # while (ptr < sz) {
-  # final byte c = b[ptr++];
-  # if (c == '\n' && (ptr == sz || b[ptr] != ' ')) {
-  # return ptr - 1;
-  # }
-  # }
-  # return ptr - 1;
-  # }
-  #
+  @doc ~S"""
+  Locate the end of the header. Note that headers may be more than one line long.
+
+  Returns charlist beginning just after the header. This is either `[]` or the
+  charlist beginning with the `\n` character that terminates the header.
+  """
+  def header_end([?\n | [?\s | b]]), do: header_end(b)
+  def header_end([?\n | _] = b), do: b
+  def header_end([]), do: []
+  def header_end([_ | b]), do: header_end(b)
+
   # /**
   # * Find the start of the contents of a given header.
   # *
