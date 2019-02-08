@@ -165,46 +165,25 @@ defmodule Xgit.Util.RawParseUtils do
   defp parse_hex_digits([d | b], n, rem) when d >= ?a and d <= ?f,
     do: parse_hex_digits(b, n * 16 + (d - ?a + 10), rem - 1)
 
-  # /**
-  # * Parse a Git style timezone string.
-  # * <p>
-  # * The sequence "-0315" will be parsed as the numeric value -195, as the
-  # * lower two positions count minutes, not 100ths of an hour.
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @param ptr
-  # *            position within buffer to start parsing digits at.
-  # * @return the timezone at this location, expressed in minutes.
-  # */
-  # public static final int parseTimeZoneOffset(byte[] b, int ptr) {
-  # return parseTimeZoneOffset(b, ptr, null);
-  # }
-  #
-  # /**
-  # * Parse a Git style timezone string.
-  # * <p>
-  # * The sequence "-0315" will be parsed as the numeric value -195, as the
-  # * lower two positions count minutes, not 100ths of an hour.
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @param ptr
-  # *            position within buffer to start parsing digits at.
-  # * @param ptrResult
-  # *            optional location to return the new ptr value through. If null
-  # *            the ptr value will be discarded.
-  # * @return the timezone at this location, expressed in minutes.
-  # * @since 4.1
-  # */
-  # public static final int parseTimeZoneOffset(final byte[] b, int ptr,
-  # MutableInteger ptrResult) {
-  # final int v = parseBase10(b, ptr, ptrResult);
-  # final int tzMins = v % 100;
-  # final int tzHours = v / 100;
-  # return tzHours * 60 + tzMins;
-  # }
-  #
+  @doc ~S"""
+  Parse a Git style timezone string.
+
+  The sequence `-0315` will be parsed as the numeric value -195, as the
+  lower two positions count minutes, not 100ths of an hour.
+
+  Returns `{number, new_buffer}` where `number` is the time zone offset in minutes
+  that was found (or 0 if no number found there) and `new_buffer` is the charlist
+  following the number that was parsed.
+  """
+  def parse_timezone_offset(b) do
+    {v, b} = parse_base_10(b)
+
+    tz_min = rem(v, 100)
+    tz_hour = div(v, 100)
+
+    {tz_hour * 60 + tz_min, b}
+  end
+
   # /**
   # * Locate the first position after a given character.
   # *

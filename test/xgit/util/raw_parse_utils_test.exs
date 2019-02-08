@@ -32,4 +32,11 @@ defmodule Xgit.Util.RawParseUtilsTest do
     assert RPU.parse_hex_int4('84') == {8, '4'}
     assert RPU.parse_hex_int4('E') == {14, ''}
   end
+
+  test "parse_timezone_offset/1" do
+    assert RPU.parse_timezone_offset('0') == {0, ''}
+    assert RPU.parse_timezone_offset('') == {0, ''}
+    assert RPU.parse_timezone_offset('-0315X') == {-195, 'X'}
+    assert RPU.parse_timezone_offset('+0400abc') == {240, 'abc'}
+  end
 end
