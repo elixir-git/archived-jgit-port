@@ -714,30 +714,15 @@ defmodule Xgit.Util.RawParseUtils do
   #
   # throw new CharacterCodingException();
   # }
-  #
-  # /**
-  # * Decode a region of the buffer under the ISO-8859-1 encoding.
-  # *
-  # * Each byte is treated as a single character in the 8859-1 character
-  # * encoding, performing a raw binary-&gt;char conversion.
-  # *
-  # * @param buffer
-  # *            buffer to pull raw bytes from.
-  # * @param start
-  # *            first position within the buffer to take data from.
-  # * @param end
-  # *            one position past the last location within the buffer to take
-  # *            data from.
-  # * @return a string representation of the range <code>[start,end)</code>.
-  # */
-  # public static String extractBinaryString(final byte[] buffer,
-  # final int start, final int end) {
-  # final StringBuilder r = new StringBuilder(end - start);
-  # for (int i = start; i < end; i++)
-  # r.append((char) (buffer[i] & 0xff));
-  # return r.toString();
-  # }
-  #
+
+  @doc ~S"""
+  Convert a list of bytes from ISO-8859-1 to an Elixir (UTF-8) string.
+
+  TO DO: Remove this in favor of to_string/1 when the one external
+  reference (in FileHeader) is ported.
+  """
+  def extract_binary_string(b) when is_list(b), do: to_string(b)
+
   # private static String decode(ByteBuffer b, Charset charset)
   # throws CharacterCodingException {
   # final CharsetDecoder d = charset.newDecoder();
