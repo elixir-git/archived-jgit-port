@@ -73,6 +73,11 @@ defmodule Xgit.Util.RawParseUtilsTest do
     assert RPU.next_lf('xyz') == ''
   end
 
+  test "until_next_lf/1" do
+    assert RPU.until_next_lf('abc\ndef') == 'abc'
+    assert RPU.until_next_lf('xyz') == 'xyz'
+  end
+
   test "header_end/1" do
     Enum.reduce([45, 93, 148, 619, 637], @commit, fn drop_count, remaining_commit ->
       actual = RPU.header_end(remaining_commit)
