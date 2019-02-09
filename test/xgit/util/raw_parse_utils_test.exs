@@ -144,4 +144,14 @@ defmodule Xgit.Util.RawParseUtilsTest do
 
     assert RPU.encoding(commit_with_encoding) == 'UTF-8\n'
   end
+
+  test "until_end_of_paragraph/1" do
+    some = RPU.header_start('some', @commit)
+    assert RPU.until_end_of_paragraph(some) == 'other header'
+    assert RPU.until_end_of_paragraph('abc\n\rblah') == 'abc\n\rblah'
+    assert RPU.until_end_of_paragraph('abc\r\n\r\nblah') == 'abc'
+    assert RPU.until_end_of_paragraph('abc\n\nblah') == 'abc'
+    assert RPU.until_end_of_paragraph('abc\r\nblah') == 'abc\r\nblah'
+    assert RPU.until_end_of_paragraph('abc\n\r\n\rblah') == 'abc\n\r\n\rblah'
+  end
 end

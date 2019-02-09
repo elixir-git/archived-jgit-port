@@ -791,33 +791,19 @@ defmodule Xgit.Util.RawParseUtils do
   # return ptr + 1;
   # return -1;
   # }
-  #
-  # /**
-  # * Locate the end of a paragraph.
-  # * <p>
-  # * A paragraph is ended by two consecutive LF bytes or CRLF pairs
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @param start
-  # *            position in buffer to start the scan at. Most callers will
-  # *            want to pass the first position of the commit message (as
-  # *            found by {@link #commitMessage(byte[], int)}.
-  # * @return position of the LF at the end of the paragraph;
-  # *         <code>b.length</code> if no paragraph end could be located.
-  # */
-  # public static final int endOfParagraph(byte[] b, int start) {
-  # int ptr = start;
-  # final int sz = b.length;
-  # while (ptr < sz && (b[ptr] != '\n' && b[ptr] != '\r'))
-  # ptr = nextLF(b, ptr);
-  # if (ptr > start && b[ptr - 1] == '\n')
-  # ptr--;
-  # if (ptr > start && b[ptr - 1] == '\r')
-  # ptr--;
-  # return ptr;
-  # }
-  #
+
+  @doc ~S"""
+  Return the contents of the charlist up to, but not including, the next end-of-paragraph
+  sequence.
+  """
+  def until_end_of_paragraph(b) when is_list(b),
+    do: until_end_of_paragraph([], b)
+
+  defp until_end_of_paragraph(acc, [?\r | [?\n | [?\r | _]]]), do: acc
+  defp until_end_of_paragraph(acc, [?\n | [?\n | _]]), do: acc
+  defp until_end_of_paragraph(acc, [c | rem]), do: until_end_of_paragraph(acc ++ [c], rem)
+  defp until_end_of_paragraph(acc, []), do: acc
+
   # /**
   # * Get last index of {@code ch} in raw, trimming spaces.
   # *
