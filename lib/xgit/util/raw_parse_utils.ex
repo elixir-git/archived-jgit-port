@@ -839,12 +839,4 @@ defmodule Xgit.Util.RawParseUtils do
   #
   # return pos;
   # }
-  #
-  # private static Charset charsetForAlias(String name) {
-  # return encodingAliases.get(StringUtils.toLowerCase(name));
-  # }
-  #
-  # private RawParseUtils() {
-  # // Don't create instances of a static only utility.
-  # }
 end
