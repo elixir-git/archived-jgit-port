@@ -214,6 +214,12 @@ defmodule Xgit.Util.RawParseUtils do
   def until_next_lf(b), do: Enum.take_while(b, fn c -> c != ?\n end)
 
   @doc ~S"""
+  Return the contents of the charlist up to, but not including, the next instance
+  of the given character or LF.
+  """
+  def until_next_lf(b, char), do: Enum.take_while(b, fn c -> c != ?\n and c != char end)
+
+  @doc ~S"""
   Locate the end of the header. Note that headers may be more than one line long.
 
   Returns charlist beginning just after the header. This is either `[]` or the
