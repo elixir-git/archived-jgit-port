@@ -318,30 +318,15 @@ defmodule Xgit.Util.RawParseUtils do
   """
   def author(b) when is_list(b), do: header_start('author', b)
 
-  # /**
-  # * Locate the "committer " header line data.
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @param ptr
-  # *            position in buffer to start the scan at. Most callers should
-  # *            pass 0 to ensure the scan starts from the beginning of the
-  # *            commit buffer and does not accidentally look at message body.
-  # * @return position just after the space in "committer ", so the first
-  # *         character of the committer's name. If no committer header can be
-  # *         located -1 is returned.
-  # */
-  # public static final int committer(byte[] b, int ptr) {
-  # final int sz = b.length;
-  # if (ptr == 0)
-  # ptr += 46; // skip the "tree ..." line.
-  # while (ptr < sz && b[ptr] == 'p')
-  # ptr += 48; // skip this parent.
-  # if (ptr < sz && b[ptr] == 'a')
-  # ptr = nextLF(b, ptr);
-  # return match(b, ptr, committer);
-  # }
-  #
+  @doc ~S"""
+  Locate the `committer ` header line data.
+
+  Returns a charlist beginning just after the space in `committer ` which should be
+  the first character of the committer's name. If no committer header can be located,
+  `nil` is returned.
+  """
+  def committer(b) when is_list(b), do: header_start('committer', b)
+
   # /**
   # * Locate the "tagger " header line data.
   # *
