@@ -309,29 +309,15 @@ defmodule Xgit.Util.RawParseUtils do
   # return ptr;
   # }
 
-  #
-  # /**
-  # * Locate the "author " header line data.
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @param ptr
-  # *            position in buffer to start the scan at. Most callers should
-  # *            pass 0 to ensure the scan starts from the beginning of the
-  # *            commit buffer and does not accidentally look at message body.
-  # * @return position just after the space in "author ", so the first
-  # *         character of the author's name. If no author header can be
-  # *         located -1 is returned.
-  # */
-  # public static final int author(byte[] b, int ptr) {
-  # final int sz = b.length;
-  # if (ptr == 0)
-  # ptr += 46; // skip the "tree ..." line.
-  # while (ptr < sz && b[ptr] == 'p')
-  # ptr += 48; // skip this parent.
-  # return match(b, ptr, author);
-  # }
-  #
+  @doc ~S"""
+  Locate the `author ` header line data.
+
+  Returns a charlist beginning just after the space in `author ` which should be
+  the first character of the author's name. If no author header can be located,
+  `nil` is returned.
+  """
+  def author(b) when is_list(b), do: header_start('author', b)
+
   # /**
   # * Locate the "committer " header line data.
   # *

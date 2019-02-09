@@ -89,4 +89,15 @@ defmodule Xgit.Util.RawParseUtilsTest do
     assert RPU.header_start('parens', @commit) == nil
     assert RPU.header_start('commit', @commit) == 'message'
   end
+
+  test "author/1" do
+    assert RPU.author(@commit) == nil
+
+    commit_with_author =
+      'tree e3a1035abd2b319bb01e57d69b0ba6cab289297e\n' ++
+        'parent 54e895b87c0768d2317a2b17062e3ad9f76a8105\n' ++
+        'author A U Thorax <author@xample.com 1528968566 +0200\n'
+
+    assert RPU.author(commit_with_author) == 'A U Thorax <author@xample.com 1528968566 +0200\n'
+  end
 end
