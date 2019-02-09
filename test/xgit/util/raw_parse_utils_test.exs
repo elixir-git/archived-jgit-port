@@ -111,4 +111,15 @@ defmodule Xgit.Util.RawParseUtilsTest do
 
     assert RPU.committer(commit_with_author) == nil
   end
+
+  test "tagger/1" do
+    assert RPU.tagger(@commit) == nil
+
+    commit_with_tagger =
+      'tree e3a1035abd2b319bb01e57d69b0ba6cab289297e\n' ++
+        'parent 54e895b87c0768d2317a2b17062e3ad9f76a8105\n' ++
+        'tagger A U Thorax <author@xample.com 1528968566 +0200\n'
+
+    assert RPU.tagger(commit_with_tagger) == 'A U Thorax <author@xample.com 1528968566 +0200\n'
+  end
 end

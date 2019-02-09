@@ -327,34 +327,15 @@ defmodule Xgit.Util.RawParseUtils do
   """
   def committer(b) when is_list(b), do: header_start('committer', b)
 
-  # /**
-  # * Locate the "tagger " header line data.
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @param ptr
-  # *            position in buffer to start the scan at. Most callers should
-  # *            pass 0 to ensure the scan starts from the beginning of the tag
-  # *            buffer and does not accidentally look at message body.
-  # * @return position just after the space in "tagger ", so the first
-  # *         character of the tagger's name. If no tagger header can be
-  # *         located -1 is returned.
-  # */
-  # public static final int tagger(byte[] b, int ptr) {
-  # final int sz = b.length;
-  # if (ptr == 0)
-  # ptr += 48; // skip the "object ..." line.
-  # while (ptr < sz) {
-  # if (b[ptr] == '\n')
-  # return -1;
-  # final int m = match(b, ptr, tagger);
-  # if (m >= 0)
-  # return m;
-  # ptr = nextLF(b, ptr);
-  # }
-  # return -1;
-  # }
-  #
+  @doc ~S"""
+  Locate the `tagger ` header line data.
+
+  Returns a charlist beginning just after the space in `tagger ` which should be
+  the first character of the tagger's name. If no tagger header can be located,
+  `nil` is returned.
+  """
+  def tagger(b) when is_list(b), do: header_start('tagger', b)
+
   # /**
   # * Locate the "encoding " header line.
   # *
