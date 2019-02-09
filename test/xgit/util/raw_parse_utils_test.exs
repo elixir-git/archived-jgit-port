@@ -122,4 +122,15 @@ defmodule Xgit.Util.RawParseUtilsTest do
 
     assert RPU.tagger(commit_with_tagger) == 'A U Thorax <author@xample.com 1528968566 +0200\n'
   end
+
+  test "encoding/1" do
+    assert RPU.encoding(@commit) == nil
+
+    commit_with_encoding =
+      'tree e3a1035abd2b319bb01e57d69b0ba6cab289297e\n' ++
+        'parent 54e895b87c0768d2317a2b17062e3ad9f76a8105\n' ++
+        'encoding UTF-8\n'
+
+    assert RPU.encoding(commit_with_encoding) == 'UTF-8\n'
+  end
 end

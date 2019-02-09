@@ -336,31 +336,15 @@ defmodule Xgit.Util.RawParseUtils do
   """
   def tagger(b) when is_list(b), do: header_start('tagger', b)
 
-  # /**
-  # * Locate the "encoding " header line.
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @param ptr
-  # *            position in buffer to start the scan at. Most callers should
-  # *            pass 0 to ensure the scan starts from the beginning of the
-  # *            buffer and does not accidentally look at the message body.
-  # * @return position just after the space in "encoding ", so the first
-  # *         character of the encoding's name. If no encoding header can be
-  # *         located -1 is returned (and UTF-8 should be assumed).
-  # */
-  # public static final int encoding(byte[] b, int ptr) {
-  # final int sz = b.length;
-  # while (ptr < sz) {
-  # if (b[ptr] == '\n')
-  # return -1;
-  # if (b[ptr] == 'e')
-  # break;
-  # ptr = nextLF(b, ptr);
-  # }
-  # return match(b, ptr, encoding);
-  # }
-  #
+  @doc ~S"""
+  Locate the `encoding ` header line data.
+
+  Returns a charlist beginning just after the space in `encoding ` which should be
+  the first character of the encoding's name. If no encoding header can be located,
+  `nil` is returned (ad UTF-8 should be assumed).
+  """
+  def encoding(b) when is_list(b), do: header_start('encoding', b)
+
   # /**
   # * Parse the "encoding " header as a string.
   # * <p>
