@@ -385,7 +385,7 @@ defmodule Xgit.Util.RawParseUtils do
   WARNING: Compared to jgit, the character set support in xgit is limited.
   """
   def parse_encoding(b) when is_list(b) do
-    case parse_encoding_name(b) |> trim_if_string() do
+    case b |> parse_encoding_name() |> trim_if_string() do
       nil -> :utf8
       "UTF-8" -> :utf8
       "ISO-8859-1" -> :latin1
