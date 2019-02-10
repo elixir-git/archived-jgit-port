@@ -191,4 +191,11 @@ defmodule Xgit.Util.RawParseUtilsTest do
     assert RPU.until_end_of_paragraph('abc\r\nblah') == 'abc\r\nblah'
     assert RPU.until_end_of_paragraph('abc\n\r\n\rblah') == 'abc\n'
   end
+
+  test "until_last_instance_of_trim/2" do
+    assert RPU.until_last_instance_of_trim('foo bar  ', ?o) == 'fo'
+    assert RPU.until_last_instance_of_trim('foo bar  ', ?x) == ''
+    assert RPU.until_last_instance_of_trim('foo bar  ', ?r) == 'foo ba'
+    assert RPU.until_last_instance_of_trim('foo bar', ?r) == 'foo ba'
+  end
 end
