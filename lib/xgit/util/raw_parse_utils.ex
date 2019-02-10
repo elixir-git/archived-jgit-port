@@ -356,65 +356,41 @@ defmodule Xgit.Util.RawParseUtils do
   """
   def encoding(b) when is_list(b), do: header_start('encoding', b)
 
-  # /**
-  # * Parse the "encoding " header as a string.
-  # * <p>
-  # * Locates the "encoding " header (if present) and returns its value.
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @return the encoding header as specified in the commit; null if the
-  # *         header was not present and should be assumed.
-  # * @since 4.2
-  # */
-  # @Nullable
-  # public static String parseEncodingName(byte[] b) {
-  # int enc = encoding(b, 0);
-  # if (enc < 0) {
-  # return null;
-  # }
-  # int lf = nextLF(b, enc);
-  # return decode(UTF_8, b, enc, lf - 1);
-  # }
-  #
-  # /**
-  # * Parse the "encoding " header into a character set reference.
-  # * <p>
-  # * Locates the "encoding " header (if present) by first calling
-  # * {@link #encoding(byte[], int)} and then returns the proper character set
-  # * to apply to this buffer to evaluate its contents as character data.
-  # * <p>
-  # * If no encoding header is present {@code UTF-8} is assumed.
-  # *
-  # * @param b
-  # *            buffer to scan.
-  # * @return the Java character set representation. Never null.
-  # * @throws IllegalCharsetNameException
-  # *             if the character set requested by the encoding header is
-  # *             malformed and unsupportable.
-  # * @throws UnsupportedCharsetException
-  # *             if the JRE does not support the character set requested by
-  # *             the encoding header.
-  # */
-  # public static Charset parseEncoding(byte[] b) {
-  # String enc = parseEncodingName(b);
-  # if (enc == null) {
-  # return UTF_8;
-  # }
-  #
-  # String name = enc.trim();
-  # try {
-  # return Charset.forName(name);
-  # } catch (IllegalCharsetNameException
-  # | UnsupportedCharsetException badName) {
-  # Charset aliased = charsetForAlias(name);
-  # if (aliased != null) {
-  # return aliased;
-  # }
-  # throw badName;
-  # }
-  # }
-  #
+  @doc ~S"""
+  Parse the `encoding ` header as a string.
+
+  Returns the encoding header as specified in the commit or `nil` if the header
+  was not present and should be assumed.
+  """
+  def parse_encoding_name(b) when is_list(b) do
+    enc = encoding(b)
+
+    if enc == nil do
+      nil
+    else
+      enc
+      |> until_next_lf()
+      |> decode()
+    end
+  end
+
+  @doc ~S"""
+  Parse the `encoding ` header into a character set reference.
+
+  Returns `:utf8` or `:latin`.
+
+  Raises `UnsupportedCharsetError` if the character set is unknown.
+  WARNING: Compared to jgit, the character set support in xgit is limited.
+  """
+  def parse_encoding(b) when is_list(b) do
+    case parse_encoding_name(b) |> String.trim() do
+      nil -> :utf8
+      "UTF-8" -> :utf8
+      "ISO-8859-1" -> :latin1
+      x -> raise UnsupportedCharsetError, charset: x
+    end
+  end
+
   # /**
   # * Parse a name string (e.g. author, committer, tagger) into a PersonIdent.
   # * <p>
