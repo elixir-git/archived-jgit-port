@@ -145,6 +145,20 @@ defmodule Xgit.Util.RawParseUtilsTest do
     assert RPU.encoding(commit_with_encoding) == 'UTF-8\n'
   end
 
+  test "decode/1" do
+    assert RPU.decode([64, 65, 66]) == "@AB"
+    assert RPU.decode([228, 105, 116, 105]) == "äiti"
+    assert RPU.decode([195, 164, 105, 116, 105]) == "äiti"
+    assert RPU.decode([66, 106, 246, 114, 110]) == "Björn"
+    assert RPU.decode([66, 106, 195, 182, 114, 110]) == "Björn"
+  end
+
+  test "extract_binary_string/1" do
+    assert RPU.extract_binary_string([64, 65, 66]) == "@AB"
+    assert RPU.extract_binary_string([228, 105, 116, 105]) == "äiti"
+    assert RPU.extract_binary_string([66, 106, 246, 114, 110]) == "Björn"
+  end
+
   test "until_end_of_paragraph/1" do
     some = RPU.header_start('some', @commit)
     assert RPU.until_end_of_paragraph(some) == 'other header'
