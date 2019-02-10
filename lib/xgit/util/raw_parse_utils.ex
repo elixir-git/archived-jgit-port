@@ -638,25 +638,16 @@ defmodule Xgit.Util.RawParseUtils do
   defp until_end_of_paragraph(acc, [c | rem]), do: until_end_of_paragraph(acc ++ [c], rem)
   defp until_end_of_paragraph(acc, []), do: acc
 
-  # /**
-  # * Get last index of {@code ch} in raw, trimming spaces.
-  # *
-  # * @param raw
-  # *            buffer to scan.
-  # * @param ch
-  # *            character to find.
-  # * @param pos
-  # *            starting position.
-  # * @return last index of {@code ch} in raw, trimming spaces.
-  # * @since 4.1
-  # */
-  # public static int lastIndexOfTrim(byte[] raw, char ch, int pos) {
-  # while (pos >= 0 && raw[pos] == ' ')
-  # pos--;
-  #
-  # while (pos >= 0 && raw[pos] != ch)
-  # pos--;
-  #
-  # return pos;
-  # }
+  @doc ~S"""
+  Return the portion of the byte array up to, but not including the last instance of
+  `ch`, disregarding any trailing spaces.
+  """
+  def until_last_instance_of_trim(b, ch) when is_list(b) do
+    b
+    |> Enum.reverse()
+    |> Enum.drop_while(&(&1 == ?\s))
+    |> Enum.drop_while(&(&1 != ch))
+    |> Enum.drop(1)
+    |> Enum.reverse()
+  end
 end
