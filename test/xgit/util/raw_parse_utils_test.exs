@@ -1,6 +1,7 @@
 defmodule Xgit.Util.RawParseUtilsTest do
   use ExUnit.Case
 
+  alias Xgit.Errors.UnsupportedCharsetError
   alias Xgit.Util.RawParseUtils, as: RPU
 
   @commit 'tree e3a1035abd2b319bb01e57d69b0ba6cab289297e\n' ++
@@ -134,15 +135,37 @@ defmodule Xgit.Util.RawParseUtilsTest do
     assert RPU.tagger(commit_with_tagger) == 'A U Thorax <author@xample.com 1528968566 +0200\n'
   end
 
+  @commit_with_encoding 'tree e3a1035abd2b319bb01e57d69b0ba6cab289297e\n' ++
+                          'parent 54e895b87c0768d2317a2b17062e3ad9f76a8105\n' ++
+                          'encoding UTF-8\n'
+
   test "encoding/1" do
     assert RPU.encoding(@commit) == nil
+    assert RPU.encoding(@commit_with_encoding) == 'UTF-8\n'
+  end
 
-    commit_with_encoding =
+  test "parse_encoding_name/1" do
+    assert RPU.parse_encoding_name(@commit) == nil
+    assert RPU.parse_encoding_name(@commit_with_encoding) == "UTF-8"
+  end
+
+  test "parse_encoding/1" do
+    assert RPU.parse_encoding(@commit) == :utf8
+    assert RPU.parse_encoding(@commit_with_encoding) == :utf8
+
+    commit_with_latin1_encoding =
       'tree e3a1035abd2b319bb01e57d69b0ba6cab289297e\n' ++
         'parent 54e895b87c0768d2317a2b17062e3ad9f76a8105\n' ++
-        'encoding UTF-8\n'
+        'encoding ISO-8859-1 \n'
 
-    assert RPU.encoding(commit_with_encoding) == 'UTF-8\n'
+    assert RPU.parse_encoding(commit_with_latin1_encoding) == :latin1
+
+    commit_with_other_encoding =
+      'tree e3a1035abd2b319bb01e57d69b0ba6cab289297e\n' ++
+        'parent 54e895b87c0768d2317a2b17062e3ad9f76a8105\n' ++
+        'encoding Martian\n'
+
+    assert_raise UnsupportedCharsetError, fn -> RPU.parse_encoding(commit_with_other_encoding) end
   end
 
   test "decode/1" do
