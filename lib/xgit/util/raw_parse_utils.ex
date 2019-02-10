@@ -3,6 +3,8 @@ defmodule Xgit.Util.RawParseUtils do
   Handy utility functions to parse raw object contents.
   """
 
+  alias Xgit.Errors.UnsupportedCharsetError
+
   # /**
   #  * Determine if b[ptr] matches src.
   #  *
@@ -383,13 +385,16 @@ defmodule Xgit.Util.RawParseUtils do
   WARNING: Compared to jgit, the character set support in xgit is limited.
   """
   def parse_encoding(b) when is_list(b) do
-    case parse_encoding_name(b) |> String.trim() do
+    case parse_encoding_name(b) |> trim_if_string() do
       nil -> :utf8
       "UTF-8" -> :utf8
       "ISO-8859-1" -> :latin1
       x -> raise UnsupportedCharsetError, charset: x
     end
   end
+
+  defp trim_if_string(s) when is_binary(s), do: String.trim(s)
+  defp trim_if_string(s), do: s
 
   # /**
   # * Parse a name string (e.g. author, committer, tagger) into a PersonIdent.
