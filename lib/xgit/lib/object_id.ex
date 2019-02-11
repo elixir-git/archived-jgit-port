@@ -7,6 +7,8 @@ defmodule Xgit.Lib.ObjectId do
   mechanisms for manipulating and validating such strings.
   """
 
+  @type t :: String.t()
+
   @doc ~S"""
   Get the special all-null ObjectId, often used to stand-in for no object.
   """
