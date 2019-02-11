@@ -449,8 +449,11 @@ defmodule Xgit.Util.RawParseUtils do
     {time, _rev} = trim_word_and_rev(rev)
 
     case {time, tz} do
-      {[_ | _], [_ | _]} -> {parse_base_10(time) |> elem(0), parse_timezone_offset(tz) |> elem(0)}
-      _ -> {0, 0}
+      {[_ | _], [_ | _]} ->
+        {time |> parse_base_10() |> elem(0), tz |> parse_timezone_offset() |> elem(0)}
+
+      _ ->
+        {0, 0}
     end
   end
 
