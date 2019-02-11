@@ -4,6 +4,7 @@ defmodule Xgit.Util.RawParseUtils do
   """
 
   alias Xgit.Errors.UnsupportedCharsetError
+  alias Xgit.Lib.PersonIdent
 
   # /**
   #  * Determine if b[ptr] matches src.
@@ -396,83 +397,77 @@ defmodule Xgit.Util.RawParseUtils do
   defp trim_if_string(s) when is_binary(s), do: String.trim(s)
   defp trim_if_string(s), do: s
 
-  # /**
-  # * Parse a name string (e.g. author, committer, tagger) into a PersonIdent.
-  # * <p>
-  # * Leading spaces won't be trimmed from the string, i.e. will show up in the
-  # * parsed name afterwards.
-  # *
-  # * @param in
-  # *            the string to parse a name from.
-  # * @return the parsed identity or null in case the identity could not be
-  # *         parsed.
-  # */
-  # public static PersonIdent parsePersonIdent(String in) {
-  # return parsePersonIdent(Constants.encode(in), 0);
-  # }
-  #
-  # /**
-  # * Parse a name line (e.g. author, committer, tagger) into a PersonIdent.
-  # * <p>
-  # * When passing in a value for <code>nameB</code> callers should use the
-  # * return value of {@link #author(byte[], int)} or
-  # * {@link #committer(byte[], int)}, as these methods provide the proper
-  # * position within the buffer.
-  # *
-  # * @param raw
-  # *            the buffer to parse character data from.
-  # * @param nameB
-  # *            first position of the identity information. This should be the
-  # *            first position after the space which delimits the header field
-  # *            name (e.g. "author" or "committer") from the rest of the
-  # *            identity line.
-  # * @return the parsed identity or null in case the identity could not be
-  # *         parsed.
-  # */
-  # public static PersonIdent parsePersonIdent(byte[] raw, int nameB) {
-  # Charset cs;
-  # try {
-  # cs = parseEncoding(raw);
-  # } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
-  # // Assume UTF-8 for person identities, usually this is correct.
-  # // If not decode() will fall back to the ISO-8859-1 encoding.
-  # cs = UTF_8;
-  # }
-  #
-  # final int emailB = nextLF(raw, nameB, '<');
-  # final int emailE = nextLF(raw, emailB, '>');
-  # if (emailB >= raw.length || raw[emailB] == '\n' ||
-  # (emailE >= raw.length - 1 && raw[emailE - 1] != '>'))
-  # return null;
-  #
-  # final int nameEnd = emailB - 2 >= nameB && raw[emailB - 2] == ' ' ?
-  # emailB - 2 : emailB - 1;
-  # final String name = decode(cs, raw, nameB, nameEnd);
-  # final String email = decode(cs, raw, emailB, emailE - 1);
-  #
-  # // Start searching from end of line, as after first name-email pair,
-  # // another name-email pair may occur. We will ignore all kinds of
-  # // "junk" following the first email.
-  # //
-  # // We've to use (emailE - 1) for the case that raw[email] is LF,
-  # // otherwise we would run too far. "-2" is necessary to position
-  # // before the LF in case of LF termination resp. the penultimate
-  # // character if there is no trailing LF.
-  # final int tzBegin = lastIndexOfTrim(raw, ' ',
-  # nextLF(raw, emailE - 1) - 2) + 1;
-  # if (tzBegin <= emailE) // No time/zone, still valid
-  # return new PersonIdent(name, email, 0, 0);
-  #
-  # final int whenBegin = Math.max(emailE,
-  # lastIndexOfTrim(raw, ' ', tzBegin - 1) + 1);
-  # if (whenBegin >= tzBegin - 1) // No time/zone, still valid
-  # return new PersonIdent(name, email, 0, 0);
-  #
-  # final long when = parseLongBase10(raw, whenBegin, null);
-  # final int tz = parseTimeZoneOffset(raw, tzBegin);
-  # return new PersonIdent(name, email, when * 1000L, tz);
-  # }
-  #
+  @doc ~S"""
+  Parse a name line (e.g. author, committer, tagger) into a `PersonIdent` struct.
+
+  When passing in a charlist for `b` callers should use the return value of
+  `author/1` or `committer/1`, as these functions provide the proper subset of
+  the buffer.
+
+  Returns `%PersonIdent{}` or `nil` in case the identity could not be parsed.
+  """
+  def parse_person_ident(b) when is_list(b) do
+    with [_ | _] = email_start <- next_lf(b, ?<),
+         true <- has_closing_angle_bracket?(email_start),
+         email <- until_next_lf(email_start, ?>),
+         name <- parse_name(b),
+         {time, tz} <- parse_tz(email_start) do
+      %PersonIdent{name: decode(name), email: decode(email), when: time, tz_offset: tz}
+    else
+      # Could not parse the line as a PersonIdent.
+      _ -> nil
+    end
+  end
+
+  defp has_closing_angle_bracket?(b), do: Enum.any?(b, &(&1 == ?>))
+
+  defp parse_name(b) do
+    b
+    |> until_next_lf(?<)
+    |> Enum.reverse()
+    |> drop_first_if_space()
+    |> Enum.reverse()
+  end
+
+  defp drop_first_if_space([?\s | b]), do: b
+  defp drop_first_if_space(b), do: b
+
+  defp parse_tz(first_email_start) do
+    # Start searching from end of line, as after first name-email pair,
+    # another name-email pair may occur. We will ignore all kinds of
+    # "junk" following the first email.
+
+    # We've to use (emailE - 1) for the case that raw[email] is LF,
+    # otherwise we would run too far. "-2" is necessary to position
+    # before the LF in case of LF termination resp. the penultimate
+    # character if there is no trailing LF.
+
+    first_email_end = next_lf(first_email_start, ?>)
+    rev = Enum.reverse(first_email_end)
+
+    {tz, rev} = trim_word_and_rev(rev)
+    {time, _rev} = trim_word_and_rev(rev)
+
+    case {time, tz} do
+      {[_ | _], [_ | _]} ->
+        {time |> parse_base_10() |> elem(0), tz |> parse_timezone_offset() |> elem(0)}
+
+      _ ->
+        {0, 0}
+    end
+  end
+
+  defp trim_word_and_rev(rev) do
+    rev = Enum.drop_while(rev, &(&1 == ?\s))
+
+    word =
+      rev
+      |> Enum.take_while(&(&1 != ?\s))
+      |> Enum.reverse()
+
+    {word, Enum.drop(rev, Enum.count(word))}
+  end
+
   # /**
   # * Parse a name data (e.g. as within a reflog) into a PersonIdent.
   # * <p>
