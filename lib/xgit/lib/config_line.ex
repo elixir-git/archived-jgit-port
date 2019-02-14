@@ -30,12 +30,17 @@ defmodule Xgit.Lib.ConfigLine do
 
   defp maybe_downcase(nil), do: nil
   defp maybe_downcase(s), do: String.downcase(s)
+end
 
-  @doc ~S"""
-  Render this ConfigLine as a string.
-  """
-  def to_string(%__MODULE__{section: section, subsection: subsection, name: name, value: value}),
-    do: "#{section_str(section)}#{subsection_str(subsection)}#{name_str(name)}#{value_str(value)}"
+defimpl String.Chars, for: Xgit.Lib.ConfigLine do
+  def to_string(%Xgit.Lib.ConfigLine{
+        section: section,
+        subsection: subsection,
+        name: name,
+        value: value
+      }),
+      do:
+        "#{section_str(section)}#{subsection_str(subsection)}#{name_str(name)}#{value_str(value)}"
 
   def section_str(nil), do: "<empty>"
   def section_str(s), do: s

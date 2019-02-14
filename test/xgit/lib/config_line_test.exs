@@ -107,26 +107,26 @@ defmodule Xgit.Lib.ConfigLineTest do
   end
 
   test "to_string/1" do
-    assert ConfigLine.to_string(%ConfigLine{}) == "<empty>"
+    assert to_string(%ConfigLine{}) == "<empty>"
 
-    assert ConfigLine.to_string(%ConfigLine{section: "foo"}) == "foo"
+    assert to_string(%ConfigLine{section: "foo"}) == "foo"
 
-    assert ConfigLine.to_string(%ConfigLine{section: "foo", subsection: "bar"}) == "foo.bar"
+    assert to_string(%ConfigLine{section: "foo", subsection: "bar"}) == "foo.bar"
 
-    assert ConfigLine.to_string(%ConfigLine{section: "foo", name: "joe"}) == "foo.joe"
+    assert to_string(%ConfigLine{section: "foo", name: "joe"}) == "foo.joe"
 
-    assert ConfigLine.to_string(%ConfigLine{section: "foo", subsection: "bar", name: "bob"}) ==
+    assert to_string(%ConfigLine{section: "foo", subsection: "bar", name: "bob"}) ==
              "foo.bar.bob"
 
-    assert ConfigLine.to_string(%ConfigLine{section: "foo", value: "abc"}) == "foo=abc"
+    assert to_string(%ConfigLine{section: "foo", value: "abc"}) == "foo=abc"
 
-    assert ConfigLine.to_string(%ConfigLine{section: "foo", subsection: "bar", value: "abc"}) ==
+    assert to_string(%ConfigLine{section: "foo", subsection: "bar", value: "abc"}) ==
              "foo.bar=abc"
 
-    assert ConfigLine.to_string(%ConfigLine{section: "foo", name: "joe", value: "abc"}) ==
+    assert to_string(%ConfigLine{section: "foo", name: "joe", value: "abc"}) ==
              "foo.joe=abc"
 
-    assert ConfigLine.to_string(%ConfigLine{
+    assert to_string(%ConfigLine{
              section: "foo",
              subsection: "bar",
              name: "bob",
