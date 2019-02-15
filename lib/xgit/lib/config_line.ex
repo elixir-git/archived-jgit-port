@@ -42,15 +42,15 @@ defimpl String.Chars, for: Xgit.Lib.ConfigLine do
       do:
         "#{section_str(section)}#{subsection_str(subsection)}#{name_str(name)}#{value_str(value)}"
 
-  def section_str(nil), do: "<empty>"
-  def section_str(s), do: s
+  defp section_str(nil), do: "<empty>"
+  defp section_str(s), do: s
 
-  def subsection_str(nil), do: ""
-  def subsection_str(s), do: ".#{s}"
+  defp subsection_str(nil), do: ""
+  defp subsection_str(s), do: ".#{s}"
 
-  def name_str(nil), do: ""
-  def name_str(s), do: ".#{s}"
+  defp name_str(nil), do: ""
+  defp name_str(s), do: ".#{s}"
 
-  def value_str(nil), do: ""
-  def value_str(s), do: "=#{s}"
+  defp value_str(nil), do: ""
+  defp value_str(s), do: "=#{s}"
 end
