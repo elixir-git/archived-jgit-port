@@ -198,9 +198,17 @@ defmodule Xgit.Transport.RefSpecTest do
 
     refute a == b
     assert to_string(b) == "refs/heads/*:refs/remotes/origin/*"
+
+    assert_raise ArgumentError, fn ->
+      RefSpec.replace_source_and_destination(a, "refs/heads/*", "refs/remotes/origin/master")
+    end
+
+    assert_raise ArgumentError, fn ->
+      RefSpec.replace_source_and_destination(a, "refs/heads/master", "refs/remotes/origin/*")
+    end
   end
 
-  describe "expand_from_soure/2" do
+  describe "expand_from_source/2" do
     test "non-wildcard" do
       src = "refs/heads/master"
       dst = "refs/remotes/origin/master"
@@ -225,6 +233,27 @@ defmodule Xgit.Transport.RefSpecTest do
       refute RefSpec.wildcard?(r)
       assert r.src_name == src
       assert r.dst_name == dst
+    end
+
+    test "wildcard (expanding a Ref)" do
+      src = "refs/heads/master"
+      dst = "refs/remotes/origin/master"
+
+      a = RefSpec.from_string("refs/heads/*:refs/remotes/origin/*")
+      r = RefSpec.expand_from_source(a, %ObjectIdRef{storage: :loose, name: src})
+
+      refute a == r
+      refute RefSpec.wildcard?(r)
+      assert r.src_name == src
+      assert r.dst_name == dst
+    end
+
+    test "raises when mismatched wildcards allowed" do
+      src = "refs/heads/master"
+      dst = "refs/remotes/origin/master"
+
+      a = RefSpec.from_string("#{src}:#{dst}", allow_mismatched_wildcards?: true)
+      assert_raise ArgumentError, fn -> RefSpec.expand_from_source(a, src) end
     end
   end
 
@@ -253,6 +282,27 @@ defmodule Xgit.Transport.RefSpecTest do
       refute RefSpec.wildcard?(r)
       assert r.src_name == src
       assert r.dst_name == dst
+    end
+
+    test "wildcard (expanding a Ref)" do
+      src = "refs/heads/master"
+      dst = "refs/remotes/origin/master"
+
+      a = RefSpec.from_string("refs/heads/*:refs/remotes/origin/*")
+      r = RefSpec.expand_from_destination(a, %ObjectIdRef{storage: :loose, name: dst})
+
+      refute a == r
+      refute RefSpec.wildcard?(r)
+      assert r.src_name == src
+      assert r.dst_name == dst
+    end
+
+    test "raises when mismatched wildcards allowed" do
+      src = "refs/heads/master"
+      dst = "refs/remotes/origin/master"
+
+      a = RefSpec.from_string("#{src}:#{dst}", allow_mismatched_wildcards?: true)
+      assert_raise ArgumentError, fn -> RefSpec.expand_from_destination(a, src) end
     end
   end
 
@@ -422,6 +472,12 @@ defmodule Xgit.Transport.RefSpecTest do
   test "replace_source/2 raises when invalid" do
     a = RefSpec.from_string("refs/heads/*:refs/remotes/origin/*")
     assert_raise ArgumentError, fn -> RefSpec.replace_source(a, "refs/heads/*/*") end
+
+    a = %RefSpec{}
+    assert_raise ArgumentError, fn -> RefSpec.replace_source(a, "refs/heads/*") end
+
+    a = %RefSpec{dst_name: "refs/heads/master"}
+    assert_raise ArgumentError, fn -> RefSpec.replace_source(a, "refs/heads/*") end
   end
 
   test "replace_destination/2 raises when invalid" do
@@ -430,6 +486,12 @@ defmodule Xgit.Transport.RefSpecTest do
     assert_raise ArgumentError, fn ->
       RefSpec.replace_destination(a, "refs/remotes/origin/*/*")
     end
+
+    a = %RefSpec{}
+    assert_raise ArgumentError, fn -> RefSpec.replace_destination(a, "refs/heads/*") end
+
+    a = %RefSpec{src_name: "refs/heads/master"}
+    assert_raise ArgumentError, fn -> RefSpec.replace_destination(a, "refs/heads/*") end
   end
 
   describe "from_string/2 allow_mismatched_wildcards? option" do
@@ -450,6 +512,12 @@ defmodule Xgit.Transport.RefSpecTest do
       a = RefSpec.from_string("*", allow_mismatched_wildcards?: true)
       assert RefSpec.match_source?(a, "refs/heads/master")
       assert a.dst_name == nil
+    end
+
+    test "raises if option isn't a boolean" do
+      assert_raise ArgumentError, fn ->
+        RefSpec.from_string("refs/heads/master:refs/heads/*", allow_mismatched_wildcards?: 42)
+      end
     end
   end
 end
