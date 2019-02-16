@@ -112,9 +112,6 @@ defmodule Xgit.Transport.RefSpec do
   def replace_destination(%__MODULE__{src_name: src} = ref_spec, destination) do
     assert_valid(destination)
 
-    if wildcard?(destination) && src == nil,
-      do: raise(ArgumentError, "Source is not a wildcard.")
-
     if wildcard?(src) != wildcard?(destination),
       do: raise(ArgumentError, "Source/Destination must match.")
 
