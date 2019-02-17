@@ -15,3 +15,7 @@ jgit has its own localization mechanism (see class `JGitText`). I've decided not
 ## Exceptions -> Errors
 
 In keeping with Elixir convention, jgit class names that end with `Exception` are renamed to Elixir modules that end with `Error`.
+
+## Listeners
+
+Instead of porting the `Listener` and `ListenerList` mechanism from jgit, we instead use [`swarm`](https://hexdocs.pm/swarm) to manage inter-process messaging and the related lifetime issues.
