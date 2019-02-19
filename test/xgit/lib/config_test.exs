@@ -26,7 +26,8 @@ defmodule Xgit.Lib.ConfigTest do
 
   test "read bare key" do
     c = parse("[foo]\nbar\n")
-    assert Config.get(c, "foo", "bar") == true
+    assert Config.get_boolean(c, "foo", "bar", false) == true
+    # assert Config.get_string(c, "foo", "bar") == ""
   end
 
   # @Test

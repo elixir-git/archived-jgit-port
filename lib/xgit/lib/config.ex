@@ -76,7 +76,7 @@ defmodule Xgit.Lib.Config do
 
   @impl true
   def init({ref, :new}) when is_reference(ref) do
-    # TO DO: Manage lifetime. (Shut down when Swarm process group becomes empty.)
+    # TODO: Manage lifetime. (Shut down when Swarm process group becomes empty.)
     {:ok, %__MODULE__.State{config_lines: [], ref: ref, base_config: nil}}
   end
 
@@ -269,44 +269,32 @@ defmodule Xgit.Lib.Config do
   # 	return typedGetter.getLong(this, section, subsection, name,
   # 			defaultValue);
   # }
-  #
-  # /**
-  #  * Get a boolean value from the git config
-  #  *
-  #  * @param section
-  #  *            section the key is grouped within.
-  #  * @param name
-  #  *            name of the key to get.
-  #  * @param defaultValue
-  #  *            default value to return if no value was present.
-  #  * @return true if any value or defaultValue is true, false for missing or
-  #  *         explicit false
-  #  */
-  # public boolean getBoolean(final String section, final String name,
-  # 		final boolean defaultValue) {
-  # 	return typedGetter.getBoolean(this, section, null, name, defaultValue);
-  # }
-  #
-  # /**
-  #  * Get a boolean value from the git config
-  #  *
-  #  * @param section
-  #  *            section the key is grouped within.
-  #  * @param subsection
-  #  *            subsection name, such a remote or branch name.
-  #  * @param name
-  #  *            name of the key to get.
-  #  * @param defaultValue
-  #  *            default value to return if no value was present.
-  #  * @return true if any value or defaultValue is true, false for missing or
-  #  *         explicit false
-  #  */
-  # public boolean getBoolean(final String section, String subsection,
-  # 		final String name, final boolean defaultValue) {
-  # 	return typedGetter.getBoolean(this, section, subsection, name,
-  # 			defaultValue);
-  # }
-  #
+
+  @doc ~S"""
+  Get a boolean value from the git config.
+
+  Returns `true` if any value or `default` if `true`; `false` for missing or
+  an explicit `false`.
+  """
+  def get_boolean(c, section, subsection \\ nil, name, default)
+      when is_binary(section) and is_binary(name) and is_boolean(default) do
+    c
+    |> process_ref()
+    |> GenServer.call({:get_raw_strings, section, subsection, name})
+    |> List.first()
+    |> to_lowercase_if_string()
+    |> to_boolean(default)
+  end
+
+  defp to_lowercase_if_string(s) when is_binary(s), do: String.downcase(s)
+  defp to_lowercase_if_string(x), do: x
+
+  defp to_boolean(nil, default), do: default
+  defp to_boolean("false", _default), do: false
+  defp to_boolean("off", _default), do: false
+  defp to_boolean("0", _default), do: false
+  defp to_boolean(_, _default), do: true
+
   # /**
   #  * Parse an enumeration from the configuration.
   #  *
@@ -626,12 +614,12 @@ defmodule Xgit.Lib.Config do
   # 		return null;
   # 	}
   # }
-  #
-  # private String[] getRawStringList(String section, String subsection,
-  # 		String name) {
-  # 	return state.get().get(section, subsection, name);
-  # }
-  #
+
+  defp raw_string_list(%__MODULE__.State{config_lines: config_lines}, section, subsection, name) do
+    # TODO: Consider base state.
+    Enum.filter(config_lines, &ConfigLine.match?(&1, section, subsection, name))
+  end
+
   # private ConfigSnapshot getState() {
   # 	ConfigSnapshot cur, upd;
   # 	do {
@@ -1021,7 +1009,7 @@ defmodule Xgit.Lib.Config do
   def from_text(c, text) when is_binary(text) do
     case GenServer.call(process_ref(c), {:from_text, text}) do
       {:error, e} -> raise(e)
-      x -> x
+      _ -> c
     end
   end
 
@@ -1034,46 +1022,76 @@ defmodule Xgit.Lib.Config do
 
   defp from_text_impl(text, depth, included_from) when is_binary(text) and is_integer(depth) do
     text
-    |> String.split("\n", trim: true)
-    |> Enum.reduce({nil, nil, []}, &parse_line(&1, &2, included_from))
-    |> elem(2)
-    |> IO.inspect(label: "after parse_line reduce")
-
-    # |> Enum.flat_map(&expand_includes/...)
+    |> String.to_charlist()
+    |> config_lines_from([], nil, nil, included_from, [])
   end
 
-  defp parse_line(
-         line,
-         {previous_section, previous_subsection, previous_lines} = _acc,
-         included_from
+  defp config_lines_from(remainder, config_lines_acc, section, subsection, included_from, prefix)
+
+  defp config_lines_from([], config_lines_acc, _section, _subsection, _included_from, _prefix),
+    do: config_lines_acc
+
+  defp config_lines_from(
+         [?\n | remainder],
+         config_lines_acc,
+         section,
+         subsection,
+         included_from,
+         _prefix
        ) do
-    {prefix, remainder} =
-      line
-      |> String.to_charlist()
-      |> Enum.split_while(&whitespace?/1)
-
-    {new_section, new_subsection, config_line} =
-      parse_line(
-        remainder,
-        to_string(prefix),
-        previous_section,
-        previous_subsection,
-        line,
-        included_from
-      )
-
-    {new_section, new_subsection, previous_lines ++ [config_line]}
+    config_lines_from(remainder, config_lines_acc, section, subsection, included_from, [])
   end
 
-  # After stripping whitespace, we can pattern match to determine what kind of line this is.
+  defp config_lines_from(
+         [?\s | remainder],
+         config_lines_acc,
+         section,
+         subsection,
+         included_from,
+         prefix
+       ) do
+    config_lines_from(
+      remainder,
+      config_lines_acc,
+      section,
+      subsection,
+      included_from,
+      prefix ++ [?\s]
+    )
+  end
 
-  defp parse_line([?\[ | remainder], prefix, _section, _subsection, line, included_from) do
+  defp config_lines_from(
+         [?\t | remainder],
+         config_lines_acc,
+         section,
+         subsection,
+         included_from,
+         prefix
+       ) do
+    config_lines_from(
+      remainder,
+      config_lines_acc,
+      section,
+      subsection,
+      included_from,
+      prefix ++ [?\t]
+    )
+  end
+
+  defp config_lines_from(
+         [?\[ | remainder] = buffer,
+         config_lines_acc,
+         _section,
+         _subsection,
+         included_from,
+         prefix
+       ) do
     # This is a section header.
     {section, remainder} =
       remainder
       |> skip_whitespace()
       |> Enum.split_while(&letter_or_digit?/1)
-      |> section_to_string(line)
+      |> section_to_string(buffer)
 
     # TODO: Reread readSectionName closely.
 
@@ -1082,95 +1100,111 @@ defmodule Xgit.Lib.Config do
       |> skip_whitespace()
       |> maybe_read_subsection_name()
 
-    _ =
+    remainder =
       remainder
       |> skip_whitespace()
-      |> expect_close_brace(line)
+      |> expect_close_brace(buffer)
 
-    {section, subsection,
-     %ConfigLine{
-       prefix: prefix,
-       section: section,
-       subsection: subsection,
-       name: nil,
-       value: nil,
-       suffix: to_string(remainder),
-       included_from: included_from
-     }}
+    config_lines_from(remainder, config_lines_acc, section, subsection, included_from, prefix)
   end
 
-  defp parse_line([], prefix, section, subsection, _line, included_from) do
-    # This is a blank line.
-    {section, subsection,
-     %ConfigLine{
-       prefix: prefix,
-       section: section,
-       subsection: subsection,
-       name: nil,
-       value: nil,
-       suffix: nil,
-       included_from: included_from
-     }}
-  end
-
-  defp parse_line([c | _] = comment, prefix, section, subsection, _line, included_from)
+  defp config_lines_from(
+         [c | _] = remainder,
+         config_lines_acc,
+         section,
+         subsection,
+         included_from,
+         prefix
+       )
        when c == ?; or c == ?# do
-    # This is a comment-only line.
-    {section, subsection,
-     %ConfigLine{
-       prefix: prefix,
-       section: section,
-       subsection: subsection,
-       name: nil,
-       value: nil,
-       suffix: to_string(comment),
-       included_from: included_from
-     }}
+    {comment, remainder} = Enum.split_while(remainder, &not_eol?/1)
+
+    new_config_line =
+      config_line_with_strings(%{
+        prefix: prefix,
+        section: section,
+        subsection: subsection,
+        included_from: included_from,
+        suffix: comment
+      })
+
+    config_lines_from(
+      remainder,
+      config_lines_acc ++ [new_config_line],
+      section,
+      subsection,
+      included_from,
+      prefix
+    )
   end
 
-  defp parse_line(_remainder, _prefix, nil, _subsection, _line, _included_from) do
+  defp config_lines_from(_remainder, _config_lines_acc, nil, _subsection, _included_from, _prefix) do
     # Attempt to set a value before a section header.
     raise ConfigInvalidError, "Invalid line in config file"
   end
 
-  defp parse_line(remainder, prefix, section, subsection, _line, included_from) do
+  defp config_lines_from(remainder, config_lines_acc, section, subsection, included_from, prefix) do
     {key, remainder} = read_key_name(remainder, [])
     {value, remainder} = maybe_read_value(remainder)
+    {comment, remainder} = maybe_read_comment(remainder)
 
-    IO.inspect(key, label: "key")
-    IO.inspect(remainder, label: "remainder")
+    new_config_line =
+      config_line_with_strings(%{
+        prefix: prefix,
+        section: section,
+        subsection: nil,
+        name: key,
+        value: value,
+        suffix: comment,
+        included_from: included_from
+      })
 
-    # TODO: Expect EOL, comment, or =value.
-
-    # TO DO: Convert this to error case.
-
-    {section, subsection,
-     %ConfigLine{
-       prefix: prefix,
-       section: section,
-       subsection: nil,
-       name: to_string(key),
-       value: nil,
-       suffix: to_string(remainder),
-       included_from: included_from
-     }}
+    config_lines_from(
+      remainder,
+      config_lines_acc ++ [new_config_line],
+      section,
+      subsection,
+      included_from,
+      prefix
+    )
   end
 
-  defp expect_close_brace([?] | remainder], _line), do: remainder
-  defp expect_close_brace(_, line), do: raise_bad_section_entry(line)
+  defp config_line_with_strings(params) do
+    %ConfigLine{
+      prefix: maybe_string(params, :prefix),
+      section: params.section,
+      subsection: params.subsection,
+      name: maybe_string(params, :name),
+      value: maybe_string(params, :value),
+      suffix: maybe_string(params, :suffix),
+      included_from: params.included_from
+    }
+  end
 
-  defp section_to_string({[] = _section, _remainder}, line), do: raise_bad_section_entry(line)
-  defp section_to_string({section, remainder}, _line), do: {to_string(section), remainder}
+  defp maybe_string(nil), do: nil
+  defp maybe_string(x), do: to_string(x)
+  defp maybe_string(map, key), do: map |> Map.get(key) |> maybe_string()
+
+  defp expect_close_brace([?] | remainder], _buffer), do: remainder
+  defp expect_close_brace(_, buffer), do: raise_bad_section_entry(buffer)
+
+  defp section_to_string({[] = _section, _remainder}, buffer), do: raise_bad_section_entry(buffer)
+  defp section_to_string({section, remainder}, _buffer), do: {to_string(section), remainder}
 
   defp maybe_read_subsection_name(remainder) do
     # TODO: Implement this.
     {nil, remainder}
   end
 
-  defp raise_bad_section_entry(line),
-    do: raise(ConfigInvalidError, "Bad section entry: #{line}")
+  defp raise_bad_section_entry(buffer) do
+    raise(
+      ConfigInvalidError,
+      "Bad section entry: #{buffer |> first_line_from() |> to_string()}"
+    )
+  end
 
   defp read_key_name([], name_acc), do: {name_acc, []}
+  defp read_key_name([?\n | remainder], name_acc), do: {name_acc, remainder}
   defp read_key_name([?= | _] = remainder, name_acc), do: {name_acc, remainder}
   defp read_key_name([?\s | remainder], name_acc), do: {name_acc, skip_whitespace(remainder)}
   defp read_key_name([?\t | remainder], name_acc), do: {name_acc, skip_whitespace(remainder)}
@@ -1181,17 +1215,39 @@ defmodule Xgit.Lib.Config do
       else: raise(ConfigInvalidError, message: "Bad entry name: #{to_string(name_acc ++ [c])}")
   end
 
-  defp maybe_read_value([?= | remainder), do: read_value(remainder, [])
-  defp maybe_read_value([?; | remainder), do: {nil, remainder}
-  defp maybe_read_value([?# | remainder), do: {nil, remainder}
+  defp maybe_read_value([?= | remainder]), do: read_value(remainder, [])
+  defp maybe_read_value([?; | remainder]), do: {nil, remainder}
+  defp maybe_read_value([?# | remainder]), do: {nil, remainder}
   defp maybe_read_value([]), do: {nil, []}
   defp maybe_read_value(_), do: raise(ConfigInvalidError, message: "Bad entry delimiter.")
+
+  defp read_value(_remainder, _acc) do
+    raise "read_value not implemented yet"
+  end
+
+  defp maybe_read_comment(remainder) do
+    {whitespace, remainder} = Enum.split_while(remainder, &whitespace?/1)
+    {comment, remainder} = read_comment(remainder)
+    {whitespace ++ comment, remainder}
+  end
+
+  defp read_comment([c | _] = remainder) when c == ?; or c == ?#,
+    do: Enum.split_while(remainder, &not_eol?/1)
+
+  defp read_comment([?\n | remainder]), do: {[], remainder}
+  defp read_comment([]), do: {[], []}
+  defp read_comment(_), do: raise(ConfigInvalidError, message: "Bad entry delimiter.")
 
   defp skip_whitespace(s), do: Enum.drop_while(s, &whitespace?/1)
 
   defp whitespace?(?\s), do: true
   defp whitespace?(?\t), do: true
   defp whitespace?(_), do: false
+
+  defp first_line_from(buffer), do: Enum.take_while(buffer, &not_eol?/1)
+
+  defp not_eol?(?\n), do: true
+  defp not_eol?(_), do: false
 
   # HELP: This is not Unicode-savvy. Is there such a thing?
   defp letter_or_digit?(c) when c >= ?0 and c <= ?9, do: true
@@ -1580,6 +1636,13 @@ defmodule Xgit.Lib.Config do
     rescue
       e in ConfigInvalidError -> {:reply, {:error, e}, s}
     end
+  end
+
+  @impl true
+  def handle_call({:get_raw_strings, section, subsection, name}, _from, %__MODULE__.State{} = s)
+      when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
+             is_binary(name) do
+    {:reply, raw_string_list(s, section, subsection, name), s}
   end
 
   defp process_ref(%__MODULE__{ref: ref}) when is_reference(ref),
