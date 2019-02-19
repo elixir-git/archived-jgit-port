@@ -29,25 +29,10 @@ defmodule Xgit.Lib.Config do
   # so we can merge that functionality into this module as `defp` funcs.
 
   # private static final String[] EMPTY_STRING_ARRAY = {};
-  #
-  # static final long KiB = 1024;
-  # static final long MiB = 1024 * KiB;
-  # static final long GiB = 1024 * MiB;
-  # private static final int MAX_DEPTH = 10;
-  #
-  # private static final TypedConfigGetter DEFAULT_GETTER = new DefaultTypedConfigGetter();
-  #
-  # private static TypedConfigGetter typedGetter = DEFAULT_GETTER;
 
-  # /**
-  #  * Magic value indicating a missing entry.
-  #  * <p>
-  #  * This value is tested for reference equality in some contexts, so we
-  #  * must ensure it is a special copy of the empty string.  It also must
-  #  * be treated like the empty string.
-  #  */
-  # static final String MAGIC_EMPTY_VALUE = new String();
-  #
+  @kib 1024
+  @mib 1024 * @kib
+  @gib 1024 * @mib
 
   @doc ~S"""
   Create a configuration with no default feedback.
@@ -235,40 +220,46 @@ defmodule Xgit.Lib.Config do
   # 	return typedGetter.getInt(this, section, subsection, name,
   # 			defaultValue);
   # }
-  #
-  # /**
-  #  * Obtain an integer value from the configuration.
-  #  *
-  #  * @param section
-  #  *            section the key is grouped within.
-  #  * @param name
-  #  *            name of the key to get.
-  #  * @param defaultValue
-  #  *            default value to return if no value was present.
-  #  * @return an integer value from the configuration, or defaultValue.
-  #  */
-  # public long getLong(String section, String name, long defaultValue) {
-  # 	return typedGetter.getLong(this, section, null, name, defaultValue);
-  # }
-  #
-  # /**
-  #  * Obtain an integer value from the configuration.
-  #  *
-  #  * @param section
-  #  *            section the key is grouped within.
-  #  * @param subsection
-  #  *            subsection name, such a remote or branch name.
-  #  * @param name
-  #  *            name of the key to get.
-  #  * @param defaultValue
-  #  *            default value to return if no value was present.
-  #  * @return an integer value from the configuration, or defaultValue.
-  #  */
-  # public long getLong(final String section, String subsection,
-  # 		final String name, final long defaultValue) {
-  # 	return typedGetter.getLong(this, section, subsection, name,
-  # 			defaultValue);
-  # }
+
+  @doc ~S"""
+  Get an integer value from the git config.
+
+  If no value was present, returns `default`.
+  """
+  def get_int(c, section, subsection \\ nil, name, default)
+      when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
+             is_binary(name) and is_integer(default) do
+    c
+    |> process_ref()
+    |> GenServer.call({:get_raw_strings, section, subsection, name})
+    |> replace_empty_with_missing()
+    |> List.last()
+    |> to_lowercase_if_string()
+    |> trim_if_string()
+    |> to_number(section, name, default)
+  end
+
+  defp replace_empty_with_missing([]), do: [:missing]
+  defp replace_empty_with_missing(x), do: x
+
+  defp to_lowercase_if_string(s) when is_binary(s), do: String.downcase(s)
+  defp to_lowercase_if_string(x), do: x
+
+  defp trim_if_string(s) when is_binary(s), do: String.trim(s)
+  defp trim_if_string(x), do: x
+
+  defp to_number(:missing, _section, _name, default), do: default
+  defp to_number("", _section, _name, default), do: default
+
+  defp to_number(s, section, name, _default) do
+    case Integer.parse(s) do
+      {n, "g"} -> n * @gib
+      {n, "m"} -> n * @mib
+      {n, "k"} -> n * @kib
+      {n, ""} -> n
+      :error -> raise(ConfigInvalidError, "Invalid integer value: #{section}.#{name}=#{s}")
+    end
+  end
 
   @doc ~S"""
   Get a boolean value from the git config.
@@ -287,12 +278,6 @@ defmodule Xgit.Lib.Config do
     |> to_lowercase_if_string()
     |> to_boolean(default)
   end
-
-  defp replace_empty_with_missing([]), do: [:missing]
-  defp replace_empty_with_missing(x), do: x
-
-  defp to_lowercase_if_string(s) when is_binary(s), do: String.downcase(s)
-  defp to_lowercase_if_string(x), do: x
 
   defp to_boolean(nil, _default), do: true
   defp to_boolean(:missing, default), do: default
@@ -1096,7 +1081,9 @@ defmodule Xgit.Lib.Config do
     {subsection, remainder} =
       remainder
       |> skip_whitespace()
-      |> maybe_read_subsection_name()
+      |> maybe_read_subsection_name(buffer)
+
+    subsection = maybe_string(subsection)
 
     remainder =
       remainder
@@ -1150,7 +1137,7 @@ defmodule Xgit.Lib.Config do
       config_line_with_strings(%{
         prefix: prefix,
         section: section,
-        subsection: nil,
+        subsection: subsection,
         name: key,
         value: value,
         suffix: comment,
@@ -1189,10 +1176,22 @@ defmodule Xgit.Lib.Config do
   defp section_to_string({[] = _section, _remainder}, buffer), do: raise_bad_section_entry(buffer)
   defp section_to_string({section, remainder}, _buffer), do: {to_string(section), remainder}
 
-  defp maybe_read_subsection_name(remainder) do
-    # TODO: Implement this.
-    {nil, remainder}
-  end
+  defp maybe_read_subsection_name([?] | _] = remainder, _buffer), do: {nil, remainder}
+
+  defp maybe_read_subsection_name([?" | remainder], buffer),
+    do: read_subsection_name(remainder, [], buffer)
+
+  defp maybe_read_subsection_name(_remainder, buffer), do: raise_bad_section_entry(buffer)
+
+  defp read_subsection_name([], _name_acc, buffer), do: raise_bad_section_entry(buffer)
+  defp read_subsection_name([?\n | _], _name_acc, buffer), do: raise_bad_section_entry(buffer)
+  defp read_subsection_name([?" | remainder], name_acc, _buffer), do: {name_acc, remainder}
+
+  defp read_subsection_name([?\\ | [c | remainder]], name_acc, buffer),
+    do: read_subsection_name(remainder, name_acc ++ [c], buffer)
+
+  defp read_subsection_name([c | remainder], name_acc, buffer),
+    do: read_subsection_name(remainder, name_acc ++ [c], buffer)
 
   defp raise_bad_section_entry(buffer) do
     raise(
@@ -1202,7 +1201,7 @@ defmodule Xgit.Lib.Config do
   end
 
   defp read_key_name([], name_acc), do: {name_acc, []}
-  defp read_key_name([?\n | remainder], name_acc), do: {name_acc, remainder}
+  defp read_key_name([?\n | _] = remainder, name_acc), do: {name_acc, remainder}
   defp read_key_name([?= | _] = remainder, name_acc), do: {name_acc, remainder}
   defp read_key_name([?\s | remainder], name_acc), do: {name_acc, skip_whitespace(remainder)}
   defp read_key_name([?\t | remainder], name_acc), do: {name_acc, skip_whitespace(remainder)}
@@ -1213,15 +1212,48 @@ defmodule Xgit.Lib.Config do
       else: raise(ConfigInvalidError, message: "Bad entry name: #{to_string(name_acc ++ [c])}")
   end
 
-  defp maybe_read_value([?= | remainder]), do: read_value(remainder, [])
+  defp maybe_read_value([?\n | _] = remainder), do: {nil, remainder}
+  defp maybe_read_value([?= | remainder]), do: read_value(skip_whitespace(remainder), [], [])
   defp maybe_read_value([?; | remainder]), do: {nil, remainder}
   defp maybe_read_value([?# | remainder]), do: {nil, remainder}
   defp maybe_read_value([]), do: {nil, []}
   defp maybe_read_value(_), do: raise(ConfigInvalidError, message: "Bad entry delimiter.")
 
-  defp read_value(_remainder, _acc) do
-    raise "read_value not implemented yet"
+  # defp read_value(remainder, value_acc, trailing_ws_acc) do
+  # TODO: Handle trailing non-quoted whitespace properly.
+
+  defp read_value([], value_acc, _trailing_ws_acc), do: {value_acc, []}
+  defp read_value([?\n | _] = remainder, value_acc, _trailing_ws_acc), do: {value_acc, remainder}
+
+  defp read_value([c | _] = remainder, value_acc, _trailing_ws_acc)
+       when c == ?# or c == ?;,
+       do: {value_acc, remainder}
+
+  defp read_value([?\\], _name_acc, _trailing_ws_acc),
+    do: raise(ConfigInvalidError, message: "End of file in escape")
+
+  defp read_value([?\\ | [?\n | remainder]], value_acc, trailing_ws_acc),
+    do: read_value(remainder, value_acc ++ trailing_ws_acc, [])
+
+  defp read_value([?\\ | [c | remainder]], value_acc, trailing_ws_acc),
+    do: read_value(remainder, value_acc ++ trailing_ws_acc ++ [translate_escape(c)], [])
+
+  defp read_value([?" | _remainder], _value_acc, _trailing_ws_acc) do
+    raise "quoted values not yet implemented"
   end
+
+  defp read_value([c | remainder], value_acc, trailing_ws_acc) when c == ?\s or c == ?\t,
+    do: read_value(remainder, value_acc, trailing_ws_acc ++ [c])
+
+  defp read_value([c | remainder], value_acc, trailing_ws_acc),
+    do: read_value(remainder, value_acc ++ trailing_ws_acc ++ [c], [])
+
+  defp translate_escape(?t), do: ?\t
+  defp translate_escape(?b), do: ?\b
+  defp translate_escape(?n), do: ?\n
+  defp translate_escape(?\\), do: ?\\
+  defp translate_escape(?"), do: ?\"
+  defp translate_escape(c), do: raise(ConfigInvalidError, message: "Bad escape: #{c}")
 
   defp maybe_read_comment(remainder) do
     {whitespace, remainder} = Enum.split_while(remainder, &whitespace?/1)
@@ -1252,71 +1284,6 @@ defmodule Xgit.Lib.Config do
   defp letter_or_digit?(c) when c >= ?A and c <= ?Z, do: true
   defp letter_or_digit?(c) when c >= ?a and c <= ?z, do: true
   defp letter_or_digit?(_), do: false
-
-  # defp from_config_line(line, depth, included_from) do
-  # int input = in.read();
-  # if (-1 == input) {
-  # 	if (e.section != null)
-  # 		newEntries.add(e);
-  # 	break;
-  # }
-
-  # final char c = (char) input;
-  # if ('\n' == c) {
-  # 	// End of this entry.
-  # 	newEntries.add(e);
-  # 	if (e.section != null)
-  # 		last = e;
-  # 	e = new ConfigLine();
-  # 	e.includedFrom = includedFrom;
-  # } else if (e.suffix != null) {
-  # 	// Everything up until the end-of-line is in the suffix.
-  # 	e.suffix += c;
-  #
-  # } else if (';' == c || '#' == c) {
-  # 	// The rest of this line is a comment; put into suffix.
-  # 	e.suffix = String.valueOf(c);
-  #
-  # } else if (e.section == null && Character.isWhitespace(c)) {
-  # 	// Save the leading whitespace (if any).
-  # 	if (e.prefix == null)
-  # 		e.prefix = ""; //$NON-NLS-1$
-  # 	e.prefix += c;
-  #
-  # } else if ('[' == c) {
-  # 	// This is a section header.
-  # 	e.section = readSectionName(in);
-  # 	input = in.read();
-  # 	if ('"' == input) {
-  # 		e.subsection = readSubsectionName(in);
-  # 		input = in.read();
-  # 	}
-  # 	if (']' != input)
-  # 		throw new ConfigInvalidException(JGitText.get().badGroupHeader);
-  # 	e.suffix = ""; //$NON-NLS-1$
-  #
-  # 		} else if (last != null) {
-  # 			// Read a value.
-  # 			e.section = last.section;
-  # 			e.subsection = last.subsection;
-  # 			in.reset();
-  # 			e.name = readKeyName(in);
-  # 			if (e.name.endsWith("\n")) { //$NON-NLS-1$
-  # 				e.name = e.name.substring(0, e.name.length() - 1);
-  # 				e.value = MAGIC_EMPTY_VALUE;
-  # 			} else
-  # 				e.value = readValue(in);
-  #
-  # 			if (e.section.equalsIgnoreCase("include")) { //$NON-NLS-1$
-  # 				addIncludedConfig(newEntries, e, depth);
-  # 			}
-  # } else
-  # 	throw new ConfigInvalidException(JGitText.get().invalidLineInConfigFile);
-  # 	}
-  #
-  # 	return newEntries;
-  # }
-  # end
 
   # /**
   #  * Read the included config from the specified (possibly) relative path

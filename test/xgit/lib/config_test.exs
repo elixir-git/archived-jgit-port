@@ -30,17 +30,16 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.get_string(c, "foo", "bar") == ""
   end
 
-  # @Test
-  # public void test002_ReadWithSubsection() throws ConfigInvalidException {
-  # 	final Config c = parse("[foo \"zip\"]\nbar\n[foo \"zap\"]\nbar=false\nn=3\n");
-  # 	assertTrue(c.getBoolean("foo", "zip", "bar", false));
-  # 	assertEquals("", c.getString("foo","zip", "bar"));
-  # 	assertFalse(c.getBoolean("foo", "zap", "bar", true));
-  # 	assertEquals("false", c.getString("foo", "zap", "bar"));
-  # 	assertEquals(3, c.getInt("foo", "zap", "n", 4));
-  # 	assertEquals(4, c.getInt("foo", "zap","m", 4));
-  # }
-  #
+  test "read with subsection" do
+    c = parse("[foo \"zip\"]\nbar\n[foo \"zap\"]\nbar=false\nn=3\n")
+    assert Config.get_boolean(c, "foo", "zip", "bar", false) == true
+    assert Config.get_string(c, "foo", "zip", "bar") == ""
+    assert Config.get_boolean(c, "foo", "zap", "bar", true) == false
+    assert Config.get_string(c, "foo", "zap", "bar") == "false"
+    assert Config.get_int(c, "foo", "zap", "n", 4) == 3
+    assert Config.get_int(c, "foo", "zap", "m", 4) == 4
+  end
+
   # @Test
   # public void test003_PutRemote() {
   # 	final Config c = new Config();
