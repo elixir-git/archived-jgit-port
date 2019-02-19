@@ -729,31 +729,28 @@ defmodule Xgit.Lib.Config do
   # 		n = value.name().toLowerCase(Locale.ROOT).replace('_', ' ');
   # 	setString(section, subsection, name, n);
   # }
-  #
-  # /**
-  #  * Add or modify a configuration value. The parameters will result in a
-  #  * configuration entry like this.
-  #  *
-  #  * <pre>
-  #  * [section &quot;subsection&quot;]
-  #  *         name = value
-  #  * </pre>
-  #  *
-  #  * @param section
-  #  *            section name, e.g "branch"
-  #  * @param subsection
-  #  *            optional subsection value, e.g. a branch name
-  #  * @param name
-  #  *            parameter name, e.g. "filemode"
-  #  * @param value
-  #  *            parameter value, e.g. "true"
-  #  */
-  # public void setString(final String section, final String subsection,
-  # 		final String name, final String value) {
-  # 	setStringList(section, subsection, name, Collections
-  # 			.singletonList(value));
-  # }
-  #
+
+  @doc ~S"""
+  Add or modify a configuration value.
+
+  This parameters will result in a configuration entry like this being added
+  (in-memory only):
+
+  ```
+  [section "subsection"]
+    name = value
+  ```
+  """
+  def set_string(c, section, subsection \\ nil, name, value)
+      when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
+             is_binary(name) and is_binary(value) do
+    c
+    |> process_ref()
+    |> GenServer.call({:set_string_list, section, subsection, name, [value]})
+
+    c
+  end
+
   # /**
   #  * Remove a configuration value.
   #  *
@@ -836,71 +833,95 @@ defmodule Xgit.Lib.Config do
   # 	if (notifyUponTransientChanges())
   # 		fireConfigChangedEvent();
   # }
-  #
-  # private ConfigSnapshot replaceStringList(final ConfigSnapshot srcState,
-  # 		final String section, final String subsection, final String name,
-  # 		final List<String> values) {
-  # 	final List<ConfigLine> entries = copy(srcState, values);
-  # 	int entryIndex = 0;
-  # 	int valueIndex = 0;
-  # 	int insertPosition = -1;
-  #
-  # 	// Reset the first n Entry objects that match this input name.
-  # 	//
-  # 	while (entryIndex < entries.size() && valueIndex < values.size()) {
-  # 		final ConfigLine e = entries.get(entryIndex);
-  # 		if (e.includedFrom == null && e.match(section, subsection, name)) {
-  # 			entries.set(entryIndex, e.forValue(values.get(valueIndex++)));
-  # 			insertPosition = entryIndex + 1;
-  # 		}
-  # 		entryIndex++;
-  # 	}
-  #
-  # 	// Remove any extra Entry objects that we no longer need.
-  # 	//
-  # 	if (valueIndex == values.size() && entryIndex < entries.size()) {
-  # 		while (entryIndex < entries.size()) {
-  # 			final ConfigLine e = entries.get(entryIndex++);
-  # 			if (e.includedFrom == null
-  # 					&& e.match(section, subsection, name))
-  # 				entries.remove(--entryIndex);
-  # 		}
-  # 	}
-  #
-  # 	// Insert new Entry objects for additional/new values.
-  # 	//
-  # 	if (valueIndex < values.size() && entryIndex == entries.size()) {
-  # 		if (insertPosition < 0) {
-  # 			// We didn't find a matching key above, but maybe there
-  # 			// is already a section available that matches. Insert
-  # 			// after the last key of that section.
-  # 			//
-  # 			insertPosition = findSectionEnd(entries, section, subsection,
-  # 					true);
-  # 		}
-  # 		if (insertPosition < 0) {
-  # 			// We didn't find any matching section header for this key,
-  # 			// so we must create a new section header at the end.
-  # 			//
-  # 			final ConfigLine e = new ConfigLine();
-  # 			e.section = section;
-  # 			e.subsection = subsection;
-  # 			entries.add(e);
-  # 			insertPosition = entries.size();
-  # 		}
-  # 		while (valueIndex < values.size()) {
-  # 			final ConfigLine e = new ConfigLine();
-  # 			e.section = section;
-  # 			e.subsection = subsection;
-  # 			e.name = name;
-  # 			e.value = values.get(valueIndex++);
-  # 			entries.add(insertPosition++, e);
-  # 		}
-  # 	}
-  #
-  # 	return newState(entries);
-  # }
-  #
+
+  # IMPORTANT: set_string_list_impl/5 runs in GenServer process.
+  # See handle_call/3 below.
+
+  def set_string_list_impl(
+        %__MODULE__.State{config_lines: old_config_lines},
+        section,
+        subsection,
+        name,
+        values
+      ) do
+    new_config_lines =
+      old_config_lines
+      |> replace_matching_config_lines(values, [], section, subsection, name)
+      |> Enum.reverse()
+
+    # TODO:
+    # if (notifyUponTransientChanges())
+    # 	fireConfigChangedEvent();
+
+    new_config_lines
+  end
+
+  defp replace_matching_config_lines(
+         [],
+         new_values,
+         reversed_new_config_lines,
+         section,
+         subsection,
+         name
+       ) do
+    new_config_lines =
+      new_values
+      |> Enum.map(&%ConfigLine{section: section, subsection: subsection, name: name, value: &1})
+      |> Enum.reverse()
+
+    # If we can find a matching key in the existing config, we should insert
+    # the new config lines after those. Otherwise, attach to EOF.
+    case Enum.split_while(
+           reversed_new_config_lines,
+           &(!ConfigLine.match?(&1, section, subsection, name))
+         ) do
+      {all, []} -> new_config_lines ++ all
+      {group1, group2} -> group1 ++ new_config_lines ++ group2
+    end
+  end
+
+  defp replace_matching_config_lines(
+         [current | remainder],
+         new_values,
+         reversed_new_config_lines,
+         section,
+         subsection,
+         name
+       ) do
+    if ConfigLine.match?(current, section, subsection, name) do
+      {new_values, new_config_lines} =
+        consume_next_matching_config_line(new_values, reversed_new_config_lines, current)
+
+      replace_matching_config_lines(
+        remainder,
+        new_values,
+        new_config_lines,
+        section,
+        subsection,
+        name
+      )
+    else
+      replace_matching_config_lines(
+        remainder,
+        new_values,
+        [current | reversed_new_config_lines],
+        section,
+        subsection,
+        name
+      )
+    end
+  end
+
+  defp consume_next_matching_config_line(
+         [next_match | remainder],
+         reversed_new_config_lines,
+         current
+       ),
+       do: {[%{current | value: next_match} | reversed_new_config_lines], remainder}
+
+  defp consume_next_matching_config_line([], reversed_new_config_lines, _current),
+    do: {reversed_new_config_lines, []}
+
   # private static List<ConfigLine> copy(final ConfigSnapshot src,
   # 		final List<String> values) {
   # 	// At worst we need to insert 1 line for each value, plus 1 line
@@ -1222,9 +1243,6 @@ defmodule Xgit.Lib.Config do
   defp maybe_read_value([?# | remainder]), do: {nil, remainder}
   defp maybe_read_value([]), do: {nil, []}
   defp maybe_read_value(_), do: raise(ConfigInvalidError, message: "Bad entry delimiter.")
-
-  # defp read_value(remainder, value_acc, trailing_ws_acc) do
-  # TODO: Handle trailing non-quoted whitespace properly.
 
   defp read_value([], value_acc, _trailing_ws_acc), do: {value_acc, []}
   defp read_value([?\n | _] = remainder, value_acc, _trailing_ws_acc), do: {value_acc, remainder}
@@ -1612,6 +1630,18 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
     {:reply, raw_string_list(s, section, subsection, name), s}
+  end
+
+  @impl true
+  def handle_call(
+        {:set_string_list, section, subsection, name, values},
+        _from,
+        %__MODULE__.State{} = s
+      )
+      when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
+             is_binary(name) and is_list(values) do
+    new_config_lines = set_string_list_impl(s, section, subsection, name, values)
+    {:reply, :ok, %{s | config_lines: new_config_lines}}
   end
 
   defp process_ref(%__MODULE__{ref: ref}) when is_reference(ref),

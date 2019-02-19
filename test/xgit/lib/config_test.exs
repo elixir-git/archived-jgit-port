@@ -40,15 +40,15 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.get_int(c, "foo", "zap", "m", 4) == 4
   end
 
-  # @Test
-  # public void test003_PutRemote() {
-  # 	final Config c = new Config();
-  # 	c.setString("sec", "ext", "name", "value");
-  # 	c.setString("sec", "ext", "name2", "value2");
-  # 	final String expText = "[sec \"ext\"]\n\tname = value\n\tname2 = value2\n";
-  # 	assertEquals(expText, c.toText());
-  # }
-  #
+  test "put remote" do
+    c =
+      Config.new()
+      |> Config.set_string("sec", "ext", "name", "value")
+      |> Config.set_string("sec", "ext", "name2", "value2")
+
+    assert Config.to_text(c) == "[sec \"ext\"]\n\tname = value\n\tname2 = value2\n"
+  end
+
   # @Test
   # public void test004_PutGetSimple() {
   # 	Config c = new Config();
