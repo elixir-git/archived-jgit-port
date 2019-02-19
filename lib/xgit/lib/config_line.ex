@@ -15,6 +15,12 @@ defmodule Xgit.Lib.ConfigLine do
   defstruct [:prefix, :section, :subsection, :name, :value, :suffix, :included_from]
 
   @doc ~S"""
+  Return `true` if this config line matches the section and subection.
+  """
+  def match_section?(%__MODULE__{section: sec1, subsection: sub1}, sec2, sub2),
+    do: match_ignore_case?(sec1, sec2) && sub1 == sub2
+
+  @doc ~S"""
   Return `true` if this config line matches the section, subection, and key.
   """
   def match?(%__MODULE__{section: sec1, subsection: sub1, name: key1}, sec2, sub2, key2),
