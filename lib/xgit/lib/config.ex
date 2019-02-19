@@ -1077,7 +1077,7 @@ defmodule Xgit.Lib.Config do
   end
 
   defp config_lines_from(
-         [91 | remainder] = buffer,
+         [?[ | remainder] = buffer,
          config_lines_acc,
          _section,
          _subsection,
@@ -1085,7 +1085,6 @@ defmodule Xgit.Lib.Config do
          prefix
        ) do
     # This is a section header.
-    # 91 is open bracket. Using this syntax avoids a Credo warning.
     {section, remainder} =
       remainder
       |> skip_whitespace()
