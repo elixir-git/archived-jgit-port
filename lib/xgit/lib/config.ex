@@ -853,6 +853,8 @@ defmodule Xgit.Lib.Config do
     # if (notifyUponTransientChanges())
     # 	fireConfigChangedEvent();
 
+    # IO.inspect(new_config_lines, label: "\n\nset_string NCL")
+
     new_config_lines
   end
 
@@ -869,13 +871,18 @@ defmodule Xgit.Lib.Config do
       |> Enum.map(&%ConfigLine{section: section, subsection: subsection, name: name, value: &1})
       |> Enum.reverse()
 
+    reversed_new_config_lines
+    |> Enum.map(&{ConfigLine.match?(&1, section, subsection), &1})
+    |> IO.inspect(label: "vert der ferk?")
+
     # If we can find a matching key in the existing config, we should insert
     # the new config lines after those. Otherwise, attach to EOF.
     case Enum.split_while(
            reversed_new_config_lines,
            &(!ConfigLine.match?(&1, section, subsection, name))
          ) do
-      {all, []} -> new_config_lines ++ all
+      # |> IO.inspect(label: "--- split_while results") do
+      {all, []} -> new_config_lines ++ [create_section_heaader(section, subsection)] ++ all
       {group1, group2} -> group1 ++ new_config_lines ++ group2
     end
   end
@@ -911,6 +918,9 @@ defmodule Xgit.Lib.Config do
       )
     end
   end
+
+  defp create_section_heaader(section, subsection),
+    do: %ConfigLine{section: section, subsection: subsection}
 
   defp consume_next_matching_config_line(
          [next_match | remainder],
@@ -956,55 +966,77 @@ defmodule Xgit.Lib.Config do
   # 	}
   # 	return -1;
   # }
-  #
-  # /**
-  #  * Get this configuration, formatted as a Git style text file.
-  #  *
-  #  * @return this configuration, formatted as a Git style text file.
-  #  */
-  # public String toText() {
-  # 	final StringBuilder out = new StringBuilder();
-  # 	for (ConfigLine e : state.get().entryList) {
-  # 		if (e.includedFrom != null)
-  # 			continue;
-  # 		if (e.prefix != null)
-  # 			out.append(e.prefix);
-  # 		if (e.section != null && e.name == null) {
-  # 			out.append('[');
-  # 			out.append(e.section);
-  # 			if (e.subsection != null) {
-  # 				out.append(' ');
-  # 				String escaped = escapeValue(e.subsection);
-  # 				// make sure to avoid double quotes here
-  # 				boolean quoted = escaped.startsWith("\"") //$NON-NLS-1$
-  # 						&& escaped.endsWith("\""); //$NON-NLS-1$
-  # 				if (!quoted)
-  # 					out.append('"');
-  # 				out.append(escaped);
-  # 				if (!quoted)
-  # 					out.append('"');
-  # 			}
-  # 			out.append(']');
-  # 		} else if (e.section != null && e.name != null) {
-  # 			if (e.prefix == null || "".equals(e.prefix)) //$NON-NLS-1$
-  # 				out.append('\t');
-  # 			out.append(e.name);
-  # 			if (MAGIC_EMPTY_VALUE != e.value) {
-  # 				out.append(" ="); //$NON-NLS-1$
-  # 				if (e.value != null) {
-  # 					out.append(' ');
-  # 					out.append(escapeValue(e.value));
-  # 				}
-  # 			}
-  # 			if (e.suffix != null)
-  # 				out.append(' ');
-  # 		}
-  # 		if (e.suffix != null)
-  # 			out.append(e.suffix);
-  # 		out.append('\n');
-  # 	}
-  # 	return out.toString();
-  # }
+
+  @doc ~S"""
+  Get this configuration, formatted as a Git-style text file.
+  """
+  def to_text(c), do: GenServer.call(process_ref(c), :to_text)
+
+  # IMPORTANT: to_text_impl/1 runs in GenServer process.
+  # See handle_call/3 below.
+
+  defp to_text_impl(config_lines), do: Enum.map_join(config_lines, &config_line_to_text/1)
+
+  defp config_line_to_text(%ConfigLine{included_from: included_from}) when included_from != nil,
+    do: ""
+
+  defp config_line_to_text(%ConfigLine{prefix: prefix, suffix: suffix} = cl),
+    do:
+      "#{config_line_maybe_str(prefix)}#{config_line_body_to_text(cl)}#{
+        config_line_maybe_str(suffix)
+      }\n"
+
+  defp config_line_maybe_str(nil), do: ""
+  defp config_line_maybe_str(s), do: s
+
+  defp config_line_body_to_text(%ConfigLine{section: section, subsection: subsection, name: nil})
+       when section != nil,
+       do: "[#{section}#{subsection_to_text(subsection)}]"
+
+  defp config_line_body_to_text(%ConfigLine{
+         prefix: prefix,
+         suffix: suffix,
+         section: section,
+         name: name,
+         value: value
+       })
+       when section != nil do
+    "#{prefix_str_for_body(prefix)}#{name}#{value_to_text(value)}#{suffix_str_for_body(suffix)}"
+  end
+
+  defp config_line_body_to_text(_), do: ""
+
+  defp subsection_to_text(nil), do: ""
+
+  defp subsection_to_text(subsection) do
+    " \"#{subsection}\""
+
+    # TODO: Escaping not handled yet.
+    # 				out.append(' ');
+    # 				String escaped = escapeValue(e.subsection);
+    # 				// make sure to avoid double quotes here
+    # 				boolean quoted = escaped.startsWith("\"") //$NON-NLS-1$
+    # 						&& escaped.endsWith("\""); //$NON-NLS-1$
+    # 				if (!quoted)
+    # 					out.append('"');
+    # 				out.append(escaped);
+    # 				if (!quoted)
+    # 					out.append('"');
+  end
+
+  defp prefix_str_for_body(nil), do: "\t"
+  defp prefix_str_for_body(""), do: "\t"
+  defp prefix_str_for_body(_), do: ""
+
+  defp value_to_text(:empty), do: ""
+  defp value_to_text(nil), do: " ="
+  defp value_to_text(v), do: " = #{escape_value(v)}"
+
+  defp escape_value(v), do: v
+  # TODO: Needs a real implementation.
+
+  defp suffix_str_for_body(nil), do: ""
+  defp suffix_str_for_body(_), do: " "
 
   @doc ~S"""
   Clear this configuration and reset to the contents of the parsed string.
@@ -1614,6 +1646,12 @@ defmodule Xgit.Lib.Config do
   # 	 */
   # 	boolean matchConfigValue(String in);
   # }
+
+  @impl true
+  def handle_call(:to_text, _from, %__MODULE__.State{config_lines: config_lines} = s) do
+    IO.inspect(config_lines, label: "to text config lines")
+    {:reply, to_text_impl(config_lines), s}
+  end
 
   @impl true
   def handle_call({:from_text, text}, _from, %__MODULE__.State{} = s) when is_binary(text) do
