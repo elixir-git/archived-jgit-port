@@ -249,6 +249,7 @@ defmodule Xgit.Lib.Config do
   defp trim_if_string(x), do: x
 
   defp to_number(:missing, _section, _name, default), do: default
+  defp to_number(:empty, _section_, _name, default), do: default
   defp to_number("", _section, _name, default), do: default
 
   defp to_number(s, section, name, _default) do
@@ -280,6 +281,7 @@ defmodule Xgit.Lib.Config do
   end
 
   defp to_boolean(nil, _default), do: true
+  defp to_boolean(:empty, _default), do: true
   defp to_boolean(:missing, default), do: default
   defp to_boolean("false", _default), do: false
   defp to_boolean("off", _default), do: false
@@ -355,8 +357,9 @@ defmodule Xgit.Lib.Config do
   end
 
   defp fix_missing_or_nil_string_result(:missing), do: nil
+  defp fix_missing_or_nil_string_result(:empty), do: ""
   defp fix_missing_or_nil_string_result(nil), do: ""
-  defp fix_missing_or_nil_string_result(x), do: x
+  defp fix_missing_or_nil_string_result(x), do: to_string(x)
 
   # /**
   #  * Get a list of string values
@@ -1167,6 +1170,7 @@ defmodule Xgit.Lib.Config do
   end
 
   defp maybe_string(nil), do: nil
+  defp maybe_string(x) when is_atom(x), do: x
   defp maybe_string(x), do: to_string(x)
   defp maybe_string(map, key), do: map |> Map.get(key) |> maybe_string()
 
@@ -1212,7 +1216,7 @@ defmodule Xgit.Lib.Config do
       else: raise(ConfigInvalidError, message: "Bad entry name: #{to_string(name_acc ++ [c])}")
   end
 
-  defp maybe_read_value([?\n | _] = remainder), do: {nil, remainder}
+  defp maybe_read_value([?\n | _] = remainder), do: {:empty, remainder}
   defp maybe_read_value([?= | remainder]), do: read_value(skip_whitespace(remainder), [], [])
   defp maybe_read_value([?; | remainder]), do: {nil, remainder}
   defp maybe_read_value([?# | remainder]), do: {nil, remainder}
