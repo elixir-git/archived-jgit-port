@@ -4,6 +4,56 @@ defmodule Xgit.Lib.ConfigLineTest do
   alias Xgit.Lib.ConfigLine
   doctest Xgit.Lib.ConfigLine
 
+  test "match_section?/3" do
+    assert ConfigLine.match_section?(
+             %ConfigLine{section: "sec", subsection: "sub", name: "foo"},
+             "sec",
+             "sub"
+           )
+
+    assert ConfigLine.match_section?(
+             %ConfigLine{section: "sec", subsection: "sub", name: "foo", value: "val"},
+             "sec",
+             "sub"
+           )
+
+    assert ConfigLine.match_section?(
+             %ConfigLine{section: "Sec", subsection: "sub", name: "foo"},
+             "sec",
+             "sub"
+           )
+
+    refute ConfigLine.match_section?(
+             %ConfigLine{section: "sec", subsection: "sUb", name: "foo"},
+             "sec",
+             "sub"
+           )
+
+    assert ConfigLine.match_section?(
+             %ConfigLine{section: "sec", subsection: "sub", name: "Foo"},
+             "sec",
+             "sub"
+           )
+
+    refute ConfigLine.match_section?(
+             %ConfigLine{subsection: "sub", name: "foo"},
+             "sec",
+             "sub"
+           )
+
+    refute ConfigLine.match_section?(
+             %ConfigLine{section: "sec", name: "foo"},
+             "sec",
+             "sub"
+           )
+
+    assert ConfigLine.match_section?(
+             %ConfigLine{section: "sec", subsection: "sub"},
+             "sec",
+             "sub"
+           )
+  end
+
   test "match?/3" do
     assert ConfigLine.match?(
              %ConfigLine{section: "sec", subsection: "sub", name: "foo"},
