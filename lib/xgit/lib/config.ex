@@ -277,19 +277,25 @@ defmodule Xgit.Lib.Config do
   an explicit `false`.
   """
   def get_boolean(c, section, subsection \\ nil, name, default)
-      when is_binary(section) and is_binary(name) and is_boolean(default) do
+      when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
+             is_binary(name) and is_boolean(default) do
     c
     |> process_ref()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
-    |> List.first()
+    |> replace_empty_with_missing()
+    |> List.last()
     |> to_lowercase_if_string()
     |> to_boolean(default)
   end
 
+  defp replace_empty_with_missing([]), do: [:missing]
+  defp replace_empty_with_missing(x), do: x
+
   defp to_lowercase_if_string(s) when is_binary(s), do: String.downcase(s)
   defp to_lowercase_if_string(x), do: x
 
-  defp to_boolean(nil, default), do: default
+  defp to_boolean(nil, _default), do: true
+  defp to_boolean(:missing, default), do: default
   defp to_boolean("false", _default), do: false
   defp to_boolean("off", _default), do: false
   defp to_boolean("0", _default), do: false
@@ -348,23 +354,25 @@ defmodule Xgit.Lib.Config do
   # 	return typedGetter.getEnum(this, all, section, subsection, name,
   # 			defaultValue);
   # }
-  #
-  # /**
-  #  * Get string value or null if not found.
-  #  *
-  #  * @param section
-  #  *            the section
-  #  * @param subsection
-  #  *            the subsection for the value
-  #  * @param name
-  #  *            the key name
-  #  * @return a String value from the config, <code>null</code> if not found
-  #  */
-  # public String getString(final String section, String subsection,
-  # 		final String name) {
-  # 	return getRawString(section, subsection, name);
-  # }
-  #
+
+  @doc ~S"""
+  Get a single string value from the git config (or `nil` if not found).
+  """
+  def get_string(c, section, subsection \\ nil, name)
+      when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
+             is_binary(name) do
+    c
+    |> process_ref()
+    |> GenServer.call({:get_raw_strings, section, subsection, name})
+    |> replace_empty_with_missing()
+    |> List.last()
+    |> fix_missing_or_nil_string_result()
+  end
+
+  defp fix_missing_or_nil_string_result(:missing), do: nil
+  defp fix_missing_or_nil_string_result(nil), do: ""
+  defp fix_missing_or_nil_string_result(x), do: x
+
   # /**
   #  * Get a list of string values
   #  * <p>
@@ -602,22 +610,12 @@ defmodule Xgit.Lib.Config do
   # protected void fireConfigChangedEvent() {
   # 	listeners.dispatch(new ConfigChangedEvent());
   # }
-  #
-  # String getRawString(final String section, final String subsection,
-  # 		final String name) {
-  # 	String[] lst = getRawStringList(section, subsection, name);
-  # 	if (lst != null) {
-  # 		return lst[lst.length - 1];
-  # 	} else if (baseConfig != null) {
-  # 		return baseConfig.getRawString(section, subsection, name);
-  # 	} else {
-  # 		return null;
-  # 	}
-  # }
 
   defp raw_string_list(%__MODULE__.State{config_lines: config_lines}, section, subsection, name) do
     # TODO: Consider base state.
-    Enum.filter(config_lines, &ConfigLine.match?(&1, section, subsection, name))
+    config_lines
+    |> Enum.filter(&ConfigLine.match?(&1, section, subsection, name))
+    |> Enum.map(fn %ConfigLine{value: value} -> value end)
   end
 
   # private ConfigSnapshot getState() {
