@@ -14,6 +14,9 @@ defmodule Xgit.Lib.Config do
   @enforce_keys [:ref]
   defstruct [:ref]
 
+  alias Xgit.Errors.ConfigInvalidError
+  alias Xgit.Lib.ConfigLine
+
   use GenServer
 
   defmodule State do
@@ -51,7 +54,8 @@ defmodule Xgit.Lib.Config do
   """
   def new do
     ref = make_ref()
-    {:ok, _pid} = GenServer.start(__MODULE__, {ref, :new}, name: {:xgit_config, ref})
+
+    {:ok, _pid} = GenServer.start(__MODULE__, {ref, :new}, name: {:global, {:xgit_config, ref}})
 
     Swarm.join({:xgit_config, ref}, self())
 
@@ -1006,72 +1010,236 @@ defmodule Xgit.Lib.Config do
   # 	}
   # 	return out.toString();
   # }
-  #
-  # /**
-  #  * Clear this configuration and reset to the contents of the parsed string.
-  #  *
-  #  * @param text
-  #  *            Git style text file listing configuration properties.
-  #  * @throws org.eclipse.jgit.errors.ConfigInvalidException
-  #  *             the text supplied is not formatted correctly. No changes were
-  #  *             made to {@code this}.
-  #  */
-  # public void fromText(String text) throws ConfigInvalidException {
-  # 	state.set(newState(fromTextRecurse(text, 1, null)));
+
+  @doc ~S"""
+  Clear this configuration and reset to the contents of the parsed string.
+
+  `text` should be a Git-style text file listing configuration properties
+
+  Raises `ConfigInvalidError` if unable to parse string.
+  """
+  def from_text(c, text) when is_binary(text) do
+    case GenServer.call(process_ref(c), {:from_text, text}) do
+      {:error, e} -> raise(e)
+      x -> x
+    end
+  end
+
+  # IMPORTANT: from_text_impl/3 runs in GenServer process.
+  # See handle_call/3 below.
+
+  defp from_text_impl(_text, 10, _included_from) do
+    raise ConfigInvalidError, message: "Too many recursions; circular includes in config file(s)?"
+  end
+
+  defp from_text_impl(text, depth, included_from) when is_binary(text) and is_integer(depth) do
+    text
+    |> String.split("\n", trim: true)
+    |> Enum.reduce({nil, nil, []}, &parse_line(&1, &2, included_from))
+    |> elem(2)
+    |> IO.inspect(label: "after parse_line reduce")
+
+    # |> Enum.flat_map(&expand_includes/...)
+  end
+
+  defp parse_line(
+         line,
+         {previous_section, previous_subsection, previous_lines} = _acc,
+         included_from
+       ) do
+    {prefix, remainder} =
+      line
+      |> String.to_charlist()
+      |> Enum.split_while(&whitespace?/1)
+
+    {new_section, new_subsection, config_line} =
+      parse_line(
+        remainder,
+        to_string(prefix),
+        previous_section,
+        previous_subsection,
+        line,
+        included_from
+      )
+
+    {new_section, new_subsection, previous_lines ++ [config_line]}
+  end
+
+  # After stripping whitespace, we can pattern match to determine what kind of line this is.
+
+  defp parse_line([?\[ | remainder], prefix, _section, _subsection, line, included_from) do
+    # This is a section header.
+    {section, remainder} =
+      remainder
+      |> skip_whitespace()
+      |> Enum.split_while(&letter_or_digit?/1)
+      |> section_to_string(line)
+
+    # TODO: Reread readSectionName closely.
+
+    {subsection, remainder} =
+      remainder
+      |> skip_whitespace()
+      |> maybe_read_subsection_name()
+
+    _ =
+      remainder
+      |> skip_whitespace()
+      |> expect_close_brace(line)
+
+    {section, subsection,
+     %ConfigLine{
+       prefix: prefix,
+       section: section,
+       subsection: subsection,
+       name: nil,
+       value: nil,
+       suffix: to_string(remainder),
+       included_from: included_from
+     }}
+  end
+
+  defp parse_line([], prefix, section, subsection, _line, included_from) do
+    # This is a blank line.
+    {section, subsection,
+     %ConfigLine{
+       prefix: prefix,
+       section: section,
+       subsection: subsection,
+       name: nil,
+       value: nil,
+       suffix: nil,
+       included_from: included_from
+     }}
+  end
+
+  defp parse_line([c | _] = comment, prefix, section, subsection, _line, included_from)
+       when c == ?; or c == ?# do
+    # This is a comment-only line.
+    {section, subsection,
+     %ConfigLine{
+       prefix: prefix,
+       section: section,
+       subsection: subsection,
+       name: nil,
+       value: nil,
+       suffix: to_string(comment),
+       included_from: included_from
+     }}
+  end
+
+  defp parse_line(_remainder, _prefix, nil, _subsection, _line, _included_from) do
+    # Attempt to set a value before a section header.
+    raise ConfigInvalidError, "Invalid line in config file"
+  end
+
+  defp parse_line(remainder, prefix, section, subsection, _line, included_from) do
+    {key, remainder} = read_key_name(remainder, [])
+    {value, remainder} = maybe_read_value(remainder)
+
+    IO.inspect(key, label: "key")
+    IO.inspect(remainder, label: "remainder")
+
+    # TODO: Expect EOL, comment, or =value.
+
+    # TO DO: Convert this to error case.
+
+    {section, subsection,
+     %ConfigLine{
+       prefix: prefix,
+       section: section,
+       subsection: nil,
+       name: to_string(key),
+       value: nil,
+       suffix: to_string(remainder),
+       included_from: included_from
+     }}
+  end
+
+  defp expect_close_brace([?] | remainder], _line), do: remainder
+  defp expect_close_brace(_, line), do: raise_bad_section_entry(line)
+
+  defp section_to_string({[] = _section, _remainder}, line), do: raise_bad_section_entry(line)
+  defp section_to_string({section, remainder}, _line), do: {to_string(section), remainder}
+
+  defp maybe_read_subsection_name(remainder) do
+    # TODO: Implement this.
+    {nil, remainder}
+  end
+
+  defp raise_bad_section_entry(line),
+    do: raise(ConfigInvalidError, "Bad section entry: #{line}")
+
+  defp read_key_name([], name_acc), do: {name_acc, []}
+  defp read_key_name([?= | _] = remainder, name_acc), do: {name_acc, remainder}
+  defp read_key_name([?\s | remainder], name_acc), do: {name_acc, skip_whitespace(remainder)}
+  defp read_key_name([?\t | remainder], name_acc), do: {name_acc, skip_whitespace(remainder)}
+
+  defp read_key_name([c | remainder], name_acc) do
+    if letter_or_digit?(c) || c == ?-,
+      do: read_key_name(remainder, name_acc ++ [c]),
+      else: raise(ConfigInvalidError, message: "Bad entry name: #{to_string(name_acc ++ [c])}")
+  end
+
+  defp maybe_read_value([?= | remainder), do: read_value(remainder, [])
+  defp maybe_read_value([?; | remainder), do: {nil, remainder}
+  defp maybe_read_value([?# | remainder), do: {nil, remainder}
+  defp maybe_read_value([]), do: {nil, []}
+  defp maybe_read_value(_), do: raise(ConfigInvalidError, message: "Bad entry delimiter.")
+
+  defp skip_whitespace(s), do: Enum.drop_while(s, &whitespace?/1)
+
+  defp whitespace?(?\s), do: true
+  defp whitespace?(?\t), do: true
+  defp whitespace?(_), do: false
+
+  # HELP: This is not Unicode-savvy. Is there such a thing?
+  defp letter_or_digit?(c) when c >= ?0 and c <= ?9, do: true
+  defp letter_or_digit?(c) when c >= ?A and c <= ?Z, do: true
+  defp letter_or_digit?(c) when c >= ?a and c <= ?z, do: true
+  defp letter_or_digit?(_), do: false
+
+  # defp from_config_line(line, depth, included_from) do
+  # int input = in.read();
+  # if (-1 == input) {
+  # 	if (e.section != null)
+  # 		newEntries.add(e);
+  # 	break;
   # }
-  #
-  # private List<ConfigLine> fromTextRecurse(String text, int depth,
-  # 		String includedFrom) throws ConfigInvalidException {
-  # 	if (depth > MAX_DEPTH) {
-  # 		throw new ConfigInvalidException(
-  # 				JGitText.get().tooManyIncludeRecursions);
-  # 	}
-  # 	final List<ConfigLine> newEntries = new ArrayList<>();
-  # 	final StringReader in = new StringReader(text);
-  # 	ConfigLine last = null;
-  # 	ConfigLine e = new ConfigLine();
+
+  # final char c = (char) input;
+  # if ('\n' == c) {
+  # 	// End of this entry.
+  # 	newEntries.add(e);
+  # 	if (e.section != null)
+  # 		last = e;
+  # 	e = new ConfigLine();
   # 	e.includedFrom = includedFrom;
-  # 	for (;;) {
-  # 		int input = in.read();
-  # 		if (-1 == input) {
-  # 			if (e.section != null)
-  # 				newEntries.add(e);
-  # 			break;
-  # 		}
+  # } else if (e.suffix != null) {
+  # 	// Everything up until the end-of-line is in the suffix.
+  # 	e.suffix += c;
   #
-  # 		final char c = (char) input;
-  # 		if ('\n' == c) {
-  # 			// End of this entry.
-  # 			newEntries.add(e);
-  # 			if (e.section != null)
-  # 				last = e;
-  # 			e = new ConfigLine();
-  # 			e.includedFrom = includedFrom;
-  # 		} else if (e.suffix != null) {
-  # 			// Everything up until the end-of-line is in the suffix.
-  # 			e.suffix += c;
+  # } else if (';' == c || '#' == c) {
+  # 	// The rest of this line is a comment; put into suffix.
+  # 	e.suffix = String.valueOf(c);
   #
-  # 		} else if (';' == c || '#' == c) {
-  # 			// The rest of this line is a comment; put into suffix.
-  # 			e.suffix = String.valueOf(c);
+  # } else if (e.section == null && Character.isWhitespace(c)) {
+  # 	// Save the leading whitespace (if any).
+  # 	if (e.prefix == null)
+  # 		e.prefix = ""; //$NON-NLS-1$
+  # 	e.prefix += c;
   #
-  # 		} else if (e.section == null && Character.isWhitespace(c)) {
-  # 			// Save the leading whitespace (if any).
-  # 			if (e.prefix == null)
-  # 				e.prefix = ""; //$NON-NLS-1$
-  # 			e.prefix += c;
-  #
-  # 		} else if ('[' == c) {
-  # 			// This is a section header.
-  # 			e.section = readSectionName(in);
-  # 			input = in.read();
-  # 			if ('"' == input) {
-  # 				e.subsection = readSubsectionName(in);
-  # 				input = in.read();
-  # 			}
-  # 			if (']' != input)
-  # 				throw new ConfigInvalidException(JGitText.get().badGroupHeader);
-  # 			e.suffix = ""; //$NON-NLS-1$
+  # } else if ('[' == c) {
+  # 	// This is a section header.
+  # 	e.section = readSectionName(in);
+  # 	input = in.read();
+  # 	if ('"' == input) {
+  # 		e.subsection = readSubsectionName(in);
+  # 		input = in.read();
+  # 	}
+  # 	if (']' != input)
+  # 		throw new ConfigInvalidException(JGitText.get().badGroupHeader);
+  # 	e.suffix = ""; //$NON-NLS-1$
   #
   # 		} else if (last != null) {
   # 			// Read a value.
@@ -1088,13 +1256,14 @@ defmodule Xgit.Lib.Config do
   # 			if (e.section.equalsIgnoreCase("include")) { //$NON-NLS-1$
   # 				addIncludedConfig(newEntries, e, depth);
   # 			}
-  # 		} else
-  # 			throw new ConfigInvalidException(JGitText.get().invalidLineInConfigFile);
+  # } else
+  # 	throw new ConfigInvalidException(JGitText.get().invalidLineInConfigFile);
   # 	}
   #
   # 	return newEntries;
   # }
-  #
+  # end
+
   # /**
   #  * Read the included config from the specified (possibly) relative path
   #  *
@@ -1202,53 +1371,6 @@ defmodule Xgit.Lib.Config do
   # 			name.append((char) c);
   # 		else
   # 			throw new ConfigInvalidException(MessageFormat.format(JGitText.get().badSectionEntry, name));
-  # 	}
-  # 	return name.toString();
-  # }
-  #
-  # private static String readKeyName(StringReader in)
-  # 		throws ConfigInvalidException {
-  # 	final StringBuilder name = new StringBuilder();
-  # 	for (;;) {
-  # 		int c = in.read();
-  # 		if (c < 0)
-  # 			throw new ConfigInvalidException(JGitText.get().unexpectedEndOfConfigFile);
-  #
-  # 		if ('=' == c)
-  # 			break;
-  #
-  # 		if (' ' == c || '\t' == c) {
-  # 			for (;;) {
-  # 				c = in.read();
-  # 				if (c < 0)
-  # 					throw new ConfigInvalidException(JGitText.get().unexpectedEndOfConfigFile);
-  #
-  # 				if ('=' == c)
-  # 					break;
-  #
-  # 				if (';' == c || '#' == c || '\n' == c) {
-  # 					in.reset();
-  # 					break;
-  # 				}
-  #
-  # 				if (' ' == c || '\t' == c)
-  # 					continue; // Skipped...
-  # 				throw new ConfigInvalidException(JGitText.get().badEntryDelimiter);
-  # 			}
-  # 			break;
-  # 		}
-  #
-  # 		if (Character.isLetterOrDigit((char) c) || c == '-') {
-  # 			// From the git-config man page:
-  # 			// The variable names are case-insensitive and only
-  # 			// alphanumeric characters and - are allowed.
-  # 			name.append((char) c);
-  # 		} else if ('\n' == c) {
-  # 			in.reset();
-  # 			name.append((char) c);
-  # 			break;
-  # 		} else
-  # 			throw new ConfigInvalidException(MessageFormat.format(JGitText.get().badEntryName, name));
   # 	}
   # 	return name.toString();
   # }
@@ -1449,4 +1571,17 @@ defmodule Xgit.Lib.Config do
   # 	 */
   # 	boolean matchConfigValue(String in);
   # }
+
+  @impl true
+  def handle_call({:from_text, text}, _from, %__MODULE__.State{} = s) when is_binary(text) do
+    try do
+      new_config_lines = from_text_impl(text, 1, nil)
+      {:reply, :ok, %{s | config_lines: new_config_lines}}
+    rescue
+      e in ConfigInvalidError -> {:reply, {:error, e}, s}
+    end
+  end
+
+  defp process_ref(%__MODULE__{ref: ref}) when is_reference(ref),
+    do: {:global, {:xgit_config, ref}}
 end

@@ -1117,7 +1117,7 @@ defmodule Xgit.Lib.ConfigTest do
 
   defp parse(content) do
     Config.new()
-    |> parse(content)
+    |> Config.from_text(content)
   end
 
   # private static Config parse(String content, Config baseConfig)
