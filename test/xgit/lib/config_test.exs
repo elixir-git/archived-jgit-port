@@ -1,7 +1,9 @@
 defmodule Xgit.Lib.ConfigTest do
   use ExUnit.Case
 
+  alias Xgit.Errors.ConfigInvalidError
   alias Xgit.Lib.Config
+
   doctest Xgit.Lib.Config
 
   # // A non-ASCII whitespace character: U+2002 EN QUAD.
@@ -409,25 +411,21 @@ defmodule Xgit.Lib.ConfigTest do
   # 			FastForwardMode.Merge.valueOf(FastForwardMode.NO_FF));
   # 	assertEquals("[merge]\n\tff = false\n", c.toText());
   # }
-  #
-  # @Test
-  # public void testReadLong() throws ConfigInvalidException {
-  # 	assertReadLong(1L);
-  # 	assertReadLong(-1L);
-  # 	assertReadLong(Long.MIN_VALUE);
-  # 	assertReadLong(Long.MAX_VALUE);
-  # 	assertReadLong(4L * 1024 * 1024 * 1024, "4g");
-  # 	assertReadLong(3L * 1024 * 1024, "3 m");
-  # 	assertReadLong(8L * 1024, "8 k");
-  #
-  # 	try {
-  # 		assertReadLong(-1, "1.5g");
-  # 		fail("incorrectly accepted 1.5g");
-  # 	} catch (IllegalArgumentException e) {
-  # 		assertEquals("Invalid integer value: s.a=1.5g", e.getMessage());
-  # 	}
-  # }
-  #
+
+  test "read integer with g/m/k notation" do
+    assert_read_integer(1)
+    assert_read_integer(-1)
+
+    assert_read_integer(-9_223_372_036_854_775_808)
+    assert_read_integer(9_223_372_036_854_775_807)
+
+    assert_read_integer(4 * 1024 * 1024 * 1024, "4g")
+    assert_read_integer(3 * 1024 * 1024, "3 m")
+    assert_read_integer(8 * 1024, "8 k")
+
+    assert_raise ConfigInvalidError, fn -> assert_read_integer(-1, "1.5g") end
+  end
+
   # @Test
   # public void testBooleanWithNoValue() throws ConfigInvalidException {
   # 	Config c = parse("[my]\n\tempty\n");
@@ -1100,16 +1098,13 @@ defmodule Xgit.Lib.ConfigTest do
   #
   # 	assertEquals(refspecs, config.getRefSpecs("remote", "origin", "fetch"));
   # }
-  #
-  # private static void assertReadLong(long exp) throws ConfigInvalidException {
-  # 	assertReadLong(exp, String.valueOf(exp));
-  # }
-  #
-  # private static void assertReadLong(long exp, String act)
-  # 		throws ConfigInvalidException {
-  # 	final Config c = parse("[s]\na = " + act + "\n");
-  # 	assertEquals(exp, c.getLong("s", null, "a", 0L));
-  # }
+
+  defp assert_read_integer(n), do: assert_read_integer(n, to_string(n))
+
+  defp assert_read_integer(n, str) do
+    c = parse("[s]\na = #{str}\n")
+    assert Config.get_int(c, "s", "a", 0) == n
+  end
 
   defp parse(content) do
     Config.new()

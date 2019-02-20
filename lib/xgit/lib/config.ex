@@ -253,12 +253,19 @@ defmodule Xgit.Lib.Config do
   defp to_number("", _section, _name, default), do: default
 
   defp to_number(s, section, name, _default) do
-    case Integer.parse(s) do
+    case parse_integer_and_strip_whitespace(s) do
       {n, "g"} -> n * @gib
       {n, "m"} -> n * @mib
       {n, "k"} -> n * @kib
       {n, ""} -> n
-      :error -> raise(ConfigInvalidError, "Invalid integer value: #{section}.#{name}=#{s}")
+      _ -> raise(ConfigInvalidError, "Invalid integer value: #{section}.#{name}=#{s}")
+    end
+  end
+
+  defp parse_integer_and_strip_whitespace(s) do
+    case Integer.parse(s) do
+      {n, str} -> {n, String.trim(str)}
+      x -> x
     end
   end
 
