@@ -58,22 +58,15 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.to_text(c) == "[my]\n\tsomename = false\n"
   end
 
-  # @Test
-  # public void test005_PutGetStringList() {
-  # 	Config c = new Config();
-  # 	final LinkedList<String> values = new LinkedList<>();
-  # 	values.add("value1");
-  # 	values.add("value2");
-  # 	c.setStringList("my", null, "somename", values);
-  #
-  # 	final Object[] expArr = values.toArray();
-  # 	final String[] actArr = c.getStringList("my", null, "somename");
-  # 	assertArrayEquals(expArr, actArr);
-  #
-  # 	final String expText = "[my]\n\tsomename = value1\n\tsomename = value2\n";
-  # 	assertEquals(expText, c.toText());
-  # }
-  #
+  test "put+get string list" do
+    c =
+      Config.new()
+      |> Config.set_string_list("my", "somename", ["value1", "value2"])
+
+    assert Config.get_string_list(c, "my", "somename") == ["value1", "value2"]
+    assert Config.to_text(c) == "[my]\n\tsomename = value1\n\tsomename = value2\n"
+  end
+
   # @Test
   # public void test006_readCaseInsensitive() throws ConfigInvalidException {
   # 	final Config c = parse("[Foo]\nBar\n");
