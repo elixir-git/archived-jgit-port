@@ -177,67 +177,69 @@ defmodule Xgit.Lib.ConfigTest do
   # 	assertEquals("foobar", userConfig.getAuthorName());
   # 	assertEquals("bazqux@example.com", userConfig.getAuthorEmail());
   # }
-  #
-  # @Test
-  # public void testReadBoolean_TrueFalse1() throws ConfigInvalidException {
-  # 	final Config c = parse("[s]\na = true\nb = false\n");
-  # 	assertEquals("true", c.getString("s", null, "a"));
-  # 	assertEquals("false", c.getString("s", null, "b"));
-  #
-  # 	assertTrue(c.getBoolean("s", "a", false));
-  # 	assertFalse(c.getBoolean("s", "b", true));
-  # }
-  #
-  # @Test
-  # public void testReadBoolean_TrueFalse2() throws ConfigInvalidException {
-  # 	final Config c = parse("[s]\na = TrUe\nb = fAlSe\n");
-  # 	assertEquals("TrUe", c.getString("s", null, "a"));
-  # 	assertEquals("fAlSe", c.getString("s", null, "b"));
-  #
-  # 	assertTrue(c.getBoolean("s", "a", false));
-  # 	assertFalse(c.getBoolean("s", "b", true));
-  # }
-  #
-  # @Test
-  # public void testReadBoolean_YesNo1() throws ConfigInvalidException {
-  # 	final Config c = parse("[s]\na = yes\nb = no\n");
-  # 	assertEquals("yes", c.getString("s", null, "a"));
-  # 	assertEquals("no", c.getString("s", null, "b"));
-  #
-  # 	assertTrue(c.getBoolean("s", "a", false));
-  # 	assertFalse(c.getBoolean("s", "b", true));
-  # }
-  #
-  # @Test
-  # public void testReadBoolean_YesNo2() throws ConfigInvalidException {
-  # 	final Config c = parse("[s]\na = yEs\nb = NO\n");
-  # 	assertEquals("yEs", c.getString("s", null, "a"));
-  # 	assertEquals("NO", c.getString("s", null, "b"));
-  #
-  # 	assertTrue(c.getBoolean("s", "a", false));
-  # 	assertFalse(c.getBoolean("s", "b", true));
-  # }
-  #
-  # @Test
-  # public void testReadBoolean_OnOff1() throws ConfigInvalidException {
-  # 	final Config c = parse("[s]\na = on\nb = off\n");
-  # 	assertEquals("on", c.getString("s", null, "a"));
-  # 	assertEquals("off", c.getString("s", null, "b"));
-  #
-  # 	assertTrue(c.getBoolean("s", "a", false));
-  # 	assertFalse(c.getBoolean("s", "b", true));
-  # }
-  #
-  # @Test
-  # public void testReadBoolean_OnOff2() throws ConfigInvalidException {
-  # 	final Config c = parse("[s]\na = ON\nb = OFF\n");
-  # 	assertEquals("ON", c.getString("s", null, "a"));
-  # 	assertEquals("OFF", c.getString("s", null, "b"));
-  #
-  # 	assertTrue(c.getBoolean("s", "a", false));
-  # 	assertFalse(c.getBoolean("s", "b", true));
-  # }
-  #
+
+  describe "read boolean" do
+    test "from lowercase true/false values" do
+      c = parse("[s]\na = true\nb = false\n")
+
+      assert Config.get_string(c, "s", "a") == "true"
+      assert Config.get_string(c, "s", "b") == "false"
+
+      assert Config.get_boolean(c, "s", "a", false) == true
+      assert Config.get_boolean(c, "s", "b", true) == false
+    end
+
+    test "from mix-case true/false values" do
+      c = parse("[s]\na = TrUe\nb = fAlSe\n")
+
+      assert Config.get_string(c, "s", "a") == "TrUe"
+      assert Config.get_string(c, "s", "b") == "fAlSe"
+
+      assert Config.get_boolean(c, "s", "a", false) == true
+      assert Config.get_boolean(c, "s", "b", true) == false
+    end
+
+    test "from lowercase yes/no values" do
+      c = parse("[s]\na = yes\nb = no\n")
+
+      assert Config.get_string(c, "s", "a") == "yes"
+      assert Config.get_string(c, "s", "b") == "no"
+
+      assert Config.get_boolean(c, "s", "a", false) == true
+      assert Config.get_boolean(c, "s", "b", true) == false
+    end
+
+    test "from mixed-case yes/no values" do
+      c = parse("[s]\na = yEs\nb = NO\n")
+
+      assert Config.get_string(c, "s", "a") == "yEs"
+      assert Config.get_string(c, "s", "b") == "NO"
+
+      assert Config.get_boolean(c, "s", "a", false) == true
+      assert Config.get_boolean(c, "s", "b", true) == false
+    end
+
+    test "from lowercase on/off values" do
+      c = parse("[s]\na = on\nb = off\n")
+
+      assert Config.get_string(c, "s", "a") == "on"
+      assert Config.get_string(c, "s", "b") == "off"
+
+      assert Config.get_boolean(c, "s", "a", false) == true
+      assert Config.get_boolean(c, "s", "b", true) == false
+    end
+
+    test "from uppercase on/off values" do
+      c = parse("[s]\na = ON\nb = OFF\n")
+
+      assert Config.get_string(c, "s", "a") == "ON"
+      assert Config.get_string(c, "s", "b") == "OFF"
+
+      assert Config.get_boolean(c, "s", "a", false) == true
+      assert Config.get_boolean(c, "s", "b", true) == false
+    end
+  end
+
   # static enum TestEnum {
   # 	ONE_TWO;
   # }
