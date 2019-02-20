@@ -460,29 +460,31 @@ defmodule Xgit.Lib.ConfigTest do
                  "[core-section-not-to-remove-in-test]\n" <>
                  "  packedGitLimit = 14\n"
     end
+
+    test "single section" do
+      c =
+        parse("""
+        [branch "keep"]
+          merge = master.branch.to.keep.in.the.file
+
+        [single]
+          merge = this.will.get.deleted
+          remote = origin-for-some-long-gone-place
+
+        [core-section-not-to-remove-in-test]
+          packedGitLimit = 14
+        """)
+        |> Config.unset_section("single")
+
+      assert Config.to_text(c) ==
+               "[branch \"keep\"]\n" <>
+                 "  merge = master.branch.to.keep.in.the.file\n" <>
+                 "\n" <>
+                 "[core-section-not-to-remove-in-test]\n" <>
+                 "  packedGitLimit = 14\n"
+    end
   end
 
-  # @Test
-  # public void testUnsetSingleSection() throws ConfigInvalidException {
-  # 	Config c = parse("" //
-  # 			+ "[branch \"keep\"]\n"
-  # 			+ "  merge = master.branch.to.keep.in.the.file\n"
-  # 			+ "\n"
-  # 			+ "[single]\n"
-  # 			+ "  merge = this.will.get.deleted\n"
-  # 			+ "  remote = origin-for-some-long-gone-place\n"
-  # 			+ "\n"
-  # 			+ "[core-section-not-to-remove-in-test]\n"
-  # 			+ "  packedGitLimit = 14\n");
-  # 	c.unsetSection("single", null);
-  # 	assertEquals("" //
-  # 			+ "[branch \"keep\"]\n"
-  # 			+ "  merge = master.branch.to.keep.in.the.file\n"
-  # 			+ "\n"
-  # 			+ "[core-section-not-to-remove-in-test]\n"
-  # 			+ "  packedGitLimit = 14\n", c.toText());
-  # }
-  #
   # @Test
   # public void test008_readSectionNames() throws ConfigInvalidException {
   # 	final Config c = parse("[a]\n [B]\n");
