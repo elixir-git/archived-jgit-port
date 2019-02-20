@@ -578,23 +578,23 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.get_string(c, "a", "y") == "1"
   end
 
-  # @Test
-  # public void testExplicitlySetEmptyString() throws Exception {
-  # 	Config c = new Config();
-  # 	c.setString("a", null, "x", "0");
-  # 	c.setString("a", null, "y", "");
-  #
-  # 	assertEquals("0", c.getString("a", null, "x"));
-  # 	assertEquals(0, c.getInt("a", null, "x", 1));
-  #
-  # 	assertEquals("", c.getString("a", null, "y"));
-  # 	assertArrayEquals(new String[]{""}, c.getStringList("a", null, "y"));
-  # 	assertEquals(1, c.getInt("a", null, "y", 1));
-  #
-  # 	assertNull(c.getString("a", null, "z"));
-  # 	assertArrayEquals(new String[]{}, c.getStringList("a", null, "z"));
-  # }
-  #
+  test "explicitly set empty string" do
+    c =
+      Config.new()
+      |> Config.set_string("a", "x", "0")
+      |> Config.set_string("a", "y", "")
+
+    assert Config.get_string(c, "a", "x") == "0"
+    assert Config.get_int(c, "a", "x", 1) == 0
+
+    assert Config.get_string(c, "a", "y") == ""
+    assert Config.get_string_list(c, "a", "y") == [""]
+    assert Config.get_int(c, "a", "y", 1) == 1
+
+    assert Config.get_string(c, "a", "z") == nil
+    assert Config.get_string_list(c, "a", "z") == []
+  end
+
   # @Test
   # public void testParsedEmptyString() throws Exception {
   # 	Config c = parse("[a]\n"
