@@ -627,12 +627,11 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.get_string_list(c, "a", "x") == [nil]
   end
 
-  # @Test
-  # public void testReadMultipleValuesForName() throws ConfigInvalidException {
-  # 	Config c = parse("[foo]\nbar=false\nbar=true\n");
-  # 	assertTrue(c.getBoolean("foo", "bar", false));
-  # }
-  #
+  test "read multiple values for name" do
+    c = parse("[foo]\nbar=false\nbar=true\n")
+    assert Config.get_boolean(c, "foo", "bar", false) == true
+  end
+
   # @Test
   # public void testIncludeInvalidName() throws ConfigInvalidException {
   # 	expectedEx.expect(ConfigInvalidException.class);
