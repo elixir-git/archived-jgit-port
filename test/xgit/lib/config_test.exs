@@ -49,14 +49,15 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.to_text(c) == "[sec \"ext\"]\n\tname = value\n\tname2 = value2\n"
   end
 
-  # @Test
-  # public void test004_PutGetSimple() {
-  # 	Config c = new Config();
-  # 	c.setString("my", null, "somename", "false");
-  # 	assertEquals("false", c.getString("my", null, "somename"));
-  # 	assertEquals("[my]\n\tsomename = false\n", c.toText());
-  # }
-  #
+  test "put+get simple" do
+    c =
+      Config.new()
+      |> Config.set_string("my", "somename", "false")
+
+    assert Config.get_string(c, "my", "somename") == "false"
+    assert Config.to_text(c) == "[my]\n\tsomename = false\n"
+  end
+
   # @Test
   # public void test005_PutGetStringList() {
   # 	Config c = new Config();
