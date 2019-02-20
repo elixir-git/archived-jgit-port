@@ -388,6 +388,7 @@ defmodule Xgit.Lib.Config do
     c
     |> process_ref()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
+    |> Enum.map(&fix_missing_or_nil_string_result/1)
   end
 
   # /**
@@ -1017,7 +1018,7 @@ defmodule Xgit.Lib.Config do
   # TODO: Needs a real implementation.
 
   defp suffix_str_for_body(nil), do: ""
-  defp suffix_str_for_body(_), do: " "
+  defp suffix_str_for_body(s), do: s
 
   @doc ~S"""
   Clear this configuration and reset to the contents of the parsed string.
@@ -1127,7 +1128,25 @@ defmodule Xgit.Lib.Config do
       |> skip_whitespace()
       |> expect_close_brace(buffer)
 
-    config_lines_from(remainder, config_lines_acc, section, subsection, included_from, prefix)
+    {suffix, remainder} = Enum.split_while(remainder, &(&1 != ?\n))
+
+    new_config_line =
+      config_line_with_strings(%{
+        prefix: prefix,
+        section: section,
+        subsection: subsection,
+        included_from: included_from,
+        suffix: suffix
+      })
+
+    config_lines_from(
+      remainder,
+      config_lines_acc ++ [new_config_line],
+      section,
+      subsection,
+      included_from,
+      prefix
+    )
   end
 
   defp config_lines_from(

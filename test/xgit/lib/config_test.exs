@@ -426,16 +426,16 @@ defmodule Xgit.Lib.ConfigTest do
     assert_raise ConfigInvalidError, fn -> assert_read_integer(-1, "1.5g") end
   end
 
-  # @Test
-  # public void testBooleanWithNoValue() throws ConfigInvalidException {
-  # 	Config c = parse("[my]\n\tempty\n");
-  # 	assertEquals("", c.getString("my", null, "empty"));
-  # 	assertEquals(1, c.getStringList("my", null, "empty").length);
-  # 	assertEquals("", c.getStringList("my", null, "empty")[0]);
-  # 	assertTrue(c.getBoolean("my", "empty", false));
-  # 	assertEquals("[my]\n\tempty\n", c.toText());
-  # }
-  #
+  test "read boolean with no value" do
+    c = parse("[my]\n\tempty\n")
+
+    assert Config.get_string(c, "my", "empty") == ""
+    assert Config.get_string_list(c, "my", "empty") == [""]
+    assert Config.get_boolean(c, "my", "empty", false) == true
+
+    assert Config.to_text(c) == "[my]\n\tempty\n"
+  end
+
   # @Test
   # public void testUnsetBranchSection() throws ConfigInvalidException {
   # 	Config c = parse("" //
