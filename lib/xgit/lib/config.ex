@@ -762,44 +762,24 @@ defmodule Xgit.Lib.Config do
   # 	setStringList(section, subsection, name, Collections
   # 			.<String> emptyList());
   # }
-  #
-  # /**
-  #  * Remove all configuration values under a single section.
-  #  *
-  #  * @param section
-  #  *            section name, e.g "branch"
-  #  * @param subsection
-  #  *            optional subsection value, e.g. a branch name
-  #  */
-  # public void unsetSection(String section, String subsection) {
-  # 	ConfigSnapshot src, res;
-  # 	do {
-  # 		src = state.get();
-  # 		res = unsetSection(src, section, subsection);
-  # 	} while (!state.compareAndSet(src, res));
-  # }
-  #
-  # private ConfigSnapshot unsetSection(final ConfigSnapshot srcState,
-  # 		final String section,
-  # 		final String subsection) {
-  # 	final int max = srcState.entryList.size();
-  # 	final ArrayList<ConfigLine> r = new ArrayList<>(max);
-  #
-  # 	boolean lastWasMatch = false;
-  # 	for (ConfigLine e : srcState.entryList) {
-  # 		if (e.includedFrom == null && e.match(section, subsection)) {
-  # 			// Skip this record, it's for the section we are removing.
-  # 			lastWasMatch = true;
-  # 			continue;
-  # 		}
-  #
-  # 		if (lastWasMatch && e.section == null && e.subsection == null)
-  # 			continue; // skip this padding line in the section.
-  # 		r.add(e);
-  # 	}
-  #
-  # 	return newState(r);
-  # }
+
+  @doc ~S"""
+  Remove all configuration values under a single section.
+  """
+  def unset_section(c, section, subsection \\ nil)
+      when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) do
+    c
+    |> process_ref()
+    |> GenServer.call({:unset_section, section, subsection})
+
+    c
+  end
+
+  # IMPORTANT: unset_section_impl/5 runs in GenServer process.
+  # See handle_call/3 below.
+
+  defp unset_section_impl(%__MODULE__.State{config_lines: config_lines}, section, subsection),
+    do: Enum.reject(config_lines, &ConfigLine.match_section?(&1, section, subsection))
 
   @doc ~S"""
   Set a configuration value.
@@ -957,16 +937,28 @@ defmodule Xgit.Lib.Config do
   # IMPORTANT: to_text_impl/1 runs in GenServer process.
   # See handle_call/3 below.
 
-  defp to_text_impl(config_lines), do: Enum.map_join(config_lines, &config_line_to_text/1)
+  defp to_text_impl(config_lines) do
+    config_lines
+    |> Enum.map_join(&config_line_to_text/1)
+    |> drop_leading_blank_line()
+  end
+
+  defp drop_leading_blank_line("\n" <> remainder), do: remainder
+  defp drop_leading_blank_line(s), do: s
 
   defp config_line_to_text(%ConfigLine{included_from: included_from}) when included_from != nil,
     do: ""
 
   defp config_line_to_text(%ConfigLine{prefix: prefix, suffix: suffix} = cl),
     do:
-      "#{config_line_maybe_str(prefix)}#{config_line_body_to_text(cl)}#{
-        config_line_maybe_str(suffix)
-      }\n"
+      maybe_extra_line_prefix(cl) <>
+        "#{config_line_maybe_str(prefix)}#{config_line_body_to_text(cl)}" <>
+        "#{config_line_maybe_str(suffix)}\n"
+
+  defp maybe_extra_line_prefix(%ConfigLine{section: section, name: nil}) when section != nil,
+    do: "\n"
+
+  defp maybe_extra_line_prefix(_), do: ""
 
   defp config_line_maybe_str(nil), do: ""
   defp config_line_maybe_str(s), do: s
@@ -1111,7 +1103,7 @@ defmodule Xgit.Lib.Config do
     {section, remainder} =
       remainder
       |> skip_whitespace()
-      |> Enum.split_while(&letter_or_digit?/1)
+      |> Enum.split_while(&section_name_char?/1)
       |> section_to_string(buffer)
 
     # TODO: Reread readSectionName closely.
@@ -1332,6 +1324,13 @@ defmodule Xgit.Lib.Config do
 
   defp not_eol?(?\n), do: true
   defp not_eol?(_), do: false
+
+  defp section_name_char?(c) when c >= ?0 and c <= ?9, do: true
+  defp section_name_char?(c) when c >= ?A and c <= ?Z, do: true
+  defp section_name_char?(c) when c >= ?a and c <= ?z, do: true
+  defp section_name_char?(?.), do: true
+  defp section_name_char?(?-), do: true
+  defp section_name_char?(_), do: false
 
   # HELP: This is not Unicode-savvy. Is there such a thing?
   defp letter_or_digit?(c) when c >= ?0 and c <= ?9, do: true
@@ -1666,6 +1665,13 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
     {:reply, raw_string_list(s, section, subsection, name), s}
+  end
+
+  @impl true
+  def handle_call({:unset_section, section, subsection}, _from, %__MODULE__.State{} = s)
+      when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) do
+    new_config_lines = unset_section_impl(s, section, subsection)
+    {:reply, :ok, %{s | config_lines: new_config_lines}}
   end
 
   @impl true

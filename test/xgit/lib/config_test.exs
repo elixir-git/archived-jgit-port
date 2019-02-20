@@ -436,28 +436,32 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.to_text(c) == "[my]\n\tempty\n"
   end
 
-  # @Test
-  # public void testUnsetBranchSection() throws ConfigInvalidException {
-  # 	Config c = parse("" //
-  # 			+ "[branch \"keep\"]\n"
-  # 			+ "  merge = master.branch.to.keep.in.the.file\n"
-  # 			+ "\n"
-  # 			+ "[branch \"remove\"]\n"
-  # 			+ "  merge = this.will.get.deleted\n"
-  # 			+ "  remote = origin-for-some-long-gone-place\n"
-  # 			+ "\n"
-  # 			+ "[core-section-not-to-remove-in-test]\n"
-  # 			+ "  packedGitLimit = 14\n");
-  # 	c.unsetSection("branch", "does.not.exist");
-  # 	c.unsetSection("branch", "remove");
-  # 	assertEquals("" //
-  # 			+ "[branch \"keep\"]\n"
-  # 			+ "  merge = master.branch.to.keep.in.the.file\n"
-  # 			+ "\n"
-  # 			+ "[core-section-not-to-remove-in-test]\n"
-  # 			+ "  packedGitLimit = 14\n", c.toText());
-  # }
-  #
+  describe "unset_section/3" do
+    test "branch section" do
+      c =
+        parse("""
+        [branch "keep"]
+          merge = master.branch.to.keep.in.the.file
+
+        [branch "remove"]
+          merge = this.will.get.deleted
+          remote = origin-for-some-long-gone-place
+
+        [core-section-not-to-remove-in-test]
+          packedGitLimit = 14
+        """)
+        |> Config.unset_section("branch", "does.not.exist")
+        |> Config.unset_section("branch", "remove")
+
+      assert Config.to_text(c) ==
+               "[branch \"keep\"]\n" <>
+                 "  merge = master.branch.to.keep.in.the.file\n" <>
+                 "\n" <>
+                 "[core-section-not-to-remove-in-test]\n" <>
+                 "  packedGitLimit = 14\n"
+    end
+  end
+
   # @Test
   # public void testUnsetSingleSection() throws ConfigInvalidException {
   # 	Config c = parse("" //
