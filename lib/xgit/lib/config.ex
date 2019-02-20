@@ -474,12 +474,32 @@ defmodule Xgit.Lib.Config do
   def names_in_section(c, section) when is_binary(section),
     do: c |> process_ref() |> GenServer.call({:names_in_section, section})
 
-  # IMPORTANT: sections_impl/1 runs in GenServer process.
+  # IMPORTANT: names_in_section_impl/2 runs in GenServer process.
   # See handle_call/3 below.
 
   defp names_in_section_impl(config_lines, section) do
     config_lines
     |> Enum.filter(&(&1.section == section))
+    |> Enum.reject(&(&1.name == nil))
+    |> Enum.map(&String.downcase(&1.name))
+    |> Enum.dedup()
+
+    # TODO: Dedup globally?
+  end
+
+  @doc ~S"""
+  Get the list of names defined for this subsection.
+  """
+  def names_in_subsection(c, section, subsection)
+      when is_binary(section) and is_binary(subsection),
+      do: c |> process_ref() |> GenServer.call({:names_in_subsection, section, subsection})
+
+  # IMPORTANT: names_in_subsection_impl/3 runs in GenServer process.
+  # See handle_call/3 below.
+
+  defp names_in_subsection_impl(config_lines, section, subsection) do
+    config_lines
+    |> Enum.filter(&(&1.section == section && &1.subsection == subsection))
     |> Enum.reject(&(&1.name == nil))
     |> Enum.map(&String.downcase(&1.name))
     |> Enum.dedup()
@@ -1692,6 +1712,16 @@ defmodule Xgit.Lib.Config do
       )
       when is_binary(section) do
     {:reply, names_in_section_impl(config_lines, section), s}
+  end
+
+  @impl true
+  def handle_call(
+        {:names_in_subsection, section, subsection},
+        _from,
+        %__MODULE__.State{config_lines: config_lines} = s
+      )
+      when is_binary(section) do
+    {:reply, names_in_subsection_impl(config_lines, section, subsection), s}
   end
 
   @impl true

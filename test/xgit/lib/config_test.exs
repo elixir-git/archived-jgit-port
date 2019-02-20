@@ -530,28 +530,23 @@ defmodule Xgit.Lib.ConfigTest do
   # 	assertEquals("logAllRefUpdates", itr.next());
   # 	assertFalse(itr.hasNext());
   # }
-  #
-  # @Test
-  # public void test010_readNamesInSubSection() throws ConfigInvalidException {
-  # 	String configString = "[a \"sub1\"]\n"//
-  # 			+ "x = 0\n" //
-  # 			+ "y = false\n"//
-  # 			+ "z = true\n"//
-  # 			+ "[a \"sub2\"]\n"//
-  # 			+ "a=0\n"//
-  # 			+ "b=1\n";
-  # 	final Config c = parse(configString);
-  # 	Set<String> names = c.getNames("a", "sub1");
-  # 	assertEquals("Subsection size", 3, names.size());
-  # 	assertTrue("Subsection should contain \"x\"", names.contains("x"));
-  # 	assertTrue("Subsection should contain \"y\"", names.contains("y"));
-  # 	assertTrue("Subsection should contain \"z\"", names.contains("z"));
-  # 	names = c.getNames("a", "sub2");
-  # 	assertEquals("Subsection size", 2, names.size());
-  # 	assertTrue("Subsection should contain \"a\"", names.contains("a"));
-  # 	assertTrue("Subsection should contain \"b\"", names.contains("b"));
-  # }
-  #
+
+  test "names_in_subsection/3" do
+    c =
+      parse("""
+      [a "sub1"]
+      x = 0
+      y = false
+      z = true
+      [a "sub2"]
+      a=0
+      b=1
+      """)
+
+    assert Config.names_in_subsection(c, "a", "sub1") == ["x", "y", "z"]
+    assert Config.names_in_subsection(c, "a", "sub2") == ["a", "b"]
+  end
+
   # @Test
   # public void readNamesInSubSectionRecursive() throws ConfigInvalidException {
   # 	String baseConfigString = "[a \"sub1\"]\n"//
