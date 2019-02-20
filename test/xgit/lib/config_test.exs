@@ -67,13 +67,13 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.to_text(c) == "[my]\n\tsomename = value1\n\tsomename = value2\n"
   end
 
-  # @Test
-  # public void test006_readCaseInsensitive() throws ConfigInvalidException {
-  # 	final Config c = parse("[Foo]\nBar\n");
-  # 	assertTrue(c.getBoolean("foo", null, "bar", false));
-  # 	assertEquals("", c.getString("foo", null, "bar"));
-  # }
-  #
+  test "section and key names are case-insensitive" do
+    c = parse("[Foo]\nBar\n")
+
+    assert Config.get_boolean(c, "foo", "bar", false) == true
+    assert Config.get_string(c, "foo", "bar") == ""
+  end
+
   # @Test
   # public void test007_readUserConfig() {
   # 	final MockSystemReader mockSystemReader = new MockSystemReader();
