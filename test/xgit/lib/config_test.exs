@@ -570,17 +570,14 @@ defmodule Xgit.Lib.ConfigTest do
   # 	assertTrue("Subsection should contain \"a\"", names.contains("a"));
   # 	assertTrue("Subsection should contain \"B\"", names.contains("B"));
   # }
-  #
-  #
-  # @Test
-  # public void testNoFinalNewline() throws ConfigInvalidException {
-  # 	Config c = parse("[a]\n"
-  # 			+ "x = 0\n"
-  # 			+ "y = 1");
-  # 	assertEquals("0", c.getString("a", null, "x"));
-  # 	assertEquals("1", c.getString("a", null, "y"));
-  # }
-  #
+
+  test "no final newline" do
+    c = parse("[a]\nx = 0\ny = 1")
+
+    assert Config.get_string(c, "a", "x") == "0"
+    assert Config.get_string(c, "a", "y") == "1"
+  end
+
   # @Test
   # public void testExplicitlySetEmptyString() throws Exception {
   # 	Config c = new Config();
