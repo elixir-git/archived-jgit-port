@@ -1302,6 +1302,7 @@ defmodule Xgit.Lib.Config do
   defp maybe_read_value(_), do: raise(ConfigInvalidError, message: "Bad entry delimiter.")
 
   defp read_value([], value_acc, _trailing_ws_acc), do: {value_acc, []}
+  defp read_value([?\n | _] = remainder, [], _trailing_ws_acc), do: {:missing, remainder}
   defp read_value([?\n | _] = remainder, value_acc, _trailing_ws_acc), do: {value_acc, remainder}
 
   defp read_value([c | _] = remainder, value_acc, _trailing_ws_acc)
