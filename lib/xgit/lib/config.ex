@@ -361,40 +361,27 @@ defmodule Xgit.Lib.Config do
   defp fix_missing_or_nil_string_result(nil), do: ""
   defp fix_missing_or_nil_string_result(x), do: to_string(x)
 
-  # /**
-  #  * Get a list of string values
-  #  * <p>
-  #  * If this instance was created with a base, the base's values are returned
-  #  * first (if any).
-  #  *
-  #  * @param section
-  #  *            the section
-  #  * @param subsection
-  #  *            the subsection for the value
-  #  * @param name
-  #  *            the key name
-  #  * @return array of zero or more values from the configuration.
-  #  */
-  # public String[] getStringList(final String section, String subsection,
-  # 		final String name) {
-  # 	String[] base;
-  # 	if (baseConfig != null)
-  # 		base = baseConfig.getStringList(section, subsection, name);
-  # 	else
-  # 		base = EMPTY_STRING_ARRAY;
-  #
-  # 	String[] self = getRawStringList(section, subsection, name);
-  # 	if (self == null)
-  # 		return base;
-  # 	if (base.length == 0)
-  # 		return self;
-  # 	String[] res = new String[base.length + self.length];
-  # 	int n = base.length;
-  # 	System.arraycopy(base, 0, res, 0, n);
-  # 	System.arraycopy(self, 0, res, n, self.length);
-  # 	return res;
-  # }
-  #
+  @doc ~S"""
+  Get a list of string values from the git config.
+
+  If this instance was created with a base, the base's values (if any) are
+  returned first.
+  """
+  def get_string_list(c, section, subsection \\ nil, name)
+      when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
+             is_binary(name) do
+    # TODO: Implement base. Still thinking about how that works.
+    # String[] base;
+    # if (baseConfig != null)
+    # 	base = baseConfig.getStringList(section, subsection, name);
+    # else
+    # 	base = EMPTY_STRING_ARRAY;
+
+    c
+    |> process_ref()
+    |> GenServer.call({:get_raw_strings, section, subsection, name})
+  end
+
   # /**
   #  * Parse a numerical time unit, such as "1 minute", from the configuration.
   #  *
@@ -804,35 +791,28 @@ defmodule Xgit.Lib.Config do
   #
   # 	return newState(r);
   # }
-  #
-  # /**
-  #  * Set a configuration value.
-  #  *
-  #  * <pre>
-  #  * [section &quot;subsection&quot;]
-  #  *         name = value1
-  #  *         name = value2
-  #  * </pre>
-  #  *
-  #  * @param section
-  #  *            section name, e.g "branch"
-  #  * @param subsection
-  #  *            optional subsection value, e.g. a branch name
-  #  * @param name
-  #  *            parameter name, e.g. "filemode"
-  #  * @param values
-  #  *            list of zero or more values for this key.
-  #  */
-  # public void setStringList(final String section, final String subsection,
-  # 		final String name, final List<String> values) {
-  # 	ConfigSnapshot src, res;
-  # 	do {
-  # 		src = state.get();
-  # 		res = replaceStringList(src, section, subsection, name, values);
-  # 	} while (!state.compareAndSet(src, res));
-  # 	if (notifyUponTransientChanges())
-  # 		fireConfigChangedEvent();
-  # }
+
+  @doc ~S"""
+  Set a configuration value.
+
+  This parameters will result in a configuration entry like this being added
+  (in-memory only):
+
+  ```
+  [section "subsection"]
+    name = value1
+    name = value2
+  ```
+  """
+  def set_string_list(c, section, subsection \\ nil, name, values)
+      when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
+             is_binary(name) and is_list(values) do
+    c
+    |> process_ref()
+    |> GenServer.call({:set_string_list, section, subsection, name, values})
+
+    c
+  end
 
   # IMPORTANT: set_string_list_impl/5 runs in GenServer process.
   # See handle_call/3 below.
