@@ -485,14 +485,11 @@ defmodule Xgit.Lib.ConfigTest do
     end
   end
 
-  # @Test
-  # public void test008_readSectionNames() throws ConfigInvalidException {
-  # 	final Config c = parse("[a]\n [B]\n");
-  # 	Set<String> sections = c.getSections();
-  # 	assertTrue("Sections should contain \"a\"", sections.contains("a"));
-  # 	assertTrue("Sections should contain \"b\"", sections.contains("b"));
-  # }
-  #
+  test "sections/1" do
+    c = parse("[a]\n [B]\n")
+    assert Config.sections(c) == ["a", "b"]
+  end
+
   # @Test
   # public void test009_readNamesInSection() throws ConfigInvalidException {
   # 	String configString = "[core]\n" + "repositoryFormatVersion = 0\n"

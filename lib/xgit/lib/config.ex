@@ -450,19 +450,24 @@ defmodule Xgit.Lib.Config do
   # public Set<String> getSubsections(String section) {
   # 	return getState().getSubsections(section);
   # }
-  #
-  # /**
-  #  * Get the sections defined in this {@link org.eclipse.jgit.lib.Config}.
-  #  *
-  #  * @return the sections defined in this {@link org.eclipse.jgit.lib.Config}.
-  #  *         The set's iterator returns sections in the order they are
-  #  *         declared by the configuration starting from this instance and
-  #  *         progressing through the base.
-  #  */
-  # public Set<String> getSections() {
-  # 	return getState().getSections();
-  # }
-  #
+
+  @doc ~S"""
+  Get the sections defined in this `Config`.
+  """
+  def sections(c), do: c |> process_ref() |> GenServer.call(:sections)
+
+  # IMPORTANT: sections_impl/1 runs in GenServer process.
+  # See handle_call/3 below.
+
+  defp sections_impl(config_lines) do
+    config_lines
+    |> Enum.reject(&(&1.section == nil))
+    |> Enum.map(&String.downcase(&1.section))
+    |> Enum.dedup()
+
+    # TODO: Dedup globally?
+  end
+
   # /**
   #  * Get the list of names defined for this section
   #  *
@@ -1666,6 +1671,10 @@ defmodule Xgit.Lib.Config do
              is_binary(name) do
     {:reply, raw_string_list(s, section, subsection, name), s}
   end
+
+  @impl true
+  def handle_call(:sections, _from, %__MODULE__.State{config_lines: config_lines} = s),
+    do: {:reply, sections_impl(config_lines), s}
 
   @impl true
   def handle_call({:unset_section, section, subsection}, _from, %__MODULE__.State{} = s)
