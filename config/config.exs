@@ -1,3 +1,3 @@
 use Mix.Config
 
-# import_config "#{Mix.env()}.exs"
+if File.exists?("#{__DIR__}/#{Mix.env()}.exs"), do: import_config("#{Mix.env()}.exs")
