@@ -490,29 +490,22 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.sections(c) == ["a", "b"]
   end
 
-  # @Test
-  # public void test009_readNamesInSection() throws ConfigInvalidException {
-  # 	String configString = "[core]\n" + "repositoryFormatVersion = 0\n"
-  # 			+ "filemode = false\n" + "logAllRefUpdates = true\n";
-  # 	final Config c = parse(configString);
-  # 	Set<String> names = c.getNames("core");
-  # 	assertEquals("Core section size", 3, names.size());
-  # 	assertTrue("Core section should contain \"filemode\"", names
-  # 			.contains("filemode"));
-  #
-  # 	assertTrue("Core section should contain \"repositoryFormatVersion\"",
-  # 			names.contains("repositoryFormatVersion"));
-  #
-  # 	assertTrue("Core section should contain \"repositoryformatversion\"",
-  # 			names.contains("repositoryformatversion"));
-  #
-  # 	Iterator<String> itr = names.iterator();
-  # 	assertEquals("filemode", itr.next());
-  # 	assertEquals("logAllRefUpdates", itr.next());
-  # 	assertEquals("repositoryFormatVersion", itr.next());
-  # 	assertFalse(itr.hasNext());
-  # }
-  #
+  test "names_in_section/2" do
+    c =
+      parse("""
+      [core]
+      repositoryFormatVersion = 0
+      filemode = false
+      logAllRefUpdates = true
+      """)
+
+    assert Config.names_in_section(c, "core") == [
+             "repositoryformatversion",
+             "filemode",
+             "logallrefupdates"
+           ]
+  end
+
   # @Test
   # public void test_ReadNamesInSectionRecursive()
   # 		throws ConfigInvalidException {
