@@ -609,26 +609,24 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.get_string_list(c, "a", "z") == []
   end
 
-  # @Test
-  # public void testSetStringListWithEmptyValue() throws Exception {
-  # 	Config c = new Config();
-  # 	c.setStringList("a", null, "x", Arrays.asList(""));
-  # 	assertArrayEquals(new String[]{""}, c.getStringList("a", null, "x"));
-  # }
-  #
-  # @Test
-  # public void testEmptyValueAtEof() throws Exception {
-  # 	String text = "[a]\nx =";
-  # 	Config c = parse(text);
-  # 	assertNull(c.getString("a", null, "x"));
-  # 	assertArrayEquals(new String[]{null},
-  # 			c.getStringList("a", null, "x"));
-  # 	c = parse(text + "\n");
-  # 	assertNull(c.getString("a", null, "x"));
-  # 	assertArrayEquals(new String[]{null},
-  # 			c.getStringList("a", null, "x"));
-  # }
-  #
+  test "get/set_string_list with empty value" do
+    c =
+      Config.new()
+      |> Config.set_string_list("a", "x", [""])
+
+    assert Config.get_string_list(c, "a", "x") == [""]
+  end
+
+  test "empty value at EOF" do
+    c = parse("[a]\nx =")
+    assert Config.get_string(c, "a", "x") == nil
+    assert Config.get_string_list(c, "a", "x") == [nil]
+
+    c = parse("[a]\nx =\n")
+    assert Config.get_string(c, "a", "x") == nil
+    assert Config.get_string_list(c, "a", "x") == [nil]
+  end
+
   # @Test
   # public void testReadMultipleValuesForName() throws ConfigInvalidException {
   # 	Config c = parse("[foo]\nbar=false\nbar=true\n");
