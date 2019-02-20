@@ -853,8 +853,6 @@ defmodule Xgit.Lib.Config do
     # if (notifyUponTransientChanges())
     # 	fireConfigChangedEvent();
 
-    # IO.inspect(new_config_lines, label: "\n\nset_string NCL")
-
     new_config_lines
   end
 
@@ -872,8 +870,7 @@ defmodule Xgit.Lib.Config do
       |> Enum.reverse()
 
     reversed_new_config_lines
-    |> Enum.map(&{ConfigLine.match?(&1, section, subsection), &1})
-    |> IO.inspect(label: "vert der ferk?")
+    |> Enum.map(&{ConfigLine.match_section?(&1, section, subsection), &1})
 
     # If we can find a matching key in the existing config, we should insert
     # the new config lines after those. Otherwise, attach to EOF.
@@ -881,7 +878,6 @@ defmodule Xgit.Lib.Config do
            reversed_new_config_lines,
            &(!ConfigLine.match?(&1, section, subsection, name))
          ) do
-      # |> IO.inspect(label: "--- split_while results") do
       {all, []} -> new_config_lines ++ [create_section_heaader(section, subsection)] ++ all
       {group1, group2} -> group1 ++ new_config_lines ++ group2
     end
@@ -1648,10 +1644,8 @@ defmodule Xgit.Lib.Config do
   # }
 
   @impl true
-  def handle_call(:to_text, _from, %__MODULE__.State{config_lines: config_lines} = s) do
-    IO.inspect(config_lines, label: "to text config lines")
-    {:reply, to_text_impl(config_lines), s}
-  end
+  def handle_call(:to_text, _from, %__MODULE__.State{config_lines: config_lines} = s),
+    do: {:reply, to_text_impl(config_lines), s}
 
   @impl true
   def handle_call({:from_text, text}, _from, %__MODULE__.State{} = s) when is_binary(text) do
