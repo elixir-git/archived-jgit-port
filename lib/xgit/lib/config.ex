@@ -849,14 +849,11 @@ defmodule Xgit.Lib.Config do
       |> Enum.map(&%ConfigLine{section: section, subsection: subsection, name: name, value: &1})
       |> Enum.reverse()
 
-    reversed_new_config_lines
-    |> Enum.map(&{ConfigLine.match_section?(&1, section, subsection), &1})
-
     # If we can find a matching key in the existing config, we should insert
     # the new config lines after those. Otherwise, attach to EOF.
     case Enum.split_while(
            reversed_new_config_lines,
-           &(!ConfigLine.match?(&1, section, subsection, name))
+           &(!ConfigLine.match_section?(&1, section, subsection))
          ) do
       {all, []} -> new_config_lines ++ [create_section_heaader(section, subsection)] ++ all
       {group1, group2} -> group1 ++ new_config_lines ++ group2
