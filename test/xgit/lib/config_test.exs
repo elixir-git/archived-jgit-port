@@ -6,9 +6,9 @@ defmodule Xgit.Lib.ConfigTest do
 
   doctest Xgit.Lib.Config
 
-  # // A non-ASCII whitespace character: U+2002 EN QUAD.
-  # private static final char WS = '\u2002';
-  #
+  # A non-ASCII whitespace character: U+2002 EN QUAD.
+  @ws "\u2002"
+
   # private static final String REFS_ORIGIN = "+refs/heads/*:refs/remotes/origin/*";
   #
   # private static final String REFS_UPSTREAM = "+refs/heads/*:refs/remotes/upstream/*";
@@ -1267,24 +1267,23 @@ defmodule Xgit.Lib.ConfigTest do
     assert parse_escaped_value("b\" a\"\" z; \\n\"") == "b a z; \n"
   end
 
-  # @Test
-  # public void testParseComments() throws ConfigInvalidException {
-  # 	assertEquals("baz", parseEscapedValue("baz; comment"));
-  # 	assertEquals("baz", parseEscapedValue("baz# comment"));
-  # 	assertEquals("baz", parseEscapedValue("baz ; comment"));
-  # 	assertEquals("baz", parseEscapedValue("baz # comment"));
-  #
-  # 	assertEquals("baz", parseEscapedValue("baz ; comment"));
-  # 	assertEquals("baz", parseEscapedValue("baz # comment"));
-  # 	assertEquals("baz", parseEscapedValue("baz " + WS + " ; comment"));
-  # 	assertEquals("baz", parseEscapedValue("baz " + WS + " # comment"));
-  #
-  # 	assertEquals("baz ", parseEscapedValue("\"baz \"; comment"));
-  # 	assertEquals("baz ", parseEscapedValue("\"baz \"# comment"));
-  # 	assertEquals("baz ", parseEscapedValue("\"baz \" ; comment"));
-  # 	assertEquals("baz ", parseEscapedValue("\"baz \" # comment"));
-  # }
-  #
+  test "parse comments" do
+    assert parse_escaped_value("baz; comment") == "baz"
+    assert parse_escaped_value("baz# comment") == "baz"
+    assert parse_escaped_value("baz ; comment") == "baz"
+    assert parse_escaped_value("baz # comment") == "baz"
+
+    assert parse_escaped_value("baz ; comment") == "baz"
+    assert parse_escaped_value("baz # comment") == "baz"
+    assert parse_escaped_value("baz #{@ws} ; comment") == "baz"
+    assert parse_escaped_value("baz #{@ws} # comment") == "baz"
+
+    assert parse_escaped_value("\"baz \"; comment") == "baz "
+    assert parse_escaped_value("\"baz \"# comment") == "baz "
+    assert parse_escaped_value("\"baz \" ; comment") == "baz "
+    assert parse_escaped_value("\"baz \" # comment") == "baz "
+  end
+
   # @Test
   # public void testEscapeSubsection() throws ConfigInvalidException {
   # 	assertSubsectionRoundTrip("", "\"\"");

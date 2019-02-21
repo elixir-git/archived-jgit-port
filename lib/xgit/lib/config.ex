@@ -1304,8 +1304,11 @@ defmodule Xgit.Lib.Config do
     do: {value_acc, remainder}
 
   defp read_value([c | _] = remainder, value_acc, _trailing_ws_acc, false = _in_quote?)
-       when c == ?# or c == ?;,
-       do: {value_acc, remainder}
+       when c == ?# or c == ?; do
+    {value_acc, remainder}
+  end
+
+  # do: {value_acc, remainder}
 
   defp read_value([?\\], _name_acc, _trailing_ws_acc, _in_quote?),
     do: raise(ConfigInvalidError, message: "End of file in escape")
@@ -1320,12 +1323,11 @@ defmodule Xgit.Lib.Config do
   defp read_value([?" | remainder], value_acc, trailing_ws_acc, in_quote?),
     do: read_value(remainder, value_acc ++ trailing_ws_acc, [], !in_quote?)
 
-  defp read_value([c | remainder], value_acc, trailing_ws_acc, in_quote?)
-       when c == ?\s or c == ?\t,
-       do: read_value(remainder, value_acc, trailing_ws_acc ++ [c], in_quote?)
-
-  defp read_value([c | remainder], value_acc, trailing_ws_acc, in_quote?),
-    do: read_value(remainder, value_acc ++ trailing_ws_acc ++ [c], [], in_quote?)
+  defp read_value([c | remainder], value_acc, trailing_ws_acc, in_quote?) do
+    if whitespace?(c),
+      do: read_value(remainder, value_acc, trailing_ws_acc ++ [c], in_quote?),
+      else: read_value(remainder, value_acc ++ trailing_ws_acc ++ [c], [], in_quote?)
+  end
 
   defp translate_escape(?t), do: ?\t
   defp translate_escape(?b), do: ?\b
@@ -1351,12 +1353,20 @@ defmodule Xgit.Lib.Config do
 
   defp whitespace?(?\s), do: true
   defp whitespace?(?\t), do: true
+  defp whitespace?(0xA0), do: true
+  defp whitespace?(0x1680), do: true
+  defp whitespace?(0x180E), do: true
+  defp whitespace?(c) when c >= 0x2000 and c <= 0x200B, do: true
+  defp whitespace?(0x202F), do: true
+  defp whitespace?(0x205F), do: true
+  defp whitespace?(0x3000), do: true
+  defp whitespace?(0xFEFF), do: true
   defp whitespace?(_), do: false
 
   defp first_line_from(buffer), do: Enum.take_while(buffer, &not_eol?/1)
 
-  defp not_eol?(?\n), do: true
-  defp not_eol?(_), do: false
+  defp not_eol?(?\n), do: false
+  defp not_eol?(_), do: true
 
   defp section_name_char?(c) when c >= ?0 and c <= ?9, do: true
   defp section_name_char?(c) when c >= ?A and c <= ?Z, do: true
