@@ -1282,39 +1282,50 @@ defmodule Xgit.Lib.Config do
   end
 
   defp maybe_read_value([?\n | _] = remainder), do: {:empty, remainder}
-  defp maybe_read_value([?= | remainder]), do: read_value(skip_whitespace(remainder), [], [])
+
+  defp maybe_read_value([?= | remainder]),
+    do: read_value(skip_whitespace(remainder), [], [], false)
+
   defp maybe_read_value([?; | remainder]), do: {nil, remainder}
   defp maybe_read_value([?# | remainder]), do: {nil, remainder}
   defp maybe_read_value([]), do: {nil, []}
   defp maybe_read_value(_), do: raise(ConfigInvalidError, message: "Bad entry delimiter.")
 
-  defp read_value([], [], _trailing_ws_acc), do: {:missing, []}
-  defp read_value([], value_acc, _trailing_ws_acc), do: {value_acc, []}
-  defp read_value([?\n | _] = remainder, [], _trailing_ws_acc), do: {:missing, remainder}
-  defp read_value([?\n | _] = remainder, value_acc, _trailing_ws_acc), do: {value_acc, remainder}
+  defp read_value([], [], _trailing_ws_acc, _in_quote?), do: {:missing, []}
+  defp read_value([], value_acc, _trailing_ws_acc, _in_quote?), do: {value_acc, []}
 
-  defp read_value([c | _] = remainder, value_acc, _trailing_ws_acc)
+  defp read_value([?\n | _], _name_acc, _trailing_ws_acc, true = _in_quote?),
+    do: raise(ConfigInvalidError, message: "Newline in quotes not allowed")
+
+  defp read_value([?\n | _] = remainder, [], _trailing_ws_acc, _in_quote?),
+    do: {:missing, remainder}
+
+  defp read_value([?\n | _] = remainder, value_acc, _trailing_ws_acc, _in_quote?),
+    do: {value_acc, remainder}
+
+  defp read_value([c | _] = remainder, value_acc, _trailing_ws_acc, false = _in_quote?)
        when c == ?# or c == ?;,
        do: {value_acc, remainder}
 
-  defp read_value([?\\], _name_acc, _trailing_ws_acc),
+  defp read_value([?\\], _name_acc, _trailing_ws_acc, _in_quote?),
     do: raise(ConfigInvalidError, message: "End of file in escape")
 
-  defp read_value([?\\ | [?\n | remainder]], value_acc, trailing_ws_acc),
-    do: read_value(remainder, value_acc ++ trailing_ws_acc, [])
+  defp read_value([?\\ | [?\n | remainder]], value_acc, trailing_ws_acc, in_quote?),
+    do: read_value(remainder, value_acc ++ trailing_ws_acc, [], in_quote?)
 
-  defp read_value([?\\ | [c | remainder]], value_acc, trailing_ws_acc),
-    do: read_value(remainder, value_acc ++ trailing_ws_acc ++ [translate_escape(c)], [])
+  defp read_value([?\\ | [c | remainder]], value_acc, trailing_ws_acc, in_quote?),
+    do:
+      read_value(remainder, value_acc ++ trailing_ws_acc ++ [translate_escape(c)], [], in_quote?)
 
-  defp read_value([?" | _remainder], _value_acc, _trailing_ws_acc) do
-    raise "quoted values not yet implemented"
-  end
+  defp read_value([?" | remainder], value_acc, trailing_ws_acc, in_quote?),
+    do: read_value(remainder, value_acc ++ trailing_ws_acc, [], !in_quote?)
 
-  defp read_value([c | remainder], value_acc, trailing_ws_acc) when c == ?\s or c == ?\t,
-    do: read_value(remainder, value_acc, trailing_ws_acc ++ [c])
+  defp read_value([c | remainder], value_acc, trailing_ws_acc, in_quote?)
+       when c == ?\s or c == ?\t,
+       do: read_value(remainder, value_acc, trailing_ws_acc ++ [c], in_quote?)
 
-  defp read_value([c | remainder], value_acc, trailing_ws_acc),
-    do: read_value(remainder, value_acc ++ trailing_ws_acc ++ [c], [])
+  defp read_value([c | remainder], value_acc, trailing_ws_acc, in_quote?),
+    do: read_value(remainder, value_acc ++ trailing_ws_acc ++ [c], [], in_quote?)
 
   defp translate_escape(?t), do: ?\t
   defp translate_escape(?b), do: ?\b

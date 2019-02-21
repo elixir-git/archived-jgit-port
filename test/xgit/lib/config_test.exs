@@ -1262,12 +1262,11 @@ defmodule Xgit.Lib.ConfigTest do
   # 	assertIllegalArgumentException(() -> Config.escapeSubsection("x\ny"));
   # 	assertIllegalArgumentException(() -> Config.escapeSubsection("x\0y"));
   # }
-  #
-  # @Test
-  # public void testParseMultipleQuotedRegions() throws ConfigInvalidException {
-  # 	assertEquals("b a z; \n", parseEscapedValue("b\" a\"\" z; \\n\""));
-  # }
-  #
+
+  test "parse multiple quoted regions" do
+    assert parse_escaped_value("b\" a\"\" z; \\n\"") == "b a z; \n"
+  end
+
   # @Test
   # public void testParseComments() throws ConfigInvalidException {
   # 	assertEquals("baz", parseEscapedValue("baz; comment"));
