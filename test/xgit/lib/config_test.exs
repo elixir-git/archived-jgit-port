@@ -1313,6 +1313,24 @@ defmodule Xgit.Lib.ConfigTest do
     assert parse_escaped_value("\"baz \" # comment") == "baz "
   end
 
+  test "to_text with leading comment" do
+    c =
+      parse("""
+      ; comment on the first line
+
+      [section "the first"]
+        value = blah
+      """)
+      |> Config.unset_section("branch", "does.not.exist")
+      |> Config.unset_section("branch", "remove")
+
+    assert Config.to_text(c) ==
+             "; comment on the first line\n" <>
+               "\n" <>
+               "[section \"the first\"]\n" <>
+               "  value = blah\n"
+  end
+
   # @Test
   # public void testEscapeSubsection() throws ConfigInvalidException {
   # 	assertSubsectionRoundTrip("", "\"\"");
