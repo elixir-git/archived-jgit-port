@@ -60,6 +60,16 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.to_text(c) == "[my]\n\tsomename = false\n"
   end
 
+  test "put+get replacing existing values" do
+    c =
+      "[my]\nsomename = sam"
+      |> parse()
+      |> Config.set_string("my", "somename", "fred")
+
+    assert Config.get_string(c, "my", "somename") == "fred"
+    assert Config.to_text(c) == "[my]\n\tsomename = fred\n"
+  end
+
   test "put+get string list" do
     c =
       Config.new()
@@ -616,6 +626,11 @@ defmodule Xgit.Lib.ConfigTest do
   test "get_int with invalid value" do
     c = parse("[a]\nx = abc\n")
     assert_raise ConfigInvalidError, fn -> Config.get_int(c, "a", "x", 44) end
+  end
+
+  test "get_int with empty value" do
+    c = parse("[a]\nx")
+    assert Config.get_int(c, "a", "x", 4) == 4
   end
 
   test "get/set_string_list with empty value" do

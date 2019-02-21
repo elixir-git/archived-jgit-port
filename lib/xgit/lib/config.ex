@@ -202,7 +202,7 @@ defmodule Xgit.Lib.Config do
   defp trim_if_string(x), do: x
 
   defp to_number(:missing, _section, _name, default), do: default
-  defp to_number(:empty, _section_, _name, default), do: default
+  defp to_number(nil, _section_, _name, default), do: default
   defp to_number("", _section, _name, default), do: default
 
   defp to_number(s, section, name, _default) do
@@ -242,7 +242,6 @@ defmodule Xgit.Lib.Config do
 
   defp to_boolean(nil, _default), do: true
   defp to_boolean(:empty, _default), do: true
-  defp to_boolean(:missing, default), do: default
   defp to_boolean("false", _default), do: false
   defp to_boolean("no", _default), do: false
   defp to_boolean("off", _default), do: false
@@ -875,7 +874,7 @@ defmodule Xgit.Lib.Config do
          reversed_new_config_lines,
          current
        ),
-       do: {[%{current | value: next_match} | reversed_new_config_lines], remainder}
+       do: {remainder, [%{current | value: next_match} | reversed_new_config_lines]}
 
   defp consume_next_matching_config_line([], reversed_new_config_lines, _current),
     do: {reversed_new_config_lines, []}
