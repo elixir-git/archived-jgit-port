@@ -1300,15 +1300,13 @@ defmodule Xgit.Lib.ConfigTest do
   # 	assertSubsectionRoundTrip("x\by", "\"x\by\"");
   # 	assertSubsectionRoundTrip("x\ty", "\"x\ty\"");
   # }
-  #
-  # @Test
-  # public void testParseInvalidValues() {
-  # 	assertInvalidValue(JGitText.get().newlineInQuotesNotAllowed, "x\"\n\"y");
-  # 	assertInvalidValue(JGitText.get().endOfFileInEscape, "x\\");
-  # 	assertInvalidValue(
-  # 			MessageFormat.format(JGitText.get().badEscape, 'q'), "x\\q");
-  # }
-  #
+
+  test "parse invalid values" do
+    assert_invalid_value("x\"\n\"y")
+    assert_invalid_value("x\\")
+    assert_invalid_value("x\\q")
+  end
+
   # @Test
   # public void testParseInvalidSubsections() {
   # 	assertInvalidSubsection(
@@ -1344,16 +1342,9 @@ defmodule Xgit.Lib.ConfigTest do
     |> Config.get_string("foo", "bar")
   end
 
-  # private static void assertInvalidValue(String expectedMessage,
-  # 		String escapedValue) {
-  # 	try {
-  # 		parseEscapedValue(escapedValue);
-  # 		fail("expected ConfigInvalidException");
-  # 	} catch (ConfigInvalidException e) {
-  # 		assertEquals(expectedMessage, e.getMessage());
-  # 	}
-  # }
-  #
+  defp assert_invalid_value(escaped_value),
+    do: assert_raise(ConfigInvalidError, fn -> parse_escaped_value(escaped_value) end)
+
   # private static void assertSubsectionRoundTrip(String subsection,
   # 		String expectedEscaped) throws ConfigInvalidException {
   # 	String escaped = Config.escapeSubsection(subsection);
