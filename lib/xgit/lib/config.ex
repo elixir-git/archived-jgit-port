@@ -65,19 +65,6 @@ defmodule Xgit.Lib.Config do
     {:ok, %__MODULE__.State{config_lines: [], ref: ref, base_config: nil}}
   end
 
-  #
-  # /**
-  #  * Globally sets a {@link org.eclipse.jgit.lib.TypedConfigGetter} that is
-  #  * subsequently used to read typed values from all git configs.
-  #  *
-  #  * @param getter
-  #  *            to use; if {@code null} use the default getter.
-  #  * @since 4.9
-  #  */
-  # public static void setTypedConfigGetter(TypedConfigGetter getter) {
-  # 	typedGetter = getter == null ? DEFAULT_GETTER : getter;
-  # }
-  #
   # /**
   #  * Escape the value before saving
   #  *
