@@ -1238,14 +1238,14 @@ defmodule Xgit.Lib.ConfigTest do
   # 	assertValueRoundTrip("x\ty", "x\\ty");
   # 	assertValueRoundTrip("x\by", "x\\by");
   # }
-  #
-  # @Test
-  # public void testParseLiteralBackspace() throws ConfigInvalidException {
-  # 	// This is round-tripped with an escape sequence by JGit, but C git writes
-  # 	// it out as a literal backslash.
-  # 	assertEquals("x\by", parseEscapedValue("x\by"));
-  # }
-  #
+
+  test "parse literal backsapce" do
+    # This is round-tripped with an escape sequence by xgit, but C gits writes
+    # it out as a literal backslash.
+
+    assert parse_escaped_value("x\by") == "x\by"
+  end
+
   # @Test
   # public void testEscapeCommentCharacters() throws ConfigInvalidException {
   # 	assertValueRoundTrip("x#y", "\"x#y\"");
@@ -1339,14 +1339,13 @@ defmodule Xgit.Lib.ConfigTest do
   # 	assertEquals("escape failed;", expectedEscaped, escaped);
   # 	assertEquals("parse failed;", value, parseEscapedValue(escaped));
   # }
-  #
-  # private static String parseEscapedValue(String escapedValue)
-  # 		throws ConfigInvalidException {
-  # 	String text = "[foo]\nbar=" + escapedValue;
-  # 	Config c = parse(text);
-  # 	return c.getString("foo", null, "bar");
-  # }
-  #
+
+  defp parse_escaped_value(escaped_value) do
+    "[foo]\nbar=#{escaped_value}"
+    |> parse()
+    |> Config.get_string("foo", "bar")
+  end
+
   # private static void assertInvalidValue(String expectedMessage,
   # 		String escapedValue) {
   # 	try {
