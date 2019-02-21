@@ -1410,15 +1410,6 @@ defmodule Xgit.Lib.ConfigTest do
     List.first(subsections)
   end
 
-  # private static void assertIllegalArgumentException(Runnable r) {
-  # 	try {
-  # 		r.run();
-  # 		fail("expected IllegalArgumentException");
-  # 	} catch (IllegalArgumentException e) {
-  # 		// Expected.
-  # 	}
-  # }
-
   defp assert_invalid_subsection(escaped_subsection) do
     assert_raise ConfigInvalidError, fn -> parse_escaped_subsection(escaped_subsection) end
   end
