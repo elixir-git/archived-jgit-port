@@ -641,6 +641,11 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.get_boolean(c, "foo", "bar", false) == true
   end
 
+  test "get_boolean with missing value" do
+    c = parse("[a]\nx\n")
+    assert Config.get_boolean(c, "a", "x", false) == true
+  end
+
   # @Test
   # public void testIncludeInvalidName() throws ConfigInvalidException {
   # 	expectedEx.expect(ConfigInvalidException.class);
