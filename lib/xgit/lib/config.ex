@@ -173,40 +173,6 @@ defmodule Xgit.Lib.Config do
   # 	return r.append('"').toString();
   # }
   #
-  # /**
-  #  * Obtain an integer value from the configuration.
-  #  *
-  #  * @param section
-  #  *            section the key is grouped within.
-  #  * @param name
-  #  *            name of the key to get.
-  #  * @param defaultValue
-  #  *            default value to return if no value was present.
-  #  * @return an integer value from the configuration, or defaultValue.
-  #  */
-  # public int getInt(final String section, final String name,
-  # 		final int defaultValue) {
-  # 	return typedGetter.getInt(this, section, null, name, defaultValue);
-  # }
-  #
-  # /**
-  #  * Obtain an integer value from the configuration.
-  #  *
-  #  * @param section
-  #  *            section the key is grouped within.
-  #  * @param subsection
-  #  *            subsection name, such a remote or branch name.
-  #  * @param name
-  #  *            name of the key to get.
-  #  * @param defaultValue
-  #  *            default value to return if no value was present.
-  #  * @return an integer value from the configuration, or defaultValue.
-  #  */
-  # public int getInt(final String section, String subsection,
-  # 		final String name, final int defaultValue) {
-  # 	return typedGetter.getInt(this, section, subsection, name,
-  # 			defaultValue);
-  # }
 
   @doc ~S"""
   Get an integer value from the git config.
