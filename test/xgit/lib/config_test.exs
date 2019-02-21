@@ -1354,6 +1354,12 @@ defmodule Xgit.Lib.ConfigTest do
     assert_invalid_value("x\\q")
   end
 
+  test "parse error when value precedes section header" do
+    assert_raise ConfigInvalidError, fn ->
+      parse("x = 42")
+    end
+  end
+
   # @Test
   # public void testParseInvalidSubsections() {
   # 	assertInvalidSubsection(
