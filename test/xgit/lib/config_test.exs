@@ -1361,6 +1361,10 @@ defmodule Xgit.Lib.ConfigTest do
     assert_raise ConfigInvalidError, fn ->
       parse("[this \"section header is incomplete\"")
     end
+
+    assert_raise ConfigInvalidError, fn ->
+      parse("[this \"section header is incompl")
+    end
   end
 
   test "parse invalid subsections" do
