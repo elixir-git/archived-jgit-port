@@ -1254,11 +1254,8 @@ defmodule Xgit.Lib.Config do
     do: {value_acc, remainder}
 
   defp read_value([c | _] = remainder, value_acc, _trailing_ws_acc, false = _in_quote?)
-       when c == ?# or c == ?; do
-    {value_acc, remainder}
-  end
-
-  # do: {value_acc, remainder}
+       when c == ?# or c == ?;,
+       do: {value_acc, remainder}
 
   defp read_value([?\\], _name_acc, _trailing_ws_acc, _in_quote?),
     do: raise(ConfigInvalidError, message: "End of file in escape")
