@@ -1014,9 +1014,10 @@ defmodule Xgit.Lib.Config do
   # IMPORTANT: from_text_impl/3 runs in GenServer process.
   # See handle_call/3 below.
 
-  defp from_text_impl(_text, 10, _included_from) do
-    raise ConfigInvalidError, message: "Too many recursions; circular includes in config file(s)?"
-  end
+  # UNIMPLEMENTED: Restore this guard when we add support for included config files.
+  # defp from_text_impl(_text, 10, _included_from) do
+  #   raise ConfigInvalidError, message: "Too many recursions; circular includes in config file(s)?"
+  # end
 
   defp from_text_impl(text, depth, included_from) when is_binary(text) and is_integer(depth) do
     text
