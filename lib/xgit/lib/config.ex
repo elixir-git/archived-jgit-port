@@ -126,40 +126,38 @@ defmodule Xgit.Lib.Config do
   defp escape_charlist(reversed_result, [c | remainder], needs_quote?),
     do: escape_charlist([c | reversed_result], remainder, needs_quote?)
 
-  # static String escapeSubsection(String x) {
-  # 	if (x.isEmpty()) {
-  # 		return "\"\""; //$NON-NLS-1$
-  # 	}
-  #
-  # 	StringBuilder r = new StringBuilder(x.length() + 2).append('"');
-  # 	for (int k = 0; k < x.length(); k++) {
-  # 		char c = x.charAt(k);
-  #
-  # 		// git-config(1) lists the limited set of supported escape sequences
-  # 		// (which is even more limited for subsection names than for values).
-  # 		switch (c) {
-  # 		case '\0':
-  # 			throw new IllegalArgumentException(
-  # 					JGitText.get().configSubsectionContainsNullByte);
-  #
-  # 		case '\n':
-  # 			throw new IllegalArgumentException(
-  # 					JGitText.get().configSubsectionContainsNewline);
-  #
-  # 		case '\\':
-  # 		case '"':
-  # 			r.append('\\').append(c);
-  # 			break;
-  #
-  # 		default:
-  # 			r.append(c);
-  # 			break;
-  # 		}
-  # 	}
-  #
-  # 	return r.append('"').toString();
-  # }
-  #
+  @doc ~S"""
+  Escape a subsection name before saving.
+  """
+  def escape_subsection(""), do: "\"\""
+
+  def escape_subsection(x) when is_binary(x) do
+    x
+    |> String.to_charlist()
+    |> escape_subsection_impl([])
+    |> Enum.reverse()
+    |> to_quoted_string()
+  end
+
+  defp to_quoted_string(s), do: ~s["#{s}"]
+
+  # git-config(1) lists the limited set of supported escape sequences
+  # (which is even more limited for subsection names than for values).
+
+  defp escape_subsection_impl([], reversed_result), do: reversed_result
+
+  defp escape_subsection_impl([0 | _], _reversed_result),
+    do: raise(ConfigInvalidError, "config subsection name contains byte 0x00")
+
+  defp escape_subsection_impl([?\n | _], _reversed_result),
+    do: raise(ConfigInvalidError, "config subsection name contains newline")
+
+  defp escape_subsection_impl([c | remainder], reversed_result)
+       when c == ?\\ or c == ?",
+       do: escape_subsection_impl(remainder, [c | [?\\ | reversed_result]])
+
+  defp escape_subsection_impl([c | remainder], reversed_result),
+    do: escape_subsection_impl(remainder, [c | reversed_result])
 
   @doc ~S"""
   Get an integer value from the git config.
@@ -373,22 +371,25 @@ defmodule Xgit.Lib.Config do
   # 		String name) {
   # 	return typedGetter.getRefSpecs(this, section, subsection, name);
   # }
-  #
-  # /**
-  #  * Get set of all subsections of specified section within this configuration
-  #  * and its base configuration
-  #  *
-  #  * @param section
-  #  *            section to search for.
-  #  * @return set of all subsections of specified section within this
-  #  *         configuration and its base configuration; may be empty if no
-  #  *         subsection exists. The set's iterator returns sections in the
-  #  *         order they are declared by the configuration starting from this
-  #  *         instance and progressing through the base.
-  #  */
-  # public Set<String> getSubsections(String section) {
-  # 	return getState().getSubsections(section);
-  # }
+
+  @doc ~S"""
+  Get set of all subsections of specified section within this configuration
+  and its base configuration.
+  """
+  def subsections(c, section) when is_binary(section),
+    do: c |> process_ref() |> GenServer.call({:subsections, section})
+
+  # IMPORTANT: subsections_impl/2 runs in GenServer process.
+  # See handle_call/3 below.
+
+  defp subsections_impl(config_lines, section) do
+    config_lines
+    |> Enum.filter(&(&1.section == section))
+    |> Enum.map(& &1.subsection)
+    |> Enum.dedup()
+
+    # TODO: Dedup globally?
+  end
 
   @doc ~S"""
   Get the sections defined in this `Config`.
@@ -1655,6 +1656,16 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
     {:reply, raw_string_list(s, section, subsection, name), s}
+  end
+
+  @impl true
+  def handle_call(
+        {:subsections, section},
+        _from,
+        %__MODULE__.State{config_lines: config_lines} = s
+      )
+      when is_binary(section) do
+    {:reply, subsections_impl(config_lines, section), s}
   end
 
   @impl true

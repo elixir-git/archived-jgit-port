@@ -1275,15 +1275,14 @@ defmodule Xgit.Lib.ConfigTest do
     assert parse_escaped_value("x\by") == "x\by"
   end
 
-  # @Test
-  # public void testEscapeValueInvalidCharacters() {
-  # 	assertIllegalArgumentException(() -> Config.escapeSubsection("x\0y"));
-  # }
-  # @Test
-  # public void testEscapeSubsectionInvalidCharacters() {
-  # 	assertIllegalArgumentException(() -> Config.escapeSubsection("x\ny"));
-  # 	assertIllegalArgumentException(() -> Config.escapeSubsection("x\0y"));
-  # }
+  test "escape_value/1 raises error on invalid characters" do
+    assert_raise ConfigInvalidError, fn -> Config.escape_value("x\0y") end
+  end
+
+  test "escape_subsection/1 raises error on invalid characters" do
+    assert_raise ConfigInvalidError, fn -> Config.escape_subsection("x\ny") end
+    assert_raise ConfigInvalidError, fn -> Config.escape_subsection("x\0y") end
+  end
 
   test "parse multiple quoted regions" do
     assert parse_escaped_value("b\" a\"\" z; \\n\"") == "b a z; \n"
@@ -1324,22 +1323,21 @@ defmodule Xgit.Lib.ConfigTest do
                "  value = blah\n"
   end
 
-  # @Test
-  # public void testEscapeSubsection() throws ConfigInvalidException {
-  # 	assertSubsectionRoundTrip("", "\"\"");
-  # 	assertSubsectionRoundTrip("x", "\"x\"");
-  # 	assertSubsectionRoundTrip(" x", "\" x\"");
-  # 	assertSubsectionRoundTrip("x ", "\"x \"");
-  # 	assertSubsectionRoundTrip(" x ", "\" x \"");
-  # 	assertSubsectionRoundTrip("x y", "\"x y\"");
-  # 	assertSubsectionRoundTrip("x  y", "\"x  y\"");
-  # 	assertSubsectionRoundTrip("x\\y", "\"x\\\\y\"");
-  # 	assertSubsectionRoundTrip("x\"y", "\"x\\\"y\"");
-  #
-  # 	// Unlike for values, \b and \t are not escaped.
-  # 	assertSubsectionRoundTrip("x\by", "\"x\by\"");
-  # 	assertSubsectionRoundTrip("x\ty", "\"x\ty\"");
-  # }
+  test "escape_subsection/1" do
+    assert_subsection_round_trip("", "\"\"")
+    assert_subsection_round_trip("x", "\"x\"")
+    assert_subsection_round_trip(" x", "\" x\"")
+    assert_subsection_round_trip("x ", "\"x \"")
+    assert_subsection_round_trip(" x ", "\" x \"")
+    assert_subsection_round_trip("x y", "\"x y\"")
+    assert_subsection_round_trip("x  y", "\"x  y\"")
+    assert_subsection_round_trip("x\\y", "\"x\\\\y\"")
+    assert_subsection_round_trip("x\"y", "\"x\\\"y\"")
+
+    # Unlike for values, \b and \t are not escaped.
+    assert_subsection_round_trip("x\by", "\"x\by\"")
+    assert_subsection_round_trip("x\ty", "\"x\ty\"")
+  end
 
   test "parse invalid values" do
     assert_invalid_value("x\"\n\"y")
@@ -1365,22 +1363,19 @@ defmodule Xgit.Lib.ConfigTest do
     end
   end
 
-  # @Test
-  # public void testParseInvalidSubsections() {
-  # 	assertInvalidSubsection(
-  # 			JGitText.get().newlineInQuotesNotAllowed, "\"x\ny\"");
-  # }
-  #
-  # @Test
-  # public void testDropBackslashFromInvalidEscapeSequenceInSubsectionName()
-  # 		throws ConfigInvalidException {
-  # 	assertEquals("x0", parseEscapedSubsection("\"x\\0\""));
-  # 	assertEquals("xq", parseEscapedSubsection("\"x\\q\""));
-  # 	// Unlike for values, \b, \n, and \t are not valid escape sequences.
-  # 	assertEquals("xb", parseEscapedSubsection("\"x\\b\""));
-  # 	assertEquals("xn", parseEscapedSubsection("\"x\\n\""));
-  # 	assertEquals("xt", parseEscapedSubsection("\"x\\t\""));
-  # }
+  test "parse invalid subsections" do
+    assert_invalid_subsection("\"x\ny\"")
+  end
+
+  test "drop backslash from invalid escape sequence in subsection name" do
+    assert parse_escaped_subsection("\"x\\0\"") == "x0"
+    assert parse_escaped_subsection("\"x\\q\"") == "xq"
+
+    # Unlike for values, \b, \n, and \t are not valid escape sequences.
+    assert parse_escaped_subsection("\"x\\b\"") == "xb"
+    assert parse_escaped_subsection("\"x\\n\"") == "xn"
+    assert parse_escaped_subsection("\"x\\t\"") == "xt"
+  end
 
   defp assert_value_round_trip(value), do: assert_value_round_trip(value, value)
 
@@ -1399,22 +1394,22 @@ defmodule Xgit.Lib.ConfigTest do
   defp assert_invalid_value(escaped_value),
     do: assert_raise(ConfigInvalidError, fn -> parse_escaped_value(escaped_value) end)
 
-  # private static void assertSubsectionRoundTrip(String subsection,
-  # 		String expectedEscaped) throws ConfigInvalidException {
-  # 	String escaped = Config.escapeSubsection(subsection);
-  # 	assertEquals("escape failed;", expectedEscaped, escaped);
-  # 	assertEquals("parse failed;", subsection, parseEscapedSubsection(escaped));
-  # }
-  #
-  # private static String parseEscapedSubsection(String escapedSubsection)
-  # 		throws ConfigInvalidException {
-  # 	String text = "[foo " + escapedSubsection + "]\nbar = value";
-  # 	Config c = parse(text);
-  # 	Set<String> subsections = c.getSubsections("foo");
-  # 	assertEquals("only one section", 1, subsections.size());
-  # 	return subsections.iterator().next();
-  # }
-  #
+  defp assert_subsection_round_trip(subsection, expected_escaped) do
+    escaped = Config.escape_subsection(subsection)
+    assert escaped == expected_escaped
+    assert subsection == parse_escaped_subsection(escaped)
+  end
+
+  defp parse_escaped_subsection(escaped_subsection) do
+    text = "[foo #{escaped_subsection}]\nbar = value"
+
+    c = parse(text)
+
+    subsections = Config.subsections(c, "foo")
+    assert length(subsections) == 1
+    List.first(subsections)
+  end
+
   # private static void assertIllegalArgumentException(Runnable r) {
   # 	try {
   # 		r.run();
@@ -1423,17 +1418,11 @@ defmodule Xgit.Lib.ConfigTest do
   # 		// Expected.
   # 	}
   # }
-  #
-  # private static void assertInvalidSubsection(String expectedMessage,
-  # 		String escapedSubsection) {
-  # 	try {
-  # 		parseEscapedSubsection(escapedSubsection);
-  # 		fail("expected ConfigInvalidException");
-  # 	} catch (ConfigInvalidException e) {
-  # 		assertEquals(expectedMessage, e.getMessage());
-  # 	}
-  # }
-  #
+
+  defp assert_invalid_subsection(escaped_subsection) do
+    assert_raise ConfigInvalidError, fn -> parse_escaped_subsection(escaped_subsection) end
+  end
+
   # private static FileBasedConfig loadConfig(File file)
   # 		throws IOException, ConfigInvalidException {
   # 	final FileBasedConfig config = new FileBasedConfig(null, file,
