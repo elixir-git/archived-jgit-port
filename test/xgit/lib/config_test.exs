@@ -613,6 +613,11 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.get_int(c, "a", "y", 2) == 2
   end
 
+  test "get_int with invalid value" do
+    c = parse("[a]\nx = abc\n")
+    assert_raise ConfigInvalidError, fn -> Config.get_int(c, "a", "x", 44) end
+  end
+
   test "get/set_string_list with empty value" do
     c =
       Config.new()
