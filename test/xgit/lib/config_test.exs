@@ -1357,6 +1357,12 @@ defmodule Xgit.Lib.ConfigTest do
     end
   end
 
+  test "parse error with missing section name" do
+    assert_raise ConfigInvalidError, fn ->
+      parse("[\"subsection with nosection\"]")
+    end
+  end
+
   test "parse error with incomplete subsection header" do
     assert_raise ConfigInvalidError, fn ->
       parse("[this \"section header is incomplete\"")
