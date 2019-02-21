@@ -1217,56 +1217,56 @@ defmodule Xgit.Lib.ConfigTest do
   # 	expectedEx.expect(IllegalArgumentException.class);
   # 	parseTime("-1", MILLISECONDS);
   # }
-  #
-  # @Test
-  # public void testEscapeSpacesOnly() throws ConfigInvalidException {
-  # 	// Empty string is read back as null, so this doesn't round-trip.
-  # 	assertEquals("", Config.escapeValue(""));
-  #
-  # 	assertValueRoundTrip(" ", "\" \"");
-  # 	assertValueRoundTrip("  ", "\"  \"");
-  # }
-  #
-  # @Test
-  # public void testEscapeLeadingSpace() throws ConfigInvalidException {
-  # 	assertValueRoundTrip("x", "x");
-  # 	assertValueRoundTrip(" x", "\" x\"");
-  # 	assertValueRoundTrip("  x", "\"  x\"");
-  # }
-  #
-  # @Test
-  # public void testEscapeTrailingSpace() throws ConfigInvalidException {
-  # 	assertValueRoundTrip("x", "x");
-  # 	assertValueRoundTrip("x  ","\"x  \"");
-  # 	assertValueRoundTrip("x ","\"x \"");
-  # }
-  #
-  # @Test
-  # public void testEscapeLeadingAndTrailingSpace()
-  # 		throws ConfigInvalidException {
-  # 	assertValueRoundTrip(" x ", "\" x \"");
-  # 	assertValueRoundTrip("  x ", "\"  x \"");
-  # 	assertValueRoundTrip(" x  ", "\" x  \"");
-  # 	assertValueRoundTrip("  x  ", "\"  x  \"");
-  # }
-  #
-  # @Test
-  # public void testNoEscapeInternalSpaces() throws ConfigInvalidException {
-  # 	assertValueRoundTrip("x y");
-  # 	assertValueRoundTrip("x  y");
-  # 	assertValueRoundTrip("x  y");
-  # 	assertValueRoundTrip("x  y   z");
-  # 	assertValueRoundTrip("x " + WS + " y");
-  # }
-  #
-  # @Test
-  # public void testNoEscapeSpecialCharacters() throws ConfigInvalidException {
-  # 	assertValueRoundTrip("x\\y", "x\\\\y");
-  # 	assertValueRoundTrip("x\"y", "x\\\"y");
-  # 	assertValueRoundTrip("x\ny", "x\\ny");
-  # 	assertValueRoundTrip("x\ty", "x\\ty");
-  # 	assertValueRoundTrip("x\by", "x\\by");
-  # }
+
+  describe "escape_value/1" do
+    test "escape spaces only" do
+      # Empty string is read back as nil, so this doesn't round trip.
+      assert Config.escape_value("") == ""
+
+      assert_value_round_trip(" ", "\" \"")
+      assert_value_round_trip("  ", "\"  \"")
+    end
+
+    test "quotes if leading space" do
+      assert_value_round_trip("x", "x")
+      assert_value_round_trip(" x", "\" x\"")
+      assert_value_round_trip("  x", "\"  x\"")
+    end
+
+    test "quotes if trailing space" do
+      assert_value_round_trip("x", "x")
+      assert_value_round_trip("x  ", "\"x  \"")
+      assert_value_round_trip("x ", "\"x \"")
+    end
+
+    test "quotes if leading and trailing space" do
+      assert_value_round_trip(" x ", "\" x \"")
+      assert_value_round_trip("  x ", "\"  x \"")
+      assert_value_round_trip(" x  ", "\" x  \"")
+      assert_value_round_trip("  x  ", "\"  x  \"")
+    end
+
+    test "does not quote if internal space" do
+      assert_value_round_trip("x y")
+      assert_value_round_trip("x  y")
+      assert_value_round_trip("x  y")
+      assert_value_round_trip("x  y   z")
+      assert_value_round_trip("x #{@ws} y")
+    end
+
+    test "does not quote if escapeds special characters" do
+      assert_value_round_trip("x\\y", "x\\\\y")
+      assert_value_round_trip("x\"y", "x\\\"y")
+      assert_value_round_trip("x\ny", "x\\ny")
+      assert_value_round_trip("x\ty", "x\\ty")
+      assert_value_round_trip("x\by", "x\\by")
+    end
+
+    test "quotes if comment characters in value" do
+      assert_value_round_trip("x#y", "\"x#y\"")
+      assert_value_round_trip("x;y", "\"x;y\"")
+    end
+  end
 
   test "parse literal backsapce" do
     # This is round-tripped with an escape sequence by xgit, but C gits writes
@@ -1276,16 +1276,9 @@ defmodule Xgit.Lib.ConfigTest do
   end
 
   # @Test
-  # public void testEscapeCommentCharacters() throws ConfigInvalidException {
-  # 	assertValueRoundTrip("x#y", "\"x#y\"");
-  # 	assertValueRoundTrip("x;y", "\"x;y\"");
-  # }
-  #
-  # @Test
   # public void testEscapeValueInvalidCharacters() {
   # 	assertIllegalArgumentException(() -> Config.escapeSubsection("x\0y"));
   # }
-  #
   # @Test
   # public void testEscapeSubsectionInvalidCharacters() {
   # 	assertIllegalArgumentException(() -> Config.escapeSubsection("x\ny"));
@@ -1388,18 +1381,14 @@ defmodule Xgit.Lib.ConfigTest do
   # 	assertEquals("xn", parseEscapedSubsection("\"x\\n\""));
   # 	assertEquals("xt", parseEscapedSubsection("\"x\\t\""));
   # }
-  #
-  # private static void assertValueRoundTrip(String value)
-  # 		throws ConfigInvalidException {
-  # 	assertValueRoundTrip(value, value);
-  # }
-  #
-  # private static void assertValueRoundTrip(String value, String expectedEscaped)
-  # 		throws ConfigInvalidException {
-  # 	String escaped = Config.escapeValue(value);
-  # 	assertEquals("escape failed;", expectedEscaped, escaped);
-  # 	assertEquals("parse failed;", value, parseEscapedValue(escaped));
-  # }
+
+  defp assert_value_round_trip(value), do: assert_value_round_trip(value, value)
+
+  defp assert_value_round_trip(value, expected_escaped) do
+    escaped = Config.escape_value(value)
+    assert escaped == expected_escaped
+    assert parse_escaped_value(escaped) == value
+  end
 
   defp parse_escaped_value(escaped_value) do
     "[foo]\nbar=#{escaped_value}"

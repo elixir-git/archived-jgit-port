@@ -65,80 +65,67 @@ defmodule Xgit.Lib.Config do
     {:ok, %__MODULE__.State{config_lines: [], ref: ref, base_config: nil}}
   end
 
-  # /**
-  #  * Escape the value before saving
-  #  *
-  #  * @param x
-  #  *            the value to escape
-  #  * @return the escaped value
-  #  */
-  # static String escapeValue(String x) {
-  # 	if (x.isEmpty()) {
-  # 		return ""; //$NON-NLS-1$
-  # 	}
+  @doc ~S"""
+  Escape the value before saving.
+  """
+  def escape_value(""), do: ""
+
+  def escape_value(s) when is_binary(s) do
+    need_quote? = String.starts_with?(s, " ") || String.ends_with?(s, " ")
+
+    {rr, need_quote?} = escape_charlist([], String.to_charlist(s), need_quote?)
+    maybe_quote = if need_quote?, do: "\"", else: ""
+
+    "#{maybe_quote}#{rr |> Enum.reverse() |> to_string()}#{maybe_quote}"
+  end
+
+  # git-config(1) lists the limited set of supported escape sequences, but
+  # the documentation is otherwise not especially normative. In particular,
+  # which ones of these produce and/or require escaping and/or quoting
+  # around them is not documented and was discovered by trial and error.
+  # In summary:
   #
-  # 	boolean needQuote = x.charAt(0) == ' ' || x.charAt(x.length() - 1) == ' ';
-  # 	StringBuilder r = new StringBuilder(x.length());
-  # 	for (int k = 0; k < x.length(); k++) {
-  # 		char c = x.charAt(k);
-  # 		// git-config(1) lists the limited set of supported escape sequences, but
-  # 		// the documentation is otherwise not especially normative. In particular,
-  # 		// which ones of these produce and/or require escaping and/or quoting
-  # 		// around them is not documented and was discovered by trial and error.
-  # 		// In summary:
-  # 		//
-  # 		// * Quotes are only required if there is leading/trailing whitespace or a
-  # 		//   comment character.
-  # 		// * Bytes that have a supported escape sequence are escaped, except for
-  # 		//   \b for some reason which isn't.
-  # 		// * Needing an escape sequence is not sufficient reason to quote the
-  # 		//   value.
-  # 		switch (c) {
-  # 		case '\0':
-  # 			// Unix command line calling convention cannot pass a '\0' as an
-  # 			// argument, so there is no equivalent way in C git to store a null byte
-  # 			// in a config value.
-  # 			throw new IllegalArgumentException(
-  # 					JGitText.get().configValueContainsNullByte);
-  #
-  # 		case '\n':
-  # 			r.append('\\').append('n');
-  # 			break;
-  #
-  # 		case '\t':
-  # 			r.append('\\').append('t');
-  # 			break;
-  #
-  # 		case '\b':
-  # 			// Doesn't match `git config foo.bar $'x\by'`, which doesn't escape the
-  # 			// \x08, but since both escaped and unescaped forms are readable, we'll
-  # 			// prefer internal consistency here.
-  # 			r.append('\\').append('b');
-  # 			break;
-  #
-  # 		case '\\':
-  # 			r.append('\\').append('\\');
-  # 			break;
-  #
-  # 		case '"':
-  # 			r.append('\\').append('"');
-  # 			break;
-  #
-  # 		case '#':
-  # 		case ';':
-  # 			needQuote = true;
-  # 			r.append(c);
-  # 			break;
-  #
-  # 		default:
-  # 			r.append(c);
-  # 			break;
-  # 		}
-  # 	}
-  #
-  # 	return needQuote ? '"' + r.toString() + '"' : r.toString();
-  # }
-  #
+  # * Quotes are only required if there is leading/trailing whitespace or a
+  #   comment character.
+  # * Bytes that have a supported escape sequence are escaped, except for
+  #   `\b` for some reason which isn't.
+  # * Needing an escape sequence is not sufficient reason to quote the
+  #   value.
+  defp escape_charlist(reversed_result, remaining_charlist, need_quote?)
+
+  defp escape_charlist(reversed_result, [], need_quote?), do: {reversed_result, need_quote?}
+
+  # Unix command line calling convention cannot pass a `\0` as an
+  # argument, so there is no equivalent way in C git to store a null byte
+  # in a config value.
+  defp escape_charlist(_, [0 | _], _),
+    do: raise(ConfigInvalidError, "config value contains byte 0x00")
+
+  defp escape_charlist(reversed_result, [?\n | remainder], needs_quote?),
+    do: escape_charlist('n\\' ++ reversed_result, remainder, needs_quote?)
+
+  defp escape_charlist(reversed_result, [?\t | remainder], needs_quote?),
+    do: escape_charlist('t\\' ++ reversed_result, remainder, needs_quote?)
+
+  # Doesn't match `git config foo.bar $'x\by'`, which doesn't escape the
+  # \x08, but since both escaped and unescaped forms are readable, we'll
+  # prefer internal consistency here.
+  defp escape_charlist(reversed_result, [?\b | remainder], needs_quote?),
+    do: escape_charlist('b\\' ++ reversed_result, remainder, needs_quote?)
+
+  defp escape_charlist(reversed_result, [?\\ | remainder], needs_quote?),
+    do: escape_charlist('\\\\' ++ reversed_result, remainder, needs_quote?)
+
+  defp escape_charlist(reversed_result, [?" | remainder], needs_quote?),
+    do: escape_charlist('"\\' ++ reversed_result, remainder, needs_quote?)
+
+  defp escape_charlist(reversed_result, [c | remainder], _needs_quote?)
+       when c == ?# or c == ?;,
+       do: escape_charlist([c | reversed_result], remainder, true)
+
+  defp escape_charlist(reversed_result, [c | remainder], needs_quote?),
+    do: escape_charlist([c | reversed_result], remainder, needs_quote?)
+
   # static String escapeSubsection(String x) {
   # 	if (x.isEmpty()) {
   # 		return "\"\""; //$NON-NLS-1$
@@ -990,9 +977,6 @@ defmodule Xgit.Lib.Config do
   defp value_to_text(:empty), do: ""
   defp value_to_text(nil), do: " ="
   defp value_to_text(v), do: " = #{escape_value(v)}"
-
-  defp escape_value(v), do: v
-  # TODO: Needs a real implementation.
 
   defp suffix_str_for_body(nil), do: ""
   defp suffix_str_for_body(s), do: s
