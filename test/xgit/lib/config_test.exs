@@ -596,7 +596,7 @@ defmodule Xgit.Lib.ConfigTest do
   end
 
   test "parsed empty string" do
-    c = parse("[a]\nx = 0\ny =\n")
+    c = parse("[a]\nx = 0\ny =\nmissing\n")
 
     assert Config.get_string(c, "a", "x") == "0"
     assert Config.get_int(c, "a", "x", 1) == 0
@@ -607,6 +607,10 @@ defmodule Xgit.Lib.ConfigTest do
 
     assert Config.get_string(c, "a", "z") == nil
     assert Config.get_string_list(c, "a", "z") == []
+
+    assert Config.get_string(c, "a", "missing") == ""
+    assert Config.get_string_list(c, "a", "missing") == [""]
+    assert Config.get_int(c, "a", "y", 2) == 2
   end
 
   test "get/set_string_list with empty value" do
