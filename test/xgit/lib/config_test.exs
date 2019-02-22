@@ -98,6 +98,13 @@ defmodule Xgit.Lib.ConfigTest do
     end
   end
 
+  test "value can span multiple lines with \\ escaping" do
+    c = parse("[Foo]\nBar=abc\\\ndefs\n")
+
+    assert Config.get_boolean(c, "foo", "bar", false) == true
+    assert Config.get_string(c, "foo", "bar") == "abcdef"
+  end
+
   # @Test
   # public void test007_readUserConfig() {
   # 	final MockSystemReader mockSystemReader = new MockSystemReader();
