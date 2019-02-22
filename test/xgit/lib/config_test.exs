@@ -92,6 +92,12 @@ defmodule Xgit.Lib.ConfigTest do
     end
   end
 
+  test "raises error if kev/value delimiter is invalid" do
+    assert_raise ConfigInvalidError, fn ->
+      parse("[Foo]\nbar > 42\n")
+    end
+  end
+
   # @Test
   # public void test007_readUserConfig() {
   # 	final MockSystemReader mockSystemReader = new MockSystemReader();
