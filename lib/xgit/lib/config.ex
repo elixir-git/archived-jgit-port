@@ -315,7 +315,7 @@ defmodule Xgit.Lib.Config do
   def get_string_list(c, section, subsection \\ nil, name)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
-    # TODO: Implement base. Still thinking about how that works.
+    # UNIMPLEMENTED: base config. Still thinking about how that works.
     # String[] base;
     # if (baseConfig != null)
     # 	base = baseConfig.getStringList(section, subsection, name);
@@ -388,7 +388,7 @@ defmodule Xgit.Lib.Config do
     |> Enum.map(& &1.subsection)
     |> Enum.dedup()
 
-    # TODO: Dedup globally?
+    # TBD: Dedup globally?
   end
 
   @doc ~S"""
@@ -405,7 +405,7 @@ defmodule Xgit.Lib.Config do
     |> Enum.map(&String.downcase(&1.section))
     |> Enum.dedup()
 
-    # TODO: Dedup globally?
+    # TBD: Dedup globally?
   end
 
   @doc ~S"""
@@ -424,7 +424,7 @@ defmodule Xgit.Lib.Config do
     |> Enum.map(&String.downcase(&1.name))
     |> Enum.dedup()
 
-    # TODO: Dedup globally?
+    # TBD: Dedup globally?
   end
 
   @doc ~S"""
@@ -444,7 +444,7 @@ defmodule Xgit.Lib.Config do
     |> Enum.map(&String.downcase(&1.name))
     |> Enum.dedup()
 
-    # TODO: Dedup globally?
+    # TBD: Dedup globally?
   end
 
   # /**
@@ -569,7 +569,7 @@ defmodule Xgit.Lib.Config do
   # }
 
   defp raw_string_list(%__MODULE__.State{config_lines: config_lines}, section, subsection, name) do
-    # TODO: Consider base state.
+    # UNIMPLEMENTED: Consider base state.
     config_lines
     |> Enum.filter(&ConfigLine.match?(&1, section, subsection, name))
     |> Enum.map(fn %ConfigLine{value: value} -> value end)
@@ -791,7 +791,7 @@ defmodule Xgit.Lib.Config do
       |> replace_matching_config_lines(values, [], section, subsection, name)
       |> Enum.reverse()
 
-    # TODO:
+    # UNIMPLEMENTED:
     # if (notifyUponTransientChanges())
     # 	fireConfigChangedEvent();
 
