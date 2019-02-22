@@ -86,6 +86,12 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.get_string(c, "foo", "bar") == ""
   end
 
+  test "raises error if key name is invalid" do
+    assert_raise ConfigInvalidError, fn ->
+      parse("[Foo]\nbar%=42\n")
+    end
+  end
+
   # @Test
   # public void test007_readUserConfig() {
   # 	final MockSystemReader mockSystemReader = new MockSystemReader();
