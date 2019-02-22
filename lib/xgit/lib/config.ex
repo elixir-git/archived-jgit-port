@@ -1295,7 +1295,6 @@ defmodule Xgit.Lib.Config do
 
   defp read_comment([?\n | remainder]), do: {[], remainder}
   defp read_comment([]), do: {[], []}
-  defp read_comment(_), do: raise(ConfigInvalidError, message: "Bad entry delimiter.")
 
   defp skip_whitespace(s), do: Enum.drop_while(s, &whitespace?/1)
 
