@@ -33,11 +33,6 @@ defmodule Xgit.Lib.Config do
 
   @idle_timeout Application.get_env(:xgit, :config_idle_timeout, 60_000)
 
-  # Looks like ConfigSnapshot devolves down to a list of %ConfigLine{} structs,
-  # so we can merge that functionality into this module as `defp` funcs.
-
-  # private static final String[] EMPTY_STRING_ARRAY = {};
-
   @kib 1024
   @mib 1024 * @kib
   @gib 1024 * @mib
