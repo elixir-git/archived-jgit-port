@@ -962,16 +962,16 @@ defmodule Xgit.Lib.Config do
     " \"#{subsection}\""
 
     # UNIMPLEMENTED: Escaping not handled yet.
-		# out.append(' ');
-		# String escaped = escapeValue(e.subsection);
-		# // make sure to avoid double quotes here
-		# boolean quoted = escaped.startsWith("\"") //$NON-NLS-1$
-		# 		&& escaped.endsWith("\""); //$NON-NLS-1$
-		# if (!quoted)
-		# 	out.append('"');
-		# out.append(escaped);
-		# if (!quoted)
-		# 	out.append('"');
+    # out.append(' ');
+    # String escaped = escapeValue(e.subsection);
+    # // make sure to avoid double quotes here
+    # boolean quoted = escaped.startsWith("\"") //$NON-NLS-1$
+    # 		&& escaped.endsWith("\""); //$NON-NLS-1$
+    # if (!quoted)
+    # 	out.append('"');
+    # out.append(escaped);
+    # if (!quoted)
+    # 	out.append('"');
   end
 
   defp prefix_str_for_body(nil), do: "\t"
