@@ -19,3 +19,11 @@ In keeping with Elixir convention, jgit class names that end with `Exception` ar
 ## Listeners
 
 Instead of porting the `Listener` and `ListenerList` mechanism from jgit, we instead use [`pg2`](http://erlang.org/doc/man/pg2.html) to manage inter-process messaging and the related lifetime issues.
+
+## Windows OS Support
+
+In this initial (experimental) version of xgit, I've decided not to explicitly support Windows. This lets me avoid the time that would be spent porting some of jgit's abstractions. Instead, we'll rely as much as possible on the Erlang VM. Some of the abstractions explicitly avoided:
+
+* FS (file system)
+
+I recognize that retrofitting these abstractions into the system later will be at best, difficult, but I can't justify the cost in porting them for my purposes here.
