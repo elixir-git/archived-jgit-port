@@ -4,12 +4,10 @@ defmodule Xgit.Lib.Config do
 
   IMPORTANT IMPLEMENTATION NOTE: The `Config` module represents a mutable state
   which could easily be shared across multiple client processes. Therefore, we use
-  [Swarm process grouping](https://hexdocs.pm/swarm/readme.html#registration-process-grouping)
-  to ensure that the lifetime of the server matches the *set* of potentially-interested
-  client processes. Client processes  should
-  [`Swarm.join/2`](https://hexdocs.pm/swarm/Swarm.html#join/2) the process group
-  defined by `:ref` to ensure that the `GenServer`'s lifetime is appropriately
-  long.
+  `pg2` process groups to ensure that the lifetime of the server matches the *set*
+  of potentially-interested client processes. Client processes, other than the first
+  process that creates a `Config` should [`:pg2.join`) the process group defined by
+  `:ref` to ensure that the `GenServer`'s lifetime is appropriately long.
   """
   @enforce_keys [:ref]
   defstruct [:ref]
@@ -25,6 +23,8 @@ defmodule Xgit.Lib.Config do
     defstruct [:config_lines, :ref, :base_config]
   end
 
+  @idle_timeout Application.get_env(:xgit, :config_idle_timeout, 60_000)
+
   # Looks like ConfigSnapshot devolves down to a list of %ConfigLine{} structs,
   # so we can merge that functionality into this module as `defp` funcs.
 
@@ -39,10 +39,11 @@ defmodule Xgit.Lib.Config do
   """
   def new do
     ref = make_ref()
+    group = {:xgit_config, ref}
+    :ok = :pg2.create(group)
+    :ok = :pg2.join(group, self())
 
-    {:ok, _pid} = GenServer.start(__MODULE__, {ref, :new}, name: {:global, {:xgit_config, ref}})
-
-    Swarm.join({:xgit_config, ref}, self())
+    {:ok, _pid} = GenServer.start(__MODULE__, {ref, :new}, name: {:global, group})
 
     %__MODULE__{ref: ref}
   end
@@ -60,10 +61,8 @@ defmodule Xgit.Lib.Config do
   # }
 
   @impl true
-  def init({ref, :new}) when is_reference(ref) do
-    # TODO: Manage lifetime. (Shut down when Swarm process group becomes empty.)
-    {:ok, %__MODULE__.State{config_lines: [], ref: ref, base_config: nil}}
-  end
+  def init({ref, :new}) when is_reference(ref),
+    do: {:ok, %__MODULE__.State{config_lines: [], ref: ref, base_config: nil}, @idle_timeout}
 
   @doc ~S"""
   Escape the value before saving.
@@ -1638,15 +1637,15 @@ defmodule Xgit.Lib.Config do
 
   @impl true
   def handle_call(:to_text, _from, %__MODULE__.State{config_lines: config_lines} = s),
-    do: {:reply, to_text_impl(config_lines), s}
+    do: {:reply, to_text_impl(config_lines), s, @idle_timeout}
 
   @impl true
   def handle_call({:from_text, text}, _from, %__MODULE__.State{} = s) when is_binary(text) do
     try do
       new_config_lines = from_text_impl(text, 1, nil)
-      {:reply, :ok, %{s | config_lines: new_config_lines}}
+      {:reply, :ok, %{s | config_lines: new_config_lines}, @idle_timeout}
     rescue
-      e in ConfigInvalidError -> {:reply, {:error, e}, s}
+      e in ConfigInvalidError -> {:reply, {:error, e}, s, @idle_timeout}
     end
   end
 
@@ -1654,7 +1653,7 @@ defmodule Xgit.Lib.Config do
   def handle_call({:get_raw_strings, section, subsection, name}, _from, %__MODULE__.State{} = s)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
-    {:reply, raw_string_list(s, section, subsection, name), s}
+    {:reply, raw_string_list(s, section, subsection, name), s, @idle_timeout}
   end
 
   @impl true
@@ -1664,12 +1663,12 @@ defmodule Xgit.Lib.Config do
         %__MODULE__.State{config_lines: config_lines} = s
       )
       when is_binary(section) do
-    {:reply, subsections_impl(config_lines, section), s}
+    {:reply, subsections_impl(config_lines, section), s, @idle_timeout}
   end
 
   @impl true
   def handle_call(:sections, _from, %__MODULE__.State{config_lines: config_lines} = s),
-    do: {:reply, sections_impl(config_lines), s}
+    do: {:reply, sections_impl(config_lines), s, @idle_timeout}
 
   @impl true
   def handle_call(
@@ -1678,7 +1677,7 @@ defmodule Xgit.Lib.Config do
         %__MODULE__.State{config_lines: config_lines} = s
       )
       when is_binary(section) do
-    {:reply, names_in_section_impl(config_lines, section), s}
+    {:reply, names_in_section_impl(config_lines, section), s, @idle_timeout}
   end
 
   @impl true
@@ -1688,14 +1687,14 @@ defmodule Xgit.Lib.Config do
         %__MODULE__.State{config_lines: config_lines} = s
       )
       when is_binary(section) do
-    {:reply, names_in_subsection_impl(config_lines, section, subsection), s}
+    {:reply, names_in_subsection_impl(config_lines, section, subsection), s, @idle_timeout}
   end
 
   @impl true
   def handle_call({:unset_section, section, subsection}, _from, %__MODULE__.State{} = s)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) do
     new_config_lines = unset_section_impl(s, section, subsection)
-    {:reply, :ok, %{s | config_lines: new_config_lines}}
+    {:reply, :ok, %{s | config_lines: new_config_lines}, @idle_timeout}
   end
 
   @impl true
@@ -1707,8 +1706,20 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_list(values) do
     new_config_lines = set_string_list_impl(s, section, subsection, name, values)
-    {:reply, :ok, %{s | config_lines: new_config_lines}}
+    {:reply, :ok, %{s | config_lines: new_config_lines}, @idle_timeout}
   end
+
+  @impl true
+  def handle_info(:timeout, %__MODULE__.State{ref: ref} = s) do
+    members = :pg2.get_members({:xgit_config, ref})
+
+    if Enum.empty?(members),
+      do: {:stop, :normal, s},
+      else: {:noreply, s, @idle_timeout}
+  end
+
+  @impl true
+  def handle_info(_message, %__MODULE__.State{} = s), do: {:noreply, s, @idle_timeout}
 
   defp process_ref(%__MODULE__{ref: ref}) when is_reference(ref),
     do: {:global, {:xgit_config, ref}}

@@ -1450,4 +1450,13 @@ defmodule Xgit.Lib.ConfigTest do
   # 	config.load();
   # 	return config;
   # }
+
+  test "process remains alive after sleep" do
+    c = parse("[foo]\nbar\n")
+
+    Process.sleep(Application.get_env(:xgit, :config_idle_timeout, 60_000) * 2)
+
+    assert Config.get_boolean(c, "foo", "bar", false) == true
+    assert Config.get_string(c, "foo", "bar") == ""
+  end
 end
