@@ -16,6 +16,7 @@ defmodule Xgit.Lib.Config do
   * parsing time units
   * change notification
   * include file support
+  * a few edge cases
   """
   @enforce_keys [:ref]
   defstruct [:ref]
@@ -960,17 +961,17 @@ defmodule Xgit.Lib.Config do
   defp subsection_to_text(subsection) do
     " \"#{subsection}\""
 
-    # TODO: Escaping not handled yet.
-    # 				out.append(' ');
-    # 				String escaped = escapeValue(e.subsection);
-    # 				// make sure to avoid double quotes here
-    # 				boolean quoted = escaped.startsWith("\"") //$NON-NLS-1$
-    # 						&& escaped.endsWith("\""); //$NON-NLS-1$
-    # 				if (!quoted)
-    # 					out.append('"');
-    # 				out.append(escaped);
-    # 				if (!quoted)
-    # 					out.append('"');
+    # UNIMPLEMENTED: Escaping not handled yet.
+		# out.append(' ');
+		# String escaped = escapeValue(e.subsection);
+		# // make sure to avoid double quotes here
+		# boolean quoted = escaped.startsWith("\"") //$NON-NLS-1$
+		# 		&& escaped.endsWith("\""); //$NON-NLS-1$
+		# if (!quoted)
+		# 	out.append('"');
+		# out.append(escaped);
+		# if (!quoted)
+		# 	out.append('"');
   end
 
   defp prefix_str_for_body(nil), do: "\t"
@@ -1078,8 +1079,6 @@ defmodule Xgit.Lib.Config do
       |> skip_whitespace()
       |> Enum.split_while(&section_name_char?/1)
       |> section_to_string(buffer)
-
-    # TODO: Reread readSectionName closely.
 
     {subsection, remainder} =
       remainder
