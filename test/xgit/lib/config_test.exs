@@ -99,7 +99,7 @@ defmodule Xgit.Lib.ConfigTest do
   end
 
   test "value can span multiple lines with \\ escaping" do
-    c = parse("[Foo]\nBar=abc\\\ndefs\n")
+    c = parse("[Foo]\nBar=abc\\\ndef\n")
 
     assert Config.get_boolean(c, "foo", "bar", false) == true
     assert Config.get_string(c, "foo", "bar") == "abcdef"
