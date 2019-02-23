@@ -1459,4 +1459,11 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.get_boolean(c, "foo", "bar", false) == true
     assert Config.get_string(c, "foo", "bar") == ""
   end
+
+  test "can handle unexpected messages" do
+    %{ref: ref} = parse("[foo]\nbar\n")
+    config_pid = GenServer.whereis({:global, {:xgit_config, ref}})
+
+    send(config_pid, :bogus_message)
+  end
 end
