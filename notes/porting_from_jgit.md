@@ -18,4 +18,4 @@ In keeping with Elixir convention, jgit class names that end with `Exception` ar
 
 ## Listeners
 
-Instead of porting the `Listener` and `ListenerList` mechanism from jgit, we instead use [`swarm`](https://hexdocs.pm/swarm) to manage inter-process messaging and the related lifetime issues.
+Instead of porting the `Listener` and `ListenerList` mechanism from jgit, we instead use [`pg2`](http://erlang.org/doc/man/pg2.html) to manage inter-process messaging and the related lifetime issues.
