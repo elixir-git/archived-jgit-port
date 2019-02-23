@@ -8,6 +8,14 @@ defmodule Xgit.Lib.Config do
   of potentially-interested client processes. Client processes, other than the first
   process that creates a `Config` should [`:pg2.join`) the process group defined by
   `:ref` to ensure that the `GenServer`'s lifetime is appropriately long.
+
+  INCOMPLETE IMPLEMENTATION: The following features have not yet been ported from jgit:
+
+  * config file inheritance ("base configs")
+  * enums
+  * parsing time units
+  * change notification
+  * include file support
   """
   @enforce_keys [:ref]
   defstruct [:ref]
