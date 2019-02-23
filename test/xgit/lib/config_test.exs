@@ -519,46 +519,37 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.sections(c) == ["a", "b"]
   end
 
-  test "names_in_section/2" do
-    c =
-      parse("""
-      [core]
-      repositoryFormatVersion = 0
-      filemode = false
-      logAllRefUpdates = true
-      """)
+  describe "names_in_section/3" do
+    test "non-recursive" do
+      c =
+        parse("""
+        [core]
+        repositoryFormatVersion = 0
+        filemode = false
+        logAllRefUpdates = true
+        """)
 
-    assert Config.names_in_section(c, "core") == [
-             "repositoryformatversion",
-             "filemode",
-             "logallrefupdates"
-           ]
+      assert Config.names_in_section(c, "core") == [
+               "repositoryformatversion",
+               "filemode",
+               "logallrefupdates"
+             ]
+    end
+
+    test "recursive" do
+      c =
+        parse(
+          "[core]\nrepositoryFormatVersion = 0\nfilemode = false\n",
+          parse("[core]\nlogAllRefUpdates = true\n")
+        )
+
+      assert Config.names_in_section(c, "core", recursive: true) == [
+               "repositoryformatversion",
+               "filemode",
+               "logallrefupdates"
+             ]
+    end
   end
-
-  # @Test
-  # public void test_ReadNamesInSectionRecursive()
-  # 		throws ConfigInvalidException {
-  # 	String baseConfigString = "[core]\n" + "logAllRefUpdates = true\n";
-  # 	String configString = "[core]\n" + "repositoryFormatVersion = 0\n"
-  # 			+ "filemode = false\n";
-  # 	final Config c = parse(configString, parse(baseConfigString));
-  # 	Set<String> names = c.getNames("core", true);
-  # 	assertEquals("Core section size", 3, names.size());
-  # 	assertTrue("Core section should contain \"filemode\"",
-  # 			names.contains("filemode"));
-  # 	assertTrue("Core section should contain \"repositoryFormatVersion\"",
-  # 			names.contains("repositoryFormatVersion"));
-  # 	assertTrue("Core section should contain \"logAllRefUpdates\"",
-  # 			names.contains("logAllRefUpdates"));
-  # 	assertTrue("Core section should contain \"logallrefupdates\"",
-  # 			names.contains("logallrefupdates"));
-  #
-  # 	Iterator<String> itr = names.iterator();
-  # 	assertEquals("filemode", itr.next());
-  # 	assertEquals("repositoryFormatVersion", itr.next());
-  # 	assertEquals("logAllRefUpdates", itr.next());
-  # 	assertFalse(itr.hasNext());
-  # }
 
   test "names_in_subsection/3" do
     c =
@@ -1136,18 +1127,16 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.get_int(c, "s", "a", 0) == n
   end
 
-  defp parse(content) do
+  defp parse(content) when is_binary(content) do
     Config.new()
     |> Config.from_text(content)
   end
 
-  # private static Config parse(String content, Config baseConfig)
-  # 		throws ConfigInvalidException {
-  # 	final Config c = new Config(baseConfig);
-  # 	c.fromText(content);
-  # 	return c;
-  # }
-  #
+  defp parse(content, %Config{} = base_config) when is_binary(content) do
+    Config.new(base_config)
+    |> Config.from_text(content)
+  end
+
   # @Test
   # public void testTimeUnit() throws ConfigInvalidException {
   # 	assertEquals(0, parseTime("0", MILLISECONDS));

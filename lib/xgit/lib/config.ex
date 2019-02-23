@@ -39,34 +39,34 @@ defmodule Xgit.Lib.Config do
   @gib 1024 * @mib
 
   @doc ~S"""
-  Create a configuration with no default feedback.
+  Create a configuration with no default fallback.
   """
-  def new do
+  def new(), do: new_impl(nil)
+
+  @doc ~S"""
+  Create an empty configuration with a fallback for missing keys.
+
+  `default_config` is a base configuration to be consulted when a key is
+  missing from this configuration instance.
+  """
+  def new(%__MODULE__{} = default_config), do: new_impl(default_config)
+
+  defp new_impl(base_config) do
     ref = make_ref()
     group = {:xgit_config, ref}
     :ok = :pg2.create(group)
     :ok = :pg2.join(group, self())
 
-    {:ok, _pid} = GenServer.start(__MODULE__, {ref, :new}, name: {:global, group})
+    {:ok, _pid} = GenServer.start(__MODULE__, {ref, base_config}, name: {:global, group})
 
     %__MODULE__{ref: ref}
   end
 
-  # /**
-  #  * Create an empty configuration with a fallback for missing keys.
-  #  *
-  #  * @param defaultConfig
-  #  *            the base configuration to be consulted when a key is missing
-  #  *            from this configuration instance.
-  #  */
-  # public Config(Config defaultConfig) {
-  # 	baseConfig = defaultConfig;
-  # 	state = new AtomicReference<>(newState());
-  # }
-
   @impl true
-  def init({ref, :new}) when is_reference(ref),
-    do: {:ok, %__MODULE__.State{config_lines: [], ref: ref, base_config: nil}, @idle_timeout}
+  def init({ref, base_config}) when is_reference(ref),
+    do:
+      {:ok, %__MODULE__.State{config_lines: [], ref: ref, base_config: base_config},
+       @idle_timeout}
 
   @doc ~S"""
   Escape the value before saving.
@@ -413,22 +413,32 @@ defmodule Xgit.Lib.Config do
 
   @doc ~S"""
   Get the list of names defined for this section.
+
+  Options:
+  * `recursive`: Include matching names from base config.
   """
-  def names_in_section(c, section) when is_binary(section),
-    do: c |> process_ref() |> GenServer.call({:names_in_section, section})
+  def names_in_section(c, section, options \\ []) when is_binary(section) and is_list(options),
+    do: c |> process_ref() |> GenServer.call({:names_in_section, section, options})
 
   # IMPORTANT: names_in_section_impl/2 runs in GenServer process.
   # See handle_call/3 below.
 
-  defp names_in_section_impl(config_lines, section) do
+  defp names_in_section_impl(config_lines, section, base_config, options) do
     config_lines
     |> Enum.filter(&(&1.section == section))
     |> Enum.reject(&(&1.name == nil))
     |> Enum.map(&String.downcase(&1.name))
     |> Enum.dedup()
+    |> names_in_section_recurse(section, base_config, Keyword.get(options, :recursive, false))
 
     # TBD: Dedup globally?
   end
+
+  defp names_in_section_recurse(names, _section, _base_config, false), do: names
+  defp names_in_section_recurse(names, _section, nil, _recursive), do: names
+
+  defp names_in_section_recurse(names, section, base_config, _recursive),
+    do: names ++ names_in_section(base_config, section, recursive: true)
 
   @doc ~S"""
   Get the list of names defined for this subsection.
@@ -1674,12 +1684,12 @@ defmodule Xgit.Lib.Config do
 
   @impl true
   def handle_call(
-        {:names_in_section, section},
+        {:names_in_section, section, options},
         _from,
-        %__MODULE__.State{config_lines: config_lines} = s
+        %__MODULE__.State{base_config: base_config, config_lines: config_lines} = s
       )
-      when is_binary(section) do
-    {:reply, names_in_section_impl(config_lines, section), s, @idle_timeout}
+      when is_binary(section) and is_list(options) do
+    {:reply, names_in_section_impl(config_lines, section, base_config, options), s, @idle_timeout}
   end
 
   @impl true
