@@ -1151,7 +1151,7 @@ defmodule Xgit.Lib.ConfigTest do
   end
 
   defp parse(content, %Config{} = base_config) when is_binary(content) do
-    base_config
+    [base_config: base_config]
     |> Config.new()
     |> Config.from_text(content)
   end
