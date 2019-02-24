@@ -413,7 +413,7 @@ defmodule Xgit.Lib.Config do
   def names_in_section(c, section, options \\ []) when is_binary(section) and is_list(options),
     do: c |> process_ref() |> GenServer.call({:names_in_section, section, options})
 
-  # IMPORTANT: names_in_section_impl/2 runs in GenServer process.
+  # IMPORTANT: names_in_section_impl/4 runs in GenServer process.
   # See handle_call/3 below.
 
   defp names_in_section_impl(config_lines, section, base_config, options) do
@@ -435,23 +435,39 @@ defmodule Xgit.Lib.Config do
 
   @doc ~S"""
   Get the list of names defined for this subsection.
-  """
-  def names_in_subsection(c, section, subsection)
-      when is_binary(section) and is_binary(subsection),
-      do: c |> process_ref() |> GenServer.call({:names_in_subsection, section, subsection})
 
-  # IMPORTANT: names_in_subsection_impl/3 runs in GenServer process.
+  Options:
+  * `recursive`: Include matching names from base config.
+  """
+  def names_in_subsection(c, section, subsection, options \\ [])
+      when is_binary(section) and is_binary(subsection) and is_list(options),
+      do:
+        c |> process_ref() |> GenServer.call({:names_in_subsection, section, subsection, options})
+
+  # IMPORTANT: names_in_subsection_impl/5 runs in GenServer process.
   # See handle_call/3 below.
 
-  defp names_in_subsection_impl(config_lines, section, subsection) do
+  defp names_in_subsection_impl(config_lines, section, subsection, base_config, options) do
     config_lines
     |> Enum.filter(&(&1.section == section && &1.subsection == subsection))
     |> Enum.reject(&(&1.name == nil))
     |> Enum.map(&String.downcase(&1.name))
     |> Enum.dedup()
+    |> names_in_subsection_recurse(
+      section,
+      subsection,
+      base_config,
+      Keyword.get(options, :recursive, false)
+    )
 
     # TBD: Dedup globally?
   end
+
+  defp names_in_subsection_recurse(names, _section, _subsection, _base_config, false), do: names
+  defp names_in_subsection_recurse(names, _section, _subsection, nil, _recursive), do: names
+
+  defp names_in_subsection_recurse(names, section, subsection, base_config, _recursive),
+    do: names ++ names_in_subsection(base_config, section, subsection, recursive: true)
 
   # /**
   #  * Get the list of names defined for this subsection
@@ -1699,12 +1715,13 @@ defmodule Xgit.Lib.Config do
 
   @impl true
   def handle_call(
-        {:names_in_subsection, section, subsection},
+        {:names_in_subsection, section, subsection, options},
         _from,
-        %__MODULE__.State{config_lines: config_lines} = s
+        %__MODULE__.State{base_config: base_config, config_lines: config_lines} = s
       )
-      when is_binary(section) do
-    {:reply, names_in_subsection_impl(config_lines, section, subsection), s, @idle_timeout}
+      when is_binary(section) and is_binary(subsection) and is_list(options) do
+    {:reply, names_in_subsection_impl(config_lines, section, subsection, base_config, options), s,
+     @idle_timeout}
   end
 
   @impl true

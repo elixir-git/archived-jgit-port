@@ -536,6 +536,19 @@ defmodule Xgit.Lib.ConfigTest do
              ]
     end
 
+    test "base config, but not recursive" do
+      c =
+        parse(
+          "[core]\nrepositoryFormatVersion = 0\nfilemode = false\n",
+          parse("[core]\nlogAllRefUpdates = true\n")
+        )
+
+      assert Config.names_in_section(c, "core") == [
+               "repositoryformatversion",
+               "filemode"
+             ]
+    end
+
     test "recursive" do
       c =
         parse(
@@ -551,45 +564,45 @@ defmodule Xgit.Lib.ConfigTest do
     end
   end
 
-  test "names_in_subsection/3" do
-    c =
-      parse("""
-      [a "sub1"]
-      x = 0
-      y = false
-      z = true
-      [a "sub2"]
-      a=0
-      b=1
-      """)
+  describe "names_in_subsection/3" do
+    test "non-recursive" do
+      c =
+        parse("""
+        [a "sub1"]
+        x = 0
+        y = false
+        z = true
+        [a "sub2"]
+        a=0
+        b=1
+        """)
 
-    assert Config.names_in_subsection(c, "a", "sub1") == ["x", "y", "z"]
-    assert Config.names_in_subsection(c, "a", "sub2") == ["a", "b"]
+      assert Config.names_in_subsection(c, "a", "sub1") == ["x", "y", "z"]
+      assert Config.names_in_subsection(c, "a", "sub2") == ["a", "b"]
+    end
+
+    test "base config, but not recursive" do
+      c =
+        parse(
+          "[a \"sub1\"]\nz = true\n[a \"sub2\"]\nB=1\n",
+          parse("[a \"sub1\"]\nx = 0\ny = false\n[a \"sub2\"]\nA=0\n")
+        )
+
+      assert Config.names_in_subsection(c, "a", "sub1") == ["z"]
+      assert Config.names_in_subsection(c, "a", "sub2") == ["b"]
+    end
+
+    test "recursive" do
+      c =
+        parse(
+          "[a \"sub1\"]\nz = true\n[a \"sub2\"]\nB=1\n",
+          parse("[a \"sub1\"]\nx = 0\ny = false\n[a \"sub2\"]\nA=0\n")
+        )
+
+      assert Config.names_in_subsection(c, "a", "sub1", recursive: true) == ["z", "x", "y"]
+      assert Config.names_in_subsection(c, "a", "sub2", recursive: true) == ["b", "a"]
+    end
   end
-
-  # @Test
-  # public void readNamesInSubSectionRecursive() throws ConfigInvalidException {
-  # 	String baseConfigString = "[a \"sub1\"]\n"//
-  # 			+ "x = 0\n" //
-  # 			+ "y = false\n"//
-  # 			+ "[a \"sub2\"]\n"//
-  # 			+ "A=0\n";//
-  # 	String configString = "[a \"sub1\"]\n"//
-  # 			+ "z = true\n"//
-  # 			+ "[a \"sub2\"]\n"//
-  # 			+ "B=1\n";
-  # 	final Config c = parse(configString, parse(baseConfigString));
-  # 	Set<String> names = c.getNames("a", "sub1", true);
-  # 	assertEquals("Subsection size", 3, names.size());
-  # 	assertTrue("Subsection should contain \"x\"", names.contains("x"));
-  # 	assertTrue("Subsection should contain \"y\"", names.contains("y"));
-  # 	assertTrue("Subsection should contain \"z\"", names.contains("z"));
-  # 	names = c.getNames("a", "sub2", true);
-  # 	assertEquals("Subsection size", 2, names.size());
-  # 	assertTrue("Subsection should contain \"A\"", names.contains("A"));
-  # 	assertTrue("Subsection should contain \"a\"", names.contains("a"));
-  # 	assertTrue("Subsection should contain \"B\"", names.contains("B"));
-  # }
 
   test "no final newline" do
     c = parse("[a]\nx = 0\ny = 1")
