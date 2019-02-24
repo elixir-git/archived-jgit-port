@@ -26,6 +26,12 @@ defmodule Xgit.Lib.ConfigTest do
   # 	SystemReader.setInstance(null);
   # }
 
+  test "new/1 with illegal base_config" do
+    assert_raise ArgumentError, fn ->
+      Config.new(base_config: "[foo]\nbar\n")
+    end
+  end
+
   test "read bare key" do
     c = parse("[foo]\nbar\n")
     assert Config.get_boolean(c, "foo", "bar", false) == true
