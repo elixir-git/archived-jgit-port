@@ -651,6 +651,11 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.get_string_list(c, "a", "x") == [""]
   end
 
+  test "get_string_list with base config" do
+    c = parse("[a]\nx = 15", parse("[a]\nx = 17\nx = 23"))
+    assert Config.get_string_list(c, "a", "x") == ["17", "23", "15"]
+  end
+
   test "empty value at EOF" do
     c = parse("[a]\nx =")
     assert Config.get_string(c, "a", "x") == nil

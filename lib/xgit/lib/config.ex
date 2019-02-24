@@ -318,13 +318,6 @@ defmodule Xgit.Lib.Config do
   def get_string_list(c, section, subsection \\ nil, name)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
-    # UNIMPLEMENTED: base config. Still thinking about how that works.
-    # String[] base;
-    # if (baseConfig != null)
-    # 	base = baseConfig.getStringList(section, subsection, name);
-    # else
-    # 	base = EMPTY_STRING_ARRAY;
-
     c
     |> process_ref()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
@@ -581,11 +574,23 @@ defmodule Xgit.Lib.Config do
   # 	listeners.dispatch(new ConfigChangedEvent());
   # }
 
-  defp raw_string_list(%__MODULE__.State{config_lines: config_lines}, section, subsection, name) do
-    # UNIMPLEMENTED: Consider base state.
-    config_lines
-    |> Enum.filter(&ConfigLine.match?(&1, section, subsection, name))
-    |> Enum.map(fn %ConfigLine{value: value} -> value end)
+  defp raw_string_list(
+         %__MODULE__.State{base_config: base_config, config_lines: config_lines},
+         section,
+         subsection,
+         name
+       ) do
+    base_strings =
+      if base_config != nil,
+        do: get_string_list(base_config, section, subsection, name),
+        else: []
+
+    self_strings =
+      config_lines
+      |> Enum.filter(&ConfigLine.match?(&1, section, subsection, name))
+      |> Enum.map(fn %ConfigLine{value: value} -> value end)
+
+    base_strings ++ self_strings
   end
 
   # private ConfigSnapshot getState() {
