@@ -3,6 +3,7 @@ defmodule Xgit.Lib.ConfigTest do
 
   alias Xgit.Errors.ConfigInvalidError
   alias Xgit.Lib.Config
+  alias Xgit.Lib.Config.SpyStorage
 
   doctest Xgit.Lib.Config
 
@@ -25,6 +26,12 @@ defmodule Xgit.Lib.ConfigTest do
   # public void tearDown() {
   # 	SystemReader.setInstance(null);
   # }
+
+  test "new/1 with illegal base_config" do
+    assert_raise ArgumentError, fn ->
+      Config.new(base_config: "[foo]\nbar\n")
+    end
+  end
 
   test "read bare key" do
     c = parse("[foo]\nbar\n")
@@ -1151,7 +1158,7 @@ defmodule Xgit.Lib.ConfigTest do
   end
 
   defp parse(content, %Config{} = base_config) when is_binary(content) do
-    base_config
+    [base_config: base_config]
     |> Config.new()
     |> Config.from_text(content)
   end
@@ -1473,5 +1480,33 @@ defmodule Xgit.Lib.ConfigTest do
     config_pid = GenServer.whereis({:global, {:xgit_config, ref}})
 
     send(config_pid, :bogus_message)
+  end
+
+  describe "load/1" do
+    test "raises error if no storage defined" do
+      c = Config.new()
+      assert_raise ArgumentError, fn -> Config.load(c) end
+    end
+
+    test "calls storage impl if specified" do
+      spy = %SpyStorage{test_pid: self()}
+      c = Config.new(storage: spy)
+      Config.load(c)
+      assert_received {:load, ^c}
+    end
+  end
+
+  describe "save/1" do
+    test "raises error if no storage defined" do
+      c = Config.new()
+      assert_raise ArgumentError, fn -> Config.save(c) end
+    end
+
+    test "calls storage impl if specified" do
+      spy = %SpyStorage{test_pid: self()}
+      c = Config.new(storage: spy)
+      Config.save(c)
+      assert_received {:save, ^c}
+    end
   end
 end

@@ -18,7 +18,7 @@ defmodule Xgit.Lib.Config do
   * a few edge cases
   """
   @enforce_keys [:ref]
-  defstruct [:ref]
+  defstruct [:ref, :storage]
 
   alias Xgit.Errors.ConfigInvalidError
   alias Xgit.Lib.ConfigLine
@@ -39,18 +39,20 @@ defmodule Xgit.Lib.Config do
 
   @doc ~S"""
   Create a configuration with no default fallback.
+
+  Options:
+  * `base_config`: A base configuration to be consulted when a key is
+    missing from this configuration instance.
+  * `storage`: Ties this configuration to a storage approach.
   """
-  def new(), do: new_impl(nil)
+  def new(options \\ []) when is_list(options) do
+    base_config =
+      case Keyword.get(options, :base_config, nil) do
+        nil -> nil
+        %__MODULE__{} = config -> config
+        x -> raise ArgumentError, message: "Illegal base_config value: #{inspect(x)}"
+      end
 
-  @doc ~S"""
-  Create an empty configuration with a fallback for missing keys.
-
-  `default_config` is a base configuration to be consulted when a key is
-  missing from this configuration instance.
-  """
-  def new(%__MODULE__{} = default_config), do: new_impl(default_config)
-
-  defp new_impl(base_config) do
     ref = make_ref()
     group = {:xgit_config, ref}
     :ok = :pg2.create(group)
@@ -58,7 +60,7 @@ defmodule Xgit.Lib.Config do
 
     {:ok, _pid} = GenServer.start(__MODULE__, {ref, base_config}, name: {:global, group})
 
-    %__MODULE__{ref: ref}
+    %__MODULE__{ref: ref, storage: Keyword.get(options, :storage, nil)}
   end
 
   @impl true
@@ -888,6 +890,51 @@ defmodule Xgit.Lib.Config do
   # 	}
   # 	return -1;
   # }
+
+  @doc ~S"""
+  Load the configuration from the persistent store (if any).
+
+  If the configuration does not exist, this configuration is cleared, and
+  thus behaves the same as though the backing store exists, but is empty.
+  """
+  def load(%__MODULE__{storage: nil}) do
+    raise(ArgumentError,
+      message: "Config.load() called for a Config that doesn't have a storage mechanism defined"
+    )
+  end
+
+  def load(%__MODULE__{storage: storage} = config), do: __MODULE__.Storage.load(storage, config)
+
+  @doc ~S"""
+  Save the configuration to the persistent store (if any).
+  """
+
+  def save(%__MODULE__{storage: nil}) do
+    raise(ArgumentError,
+      message: "Config.save() called for a Config that doesn't have a storage mechanism defined"
+    )
+  end
+
+  def save(%__MODULE__{storage: storage} = config), do: __MODULE__.Storage.save(storage, config)
+
+  defprotocol Storage do
+    @moduledoc ~S"""
+    Describes how a `Config` struct can be stored and loaded from a location.
+    """
+
+    @doc ~S"""
+    Load the configuration from the persistent store.
+
+    If the configuration does not exist, this configuration is cleared, and
+    thus behaves the same as though the backing store exists, but is empty.
+    """
+    def load(storage, config)
+
+    @doc ~S"""
+    Save the configuration to the persistent store.
+    """
+    def save(storage, config)
+  end
 
   @doc ~S"""
   Get this configuration, formatted as a Git-style text file.
