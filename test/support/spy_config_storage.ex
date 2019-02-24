@@ -2,6 +2,10 @@
 # Otherwise, we miss the window of opportunity for protocol consolidation.
 
 defmodule Xgit.Lib.Config.SpyStorage do
+  @moduledoc false
+  # Used by Xgit.Lib.ConfigTest to verify Config module's interaction
+  # with Storage protocol.
+
   defstruct [:test_pid]
 end
 
