@@ -11,7 +11,6 @@ defmodule Xgit.Lib.Config do
 
   INCOMPLETE IMPLEMENTATION: The following features have not yet been ported from jgit:
 
-  * config file inheritance ("base configs")
   * enums
   * parsing time units
   * change notification
@@ -39,34 +38,34 @@ defmodule Xgit.Lib.Config do
   @gib 1024 * @mib
 
   @doc ~S"""
-  Create a configuration with no default feedback.
+  Create a configuration with no default fallback.
   """
-  def new do
+  def new(), do: new_impl(nil)
+
+  @doc ~S"""
+  Create an empty configuration with a fallback for missing keys.
+
+  `default_config` is a base configuration to be consulted when a key is
+  missing from this configuration instance.
+  """
+  def new(%__MODULE__{} = default_config), do: new_impl(default_config)
+
+  defp new_impl(base_config) do
     ref = make_ref()
     group = {:xgit_config, ref}
     :ok = :pg2.create(group)
     :ok = :pg2.join(group, self())
 
-    {:ok, _pid} = GenServer.start(__MODULE__, {ref, :new}, name: {:global, group})
+    {:ok, _pid} = GenServer.start(__MODULE__, {ref, base_config}, name: {:global, group})
 
     %__MODULE__{ref: ref}
   end
 
-  # /**
-  #  * Create an empty configuration with a fallback for missing keys.
-  #  *
-  #  * @param defaultConfig
-  #  *            the base configuration to be consulted when a key is missing
-  #  *            from this configuration instance.
-  #  */
-  # public Config(Config defaultConfig) {
-  # 	baseConfig = defaultConfig;
-  # 	state = new AtomicReference<>(newState());
-  # }
-
   @impl true
-  def init({ref, :new}) when is_reference(ref),
-    do: {:ok, %__MODULE__.State{config_lines: [], ref: ref, base_config: nil}, @idle_timeout}
+  def init({ref, base_config}) when is_reference(ref),
+    do:
+      {:ok, %__MODULE__.State{config_lines: [], ref: ref, base_config: base_config},
+       @idle_timeout}
 
   @doc ~S"""
   Escape the value before saving.
@@ -318,13 +317,6 @@ defmodule Xgit.Lib.Config do
   def get_string_list(c, section, subsection \\ nil, name)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
-    # UNIMPLEMENTED: base config. Still thinking about how that works.
-    # String[] base;
-    # if (baseConfig != null)
-    # 	base = baseConfig.getStringList(section, subsection, name);
-    # else
-    # 	base = EMPTY_STRING_ARRAY;
-
     c
     |> process_ref()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
@@ -413,89 +405,69 @@ defmodule Xgit.Lib.Config do
 
   @doc ~S"""
   Get the list of names defined for this section.
-  """
-  def names_in_section(c, section) when is_binary(section),
-    do: c |> process_ref() |> GenServer.call({:names_in_section, section})
 
-  # IMPORTANT: names_in_section_impl/2 runs in GenServer process.
+  Options:
+  * `recursive`: Include matching names from base config.
+  """
+  def names_in_section(c, section, options \\ []) when is_binary(section) and is_list(options),
+    do: c |> process_ref() |> GenServer.call({:names_in_section, section, options})
+
+  # IMPORTANT: names_in_section_impl/4 runs in GenServer process.
   # See handle_call/3 below.
 
-  defp names_in_section_impl(config_lines, section) do
+  defp names_in_section_impl(config_lines, section, base_config, options) do
     config_lines
     |> Enum.filter(&(&1.section == section))
     |> Enum.reject(&(&1.name == nil))
     |> Enum.map(&String.downcase(&1.name))
     |> Enum.dedup()
+    |> names_in_section_recurse(section, base_config, Keyword.get(options, :recursive, false))
 
     # TBD: Dedup globally?
   end
 
+  defp names_in_section_recurse(names, _section, _base_config, false), do: names
+  defp names_in_section_recurse(names, _section, nil, _recursive), do: names
+
+  defp names_in_section_recurse(names, section, base_config, _recursive),
+    do: names ++ names_in_section(base_config, section, recursive: true)
+
   @doc ~S"""
   Get the list of names defined for this subsection.
-  """
-  def names_in_subsection(c, section, subsection)
-      when is_binary(section) and is_binary(subsection),
-      do: c |> process_ref() |> GenServer.call({:names_in_subsection, section, subsection})
 
-  # IMPORTANT: names_in_subsection_impl/3 runs in GenServer process.
+  Options:
+  * `recursive`: Include matching names from base config.
+  """
+  def names_in_subsection(c, section, subsection, options \\ [])
+      when is_binary(section) and is_binary(subsection) and is_list(options),
+      do:
+        c |> process_ref() |> GenServer.call({:names_in_subsection, section, subsection, options})
+
+  # IMPORTANT: names_in_subsection_impl/5 runs in GenServer process.
   # See handle_call/3 below.
 
-  defp names_in_subsection_impl(config_lines, section, subsection) do
+  defp names_in_subsection_impl(config_lines, section, subsection, base_config, options) do
     config_lines
     |> Enum.filter(&(&1.section == section && &1.subsection == subsection))
     |> Enum.reject(&(&1.name == nil))
     |> Enum.map(&String.downcase(&1.name))
     |> Enum.dedup()
+    |> names_in_subsection_recurse(
+      section,
+      subsection,
+      base_config,
+      Keyword.get(options, :recursive, false)
+    )
 
     # TBD: Dedup globally?
   end
 
-  # /**
-  #  * Get the list of names defined for this subsection
-  #  *
-  #  * @param section
-  #  *            the section
-  #  * @param subsection
-  #  *            the subsection
-  #  * @return the list of names defined for this subsection
-  #  */
-  # public Set<String> getNames(String section, String subsection) {
-  # 	return getState().getNames(section, subsection);
-  # }
-  #
-  # /**
-  #  * Get the list of names defined for this section
-  #  *
-  #  * @param section
-  #  *            the section
-  #  * @param recursive
-  #  *            if {@code true} recursively adds the names defined in all base
-  #  *            configurations
-  #  * @return the list of names defined for this section
-  #  * @since 3.2
-  #  */
-  # public Set<String> getNames(String section, boolean recursive) {
-  # 	return getState().getNames(section, null, recursive);
-  # }
-  #
-  # /**
-  #  * Get the list of names defined for this section
-  #  *
-  #  * @param section
-  #  *            the section
-  #  * @param subsection
-  #  *            the subsection
-  #  * @param recursive
-  #  *            if {@code true} recursively adds the names defined in all base
-  #  *            configurations
-  #  * @return the list of names defined for this subsection
-  #  * @since 3.2
-  #  */
-  # public Set<String> getNames(String section, String subsection,
-  # 		boolean recursive) {
-  # 	return getState().getNames(section, subsection, recursive);
-  # }
-  #
+  defp names_in_subsection_recurse(names, _section, _subsection, _base_config, false), do: names
+  defp names_in_subsection_recurse(names, _section, _subsection, nil, _recursive), do: names
+
+  defp names_in_subsection_recurse(names, section, subsection, base_config, _recursive),
+    do: names ++ names_in_subsection(base_config, section, subsection, recursive: true)
+
   # /**
   #  * Obtain a handle to a parsed set of configuration values.
   #  *
@@ -571,11 +543,23 @@ defmodule Xgit.Lib.Config do
   # 	listeners.dispatch(new ConfigChangedEvent());
   # }
 
-  defp raw_string_list(%__MODULE__.State{config_lines: config_lines}, section, subsection, name) do
-    # UNIMPLEMENTED: Consider base state.
-    config_lines
-    |> Enum.filter(&ConfigLine.match?(&1, section, subsection, name))
-    |> Enum.map(fn %ConfigLine{value: value} -> value end)
+  defp raw_string_list(
+         %__MODULE__.State{base_config: base_config, config_lines: config_lines},
+         section,
+         subsection,
+         name
+       ) do
+    base_strings =
+      if base_config != nil,
+        do: get_string_list(base_config, section, subsection, name),
+        else: []
+
+    self_strings =
+      config_lines
+      |> Enum.filter(&ConfigLine.match?(&1, section, subsection, name))
+      |> Enum.map(fn %ConfigLine{value: value} -> value end)
+
+    base_strings ++ self_strings
   end
 
   # private ConfigSnapshot getState() {
@@ -1674,22 +1658,23 @@ defmodule Xgit.Lib.Config do
 
   @impl true
   def handle_call(
-        {:names_in_section, section},
+        {:names_in_section, section, options},
         _from,
-        %__MODULE__.State{config_lines: config_lines} = s
+        %__MODULE__.State{base_config: base_config, config_lines: config_lines} = s
       )
-      when is_binary(section) do
-    {:reply, names_in_section_impl(config_lines, section), s, @idle_timeout}
+      when is_binary(section) and is_list(options) do
+    {:reply, names_in_section_impl(config_lines, section, base_config, options), s, @idle_timeout}
   end
 
   @impl true
   def handle_call(
-        {:names_in_subsection, section, subsection},
+        {:names_in_subsection, section, subsection, options},
         _from,
-        %__MODULE__.State{config_lines: config_lines} = s
+        %__MODULE__.State{base_config: base_config, config_lines: config_lines} = s
       )
-      when is_binary(section) do
-    {:reply, names_in_subsection_impl(config_lines, section, subsection), s, @idle_timeout}
+      when is_binary(section) and is_binary(subsection) and is_list(options) do
+    {:reply, names_in_subsection_impl(config_lines, section, subsection, base_config, options), s,
+     @idle_timeout}
   end
 
   @impl true
