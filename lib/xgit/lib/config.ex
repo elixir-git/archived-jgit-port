@@ -11,7 +11,6 @@ defmodule Xgit.Lib.Config do
 
   INCOMPLETE IMPLEMENTATION: The following features have not yet been ported from jgit:
 
-  * config file inheritance ("base configs")
   * enums
   * parsing time units
   * change notification
@@ -469,52 +468,6 @@ defmodule Xgit.Lib.Config do
   defp names_in_subsection_recurse(names, section, subsection, base_config, _recursive),
     do: names ++ names_in_subsection(base_config, section, subsection, recursive: true)
 
-  # /**
-  #  * Get the list of names defined for this subsection
-  #  *
-  #  * @param section
-  #  *            the section
-  #  * @param subsection
-  #  *            the subsection
-  #  * @return the list of names defined for this subsection
-  #  */
-  # public Set<String> getNames(String section, String subsection) {
-  # 	return getState().getNames(section, subsection);
-  # }
-  #
-  # /**
-  #  * Get the list of names defined for this section
-  #  *
-  #  * @param section
-  #  *            the section
-  #  * @param recursive
-  #  *            if {@code true} recursively adds the names defined in all base
-  #  *            configurations
-  #  * @return the list of names defined for this section
-  #  * @since 3.2
-  #  */
-  # public Set<String> getNames(String section, boolean recursive) {
-  # 	return getState().getNames(section, null, recursive);
-  # }
-  #
-  # /**
-  #  * Get the list of names defined for this section
-  #  *
-  #  * @param section
-  #  *            the section
-  #  * @param subsection
-  #  *            the subsection
-  #  * @param recursive
-  #  *            if {@code true} recursively adds the names defined in all base
-  #  *            configurations
-  #  * @return the list of names defined for this subsection
-  #  * @since 3.2
-  #  */
-  # public Set<String> getNames(String section, String subsection,
-  # 		boolean recursive) {
-  # 	return getState().getNames(section, subsection, recursive);
-  # }
-  #
   # /**
   #  * Obtain a handle to a parsed set of configuration values.
   #  *
