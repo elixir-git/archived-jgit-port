@@ -49,8 +49,4 @@ SystemReader
   ObjectChecker TRACE
 
 FileBasedConfig
-  FileSnapshot
   StoredConfig -> xgit.lib.Config.Storage
-
-FileSnapshot
-  :empty
