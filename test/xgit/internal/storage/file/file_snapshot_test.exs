@@ -40,7 +40,6 @@ defmodule Xgit.Internal.Storage.File.FileSnapshotTest do
     wait_next_sec(f1)
 
     save = FileSnapshot.save(f1)
-    IO.inspect(save, label: "new snapshot")
 
     Process.sleep(1500)
     assert FileSnapshot.modified?(save, f1) == true

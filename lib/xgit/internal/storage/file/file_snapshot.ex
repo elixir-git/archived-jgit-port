@@ -26,24 +26,19 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
   A FileSnapshot that is considered to always be modified.
 
   This instance is useful for application code that wants to lazily read a
-  file, but only after modified?/1 gets invoked. This snapshot instance
+  file, but only after `modified?/2` gets invoked. This snapshot instance
   contains only invalid status information.
   """
   def dirty, do: %__MODULE__{last_modified: :dirty, ref: nil}
 
-  # /**
-  #  * A FileSnapshot that is clean if the file does not exist.
-  #  * <p>
-  #  * This instance is useful if the application wants to consider a missing
-  #  * file to be clean. {@link #isModified(File)} will return false if the file
-  #  * path does not exist.
-  #  */
-  # public static final FileSnapshot MISSING_FILE = new FileSnapshot(0, 0) {
-  # 	@Override
-  # 	public boolean isModified(File path) {
-  # 		return FS.DETECTED.exists(path);
-  # 	}
-  # };
+  @doc ~S"""
+  A FileSnapshot that is clean if the file does not exist.
+
+  This instance is useful if the application wants to consider a missing
+  file to be clean. `modified?/2` will return `false` if the file path
+  does not exist.
+  """
+  def missing_file, do: %__MODULE__{last_modified: :missing, ref: nil}
 
   @doc ~S"""
   Record a snapshot for a specific file path.
@@ -87,6 +82,7 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
   end
 
   def modified?(%__MODULE__{last_modified: :dirty}, _path), do: true
+  def modified?(%__MODULE__{last_modified: :missing}, path), do: File.exists?(path)
 
   # /**
   #  * Update this snapshot when the content hasn't changed.
@@ -131,9 +127,6 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
   # }
 
   defp modified_impl?(file_last_modified, last_modified, ref) do
-    IO.inspect(file_last_modified, label: "\nlast_modified from file")
-    IO.inspect(last_modified, label: "last_modified from struct")
-
     last_read_time = ConCache.get(:xgit_file_snapshot, ref)
 
     if last_modified == file_last_modified,
@@ -153,9 +146,6 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
   end
 
   defp modified_impl_race?(file_last_modified, last_read_time) do
-    IO.inspect(file_last_modified, label: "\nrace? file_last_modified from file")
-    IO.inspect(last_read_time, label: "race? last_read_time from cache")
-
     if not_racy_clean?(file_last_modified, last_read_time) do
       # Our last read should have marked cannotBeRacilyClean,
       # but this thread may not have seen the change. The read
