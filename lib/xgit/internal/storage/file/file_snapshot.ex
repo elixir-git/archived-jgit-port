@@ -22,15 +22,15 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
   @enforce_keys [:last_modified, :ref]
   defstruct [:last_modified, :ref]
 
-  # /**
-  #  * A FileSnapshot that is considered to always be modified.
-  #  * <p>
-  #  * This instance is useful for application code that wants to lazily read a
-  #  * file, but only after {@link #isModified(File)} gets invoked. The returned
-  #  * snapshot contains only invalid status information.
-  #  */
-  # public static final FileSnapshot DIRTY = new FileSnapshot(-1, -1);
-  #
+  @doc ~S"""
+  A FileSnapshot that is considered to always be modified.
+
+  This instance is useful for application code that wants to lazily read a
+  file, but only after modified?/1 gets invoked. This snapshot instance
+  contains only invalid status information.
+  """
+  def dirty, do: %__MODULE__{last_modified: :dirty, ref: nil}
+
   # /**
   #  * A FileSnapshot that is clean if the file does not exist.
   #  * <p>
@@ -85,6 +85,8 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
     %{mtime: curr_last_modified} = File.stat!(path, time: :posix)
     modified_impl?(curr_last_modified, last_modified, ref)
   end
+
+  def modified?(%__MODULE__{last_modified: :dirty}, _path), do: true
 
   # /**
   #  * Update this snapshot when the content hasn't changed.
