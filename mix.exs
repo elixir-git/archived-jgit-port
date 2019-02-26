@@ -19,10 +19,11 @@ defmodule Xgit.MixProject do
     ]
   end
 
-  def application, do: [extra_applications: [:logger]]
+  def application, do: [mod: {Xgit, []}, extra_applications: [:logger]]
 
   defp deps do
     [
+      {:con_cache, "~> 0.13"},
       {:credo, "~> 1.0", only: [:dev, :test]},
       {:excoveralls, "~> 0.10", only: :test},
       {:ex_doc, "~> 0.19", only: :dev},
