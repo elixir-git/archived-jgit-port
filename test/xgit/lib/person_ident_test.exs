@@ -1,5 +1,5 @@
 defmodule Xgit.Lib.PersonIdentTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Xgit.Lib.PersonIdent
   doctest Xgit.Lib.PersonIdent

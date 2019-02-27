@@ -1,5 +1,5 @@
 defmodule Xgit.Lib.ConstantsTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Xgit.Lib.Constants
   doctest Xgit.Lib.Constants

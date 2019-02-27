@@ -1,5 +1,5 @@
 defmodule Xgit.Transport.RefSpecTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Xgit.Lib.ObjectIdRef
   alias Xgit.Transport.RefSpec

@@ -1,5 +1,5 @@
 defmodule Xgit.Lib.ObjectIdRefTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Xgit.Lib.ObjectIdRef
   alias Xgit.Lib.Ref
