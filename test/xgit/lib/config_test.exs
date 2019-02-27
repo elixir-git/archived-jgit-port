@@ -1,5 +1,5 @@
 defmodule Xgit.Lib.ConfigTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Xgit.Errors.ConfigInvalidError
   alias Xgit.Lib.Config

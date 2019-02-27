@@ -1,5 +1,5 @@
 defmodule Xgit.Lib.ConfigLineTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Xgit.Lib.ConfigLine
   doctest Xgit.Lib.ConfigLine

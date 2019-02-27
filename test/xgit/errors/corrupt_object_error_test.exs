@@ -1,5 +1,5 @@
 defmodule Xgit.Errors.CorruptObjectErrorTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Xgit.Errors.CorruptObjectError
 

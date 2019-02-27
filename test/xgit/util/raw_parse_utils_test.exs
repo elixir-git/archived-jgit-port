@@ -1,5 +1,5 @@
 defmodule Xgit.Util.RawParseUtilsTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Xgit.Errors.UnsupportedCharsetError
   alias Xgit.Lib.PersonIdent
