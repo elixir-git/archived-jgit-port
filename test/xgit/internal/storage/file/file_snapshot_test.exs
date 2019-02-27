@@ -79,16 +79,30 @@ defmodule Xgit.Internal.Storage.File.FileSnapshotTest do
     assert to_string(dirty) == "DIRTY"
   end
 
-  test "set_clean/2", %{trash: trash} do
-    f1 = create_file!(trash, "newfile")
-    wait_next_sec(f1)
+  describe "set_clean/2" do
+    test "without delay", %{trash: trash} do
+      f1 = create_file!(trash, "newfile")
+      wait_next_sec(f1)
 
-    save = FileSnapshot.save(f1)
-    assert FileSnapshot.modified?(save, f1) == true
+      save = FileSnapshot.save(f1)
+      assert FileSnapshot.modified?(save, f1) == true
 
-    # an abuse of the API, but best we can do
-    FileSnapshot.set_clean(save, save)
-    assert FileSnapshot.modified?(save, f1) == false
+      # an abuse of the API, but best we can do
+      FileSnapshot.set_clean(save, save)
+      assert FileSnapshot.modified?(save, f1) == false
+    end
+
+    test "with (faked) delay", %{trash: trash} do
+      f1 = create_file!(trash, "newfile")
+      wait_next_sec(f1)
+
+      save = FileSnapshot.save(f1)
+      assert FileSnapshot.modified?(save, f1) == true
+
+      modified_earlier = %{save | last_modified: save.last_modified - 10}
+      FileSnapshot.set_clean(modified_earlier, save)
+      assert FileSnapshot.modified?(modified_earlier, f1) == true
+    end
   end
 
   defp create_file!(trash, leaf_name) when is_binary(trash) and is_binary(leaf_name) do
