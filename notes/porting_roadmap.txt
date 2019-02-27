@@ -42,11 +42,21 @@ ContentSource
   WorkingTreeIterator TRACE
 
 MockSystemReader TRACE
-  SystemReader TRACE
+  SystemReader
 
 SystemReader
   FileBasedConfig
-  ObjectChecker TRACE
+  ObjectChecker
 
 FileBasedConfig
   StoredConfig -> xgit.lib.Config.Storage
+
+ObjectChecker
+  BlobObjectChecker
+  FileMode
+  GitmoduleEntry
+  ObjectIdSet -> MapSet
+
+BlobObjectChecker PROTOCOL
+
+GitmoduleEntry STRUCT
