@@ -33,6 +33,8 @@ defmodule Xgit.Internal.Storage.File.FileSnapshotTest do
     wait_next_sec(f1)
 
     assert FileSnapshot.modified?(save, f1) == true
+
+    assert String.starts_with?(to_string(save), "FileSnapshot")
   end
 
   test "new file without significant wait", %{trash: trash} do
@@ -61,6 +63,8 @@ defmodule Xgit.Internal.Storage.File.FileSnapshotTest do
 
     dirty = FileSnapshot.dirty()
     assert FileSnapshot.modified?(dirty, f1) == true
+
+    assert to_string(dirty) == "DIRTY"
   end
 
   test "set_clean/2", %{trash: trash} do

@@ -95,19 +95,6 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
       else: record_time_for_ref(ref, not_racy_clean?(last_modified, other_last_read))
   end
 
-  # /** {@inheritDoc} */
-  # @Override
-  # public String toString() {
-  # 	if (this == DIRTY)
-  # 		return "DIRTY"; //$NON-NLS-1$
-  # 	if (this == MISSING_FILE)
-  # 		return "MISSING_FILE"; //$NON-NLS-1$
-  # 	DateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", //$NON-NLS-1$
-  # 			Locale.US);
-  # 	return "FileSnapshot[modified: " + f.format(new Date(lastModified)) //$NON-NLS-1$
-  # 			+ ", read: " + f.format(new Date(lastRead)) + "]"; //$NON-NLS-1$ //$NON-NLS-2$
-  # }
-
   defp modified_impl?(file_last_modified, last_modified, ref) do
     last_read_time = ConCache.get(:xgit_file_snapshot, ref)
 
@@ -150,4 +137,17 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
 
   defp record_time_for_ref(ref, time \\ :os.system_time(:second)) when is_reference(ref),
     do: ConCache.put(:xgit_file_snapshot, ref, time)
+end
+
+defimpl String.Chars, for: Xgit.Internal.Storage.File.FileSnapshot do
+  alias Xgit.Internal.Storage.File.FileSnapshot
+
+  def to_string(%FileSnapshot{last_modified: :dirty}), do: "DIRTY"
+
+  def to_string(%FileSnapshot{last_modified: :missing}), do: "MISSING_FILE"
+
+  def to_string(%FileSnapshot{last_modified: last_modified, ref: ref}) do
+    last_read_time = ConCache.get(:xgit_file_snapshot, ref)
+    "FileSnapshot[modified: #{last_modified}, read: #{last_read_time}]"
+  end
 end
