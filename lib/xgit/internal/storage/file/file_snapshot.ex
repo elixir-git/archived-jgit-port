@@ -54,24 +54,6 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
     %__MODULE__{last_modified: last_modified, ref: ref}
   end
 
-  # /**
-  #  * Record a snapshot for a file for which the last modification time is
-  #  * already known.
-  #  * <p>
-  #  * This method should be invoked before the file is accessed.
-  #  *
-  #  * @param modified
-  #  *            the last modification time of the file
-  #  * @return the snapshot.
-  #  */
-  # public static FileSnapshot save(long modified) {
-  # 	final long read = System.currentTimeMillis();
-  # 	return new FileSnapshot(read, modified);
-  # }
-
-  # /** True once {@link #lastRead} is far later than {@link #lastModified}. */
-  # private boolean cannotBeRacilyClean;
-
   @doc ~S"""
   Check if the path may have been modified since the snapshot was saved.
   """
@@ -84,34 +66,34 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
   def modified?(%__MODULE__{last_modified: :dirty}, _path), do: true
   def modified?(%__MODULE__{last_modified: :missing}, path), do: File.exists?(path)
 
-  # /**
-  #  * Update this snapshot when the content hasn't changed.
-  #  * <p>
-  #  * If the caller gets true from {@link #isModified(File)}, re-reads the
-  #  * content, discovers the content is identical, and
-  #  * {@link #equals(FileSnapshot)} is true, it can use
-  #  * {@link #setClean(FileSnapshot)} to make a future
-  #  * {@link #isModified(File)} return false. The logic goes something like
-  #  * this:
-  #  *
-  #  * <pre>
-  #  * if (snapshot.isModified(path)) {
-  #  *  FileSnapshot other = FileSnapshot.save(path);
-  #  *  Content newContent = ...;
-  #  *  if (oldContent.equals(newContent) &amp;&amp; snapshot.equals(other))
-  #  *      snapshot.setClean(other);
-  #  * }
-  #  * </pre>
-  #  *
-  #  * @param other
-  #  *            the other snapshot.
-  #  */
-  # public void setClean(FileSnapshot other) {
-  # 	final long now = other.lastRead;
-  # 	if (notRacyClean(now))
-  # 		cannotBeRacilyClean = true;
-  # 	lastRead = now;
-  # }
+  @doc ~S"""
+  Update this snapshot when the content hasn't changed.
+
+  If the caller gets `true` from `modified?/2`, re-reads the content, discovers
+  the content is identical, it can use to make a future call to `modified?/2`
+  return `false`.
+
+  The logic goes something like this:
+
+  ```
+  if FileSnapshot.modified?(snapshot, path) do
+    other = FileSnapshot.save(path)
+    if old_content_matches_new_content? and snapshot.last_modified == other.last_modified do
+      FileSnapshot.set_clean(snapshot, other)
+    end
+  end
+  ```
+  """
+  def set_clean(
+        %__MODULE__{last_modified: last_modified, ref: ref},
+        %__MODULE__{ref: other_ref}
+      ) do
+    other_last_read = ConCache.get(:xgit_file_snapshot, other_ref)
+
+    if not_racy_clean?(last_modified, other_last_read),
+      do: ConCache.delete(:xgit_file_snapshot, ref),
+      else: record_time_for_ref(ref, not_racy_clean?(last_modified, other_last_read))
+  end
 
   # /** {@inheritDoc} */
   # @Override
@@ -130,15 +112,15 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
     last_read_time = ConCache.get(:xgit_file_snapshot, ref)
 
     if last_modified == file_last_modified,
-      do: true,
-      else: modified_impl_race?(file_last_modified, last_read_time)
+      do: modified_impl_race?(file_last_modified, last_read_time),
+      else: true
   end
 
   # There's a potential race condition in which the file was modified at roughly
   # the same time as the last time we read the modification time. If these two
   # events are too close together, we have to assume the file is modified.
 
-  defp modified_impl_race?(_file_last_modified, nil) do
+  defp modified_impl_race?(_file_last_modified, x) when x == false or x == nil do
     # We have already determined the last read was far enough
     # after the last modification that any new modifications
     # are certain to change the last modified time.
@@ -166,6 +148,6 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
     # a modification was not missed.
   end
 
-  defp record_time_for_ref(ref) when is_reference(ref),
-    do: ConCache.put(:xgit_file_snapshot, ref, :os.system_time(:second))
+  defp record_time_for_ref(ref, time \\ :os.system_time(:second)) when is_reference(ref),
+    do: ConCache.put(:xgit_file_snapshot, ref, time)
 end

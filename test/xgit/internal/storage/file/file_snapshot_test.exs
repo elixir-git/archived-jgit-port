@@ -63,6 +63,18 @@ defmodule Xgit.Internal.Storage.File.FileSnapshotTest do
     assert FileSnapshot.modified?(dirty, f1) == true
   end
 
+  test "set_clean/2", %{trash: trash} do
+    f1 = create_file!(trash, "newfile")
+    wait_next_sec(f1)
+
+    save = FileSnapshot.save(f1)
+    assert FileSnapshot.modified?(save, f1) == true
+
+    # an abuse of the API, but best we can do
+    FileSnapshot.set_clean(save, save)
+    assert FileSnapshot.modified?(save, f1) == false
+  end
+
   defp create_file!(trash, leaf_name) when is_binary(trash) and is_binary(leaf_name) do
     path = Path.expand(leaf_name, trash)
     File.touch!(path)
