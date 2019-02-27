@@ -23,6 +23,18 @@ defmodule Xgit.Internal.Storage.File.FileSnapshotTest do
     end
   end
 
+  test "missing_file/0", %{trash: trash} do
+    missing = FileSnapshot.missing_file()
+    path = Temp.path!()
+
+    refute FileSnapshot.modified?(missing, path)
+
+    f1 = create_file!(trash, "missing")
+    assert FileSnapshot.modified?(missing, f1)
+
+    assert to_string(missing) == "MISSING_FILE"
+  end
+
   test "actually is modified (trivial case)", %{trash: trash} do
     f1 = create_file!(trash, "simple")
     wait_next_sec(f1)
