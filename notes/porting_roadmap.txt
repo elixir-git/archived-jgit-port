@@ -54,9 +54,6 @@ FileBasedConfig
 ObjectChecker
   BlobObjectChecker
   FileMode
-  GitmoduleEntry
   ObjectIdSet -> MapSet
 
 BlobObjectChecker PROTOCOL
-
-GitmoduleEntry STRUCT
