@@ -24,6 +24,10 @@ defprotocol Xgit.Lib.BlobObjectChecker do
 end
 
 defmodule Xgit.Lib.BlobObjectChecker.NullChecker do
+  @moduledoc ~S"""
+  No-op implementation of Xgit.Lib.BlobObjectChecker.
+  """
+
   defstruct [:null]
 end
 
