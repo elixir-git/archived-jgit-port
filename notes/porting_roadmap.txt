@@ -52,8 +52,5 @@ FileBasedConfig
   StoredConfig -> xgit.lib.Config.Storage
 
 ObjectChecker
-  BlobObjectChecker
   FileMode
   ObjectIdSet -> MapSet
-
-BlobObjectChecker PROTOCOL
