@@ -25,6 +25,7 @@ defmodule Xgit.MixProject do
     [
       {:con_cache, "~> 0.13"},
       {:credo, "~> 1.0", only: [:dev, :test]},
+      {:enum_type, "~> 1.0"},
       {:excoveralls, "~> 0.10", only: :test},
       {:ex_doc, "~> 0.19", only: :dev},
       {:gettext, "~> 0.16"},
