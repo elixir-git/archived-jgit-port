@@ -1,7 +1,9 @@
 defmodule Xgit.Lib.ObjectIdTest do
   use ExUnit.Case, async: true
 
+  alias Xgit.Lib.Constants
   alias Xgit.Lib.ObjectId
+
   doctest Xgit.Lib.ObjectId
 
   test "zero/0" do
@@ -26,5 +28,12 @@ defmodule Xgit.Lib.ObjectIdTest do
 
     assert 1..25 |> Enum.to_list() |> ObjectId.from_raw_bytes() ==
              "0102030405060708090a0b0c0d0e0f1011121314"
+  end
+
+  test "id_for/2" do
+    data = 'test025 some data, more than 16 bytes to get good coverage'
+
+    assert ObjectId.id_for(Constants.obj_blob(), data) ==
+             "4f561df5ecf0dfbd53a0dc0f37262fef075d9dde"
   end
 end
