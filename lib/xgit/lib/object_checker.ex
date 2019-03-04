@@ -13,6 +13,37 @@ defmodule Xgit.Lib.ObjectChecker do
 
   use EnumType
 
+  defprotocol Strategy do
+    @doc ~S"""
+    Check a commit for errors.
+
+    Return `:ok` if commit is validated.
+
+    Return `:default` to reuse the default implementation.
+
+    Raise `CorruptObjectError` if the commit is invalid.
+    """
+    def check_commit!(strategy, commit_data)
+
+    @doc ~S"""
+    Check a blob for errors.
+
+    Return `:ok` if blob is validated.
+
+    Return `:default` to reuse the default implementation.
+
+    Raise `CorruptObjectError` if the blob is invalid.
+    """
+    def check_blob!(strategy, blob_data)
+
+    @doc ~S"""
+    Create a new `BlobObjectChecker`.
+
+    Can return `nil`.
+    """
+    def new_blob_object_checker(strategy)
+  end
+
   # PORTING NOTE:
   # The following methods are dynamically overridden in jgit:
   # * checkCommit
@@ -86,6 +117,8 @@ defmodule Xgit.Lib.ObjectChecker do
     # }
   end
 
+
+
   # PORTING NOTE: Need to account for configuration vs current state (which probably
   # needs to be passed around, rather than accumulated). Struct is configuration.
 
@@ -94,7 +127,8 @@ defmodule Xgit.Lib.ObjectChecker do
   # private EnumSet<ErrorType> errors = EnumSet.allOf(ErrorType.class);
   # private final List<GitmoduleEntry> gitsubmodules = new ArrayList<>();
 
-  defstruct skiplist: nil,
+  defstruct strategy: nil,
+            skiplist: nil,
             ignore_error_types: nil,
             allow_invalid_person_ident?: false,
             windows?: false,
@@ -248,21 +282,18 @@ defmodule Xgit.Lib.ObjectChecker do
   # case OBJ_TREE:
   # 	checkTree(id, raw);
   # 	break;
-  # case OBJ_BLOB:
-  # 	BlobObjectChecker checker = newBlobObjectChecker();
-  # 	if (checker == null) {
-  # 		checkBlob(raw);
-  # 	} else {
-  # 		checker.update(raw, 0, raw.length);
-  # 		checker.endBlob(id);
-  # 	}
-  # 	break;
-  # default:
-  # 	report(UNKNOWN_TYPE, id, MessageFormat.format(
-  # 			JGitText.get().corruptObjectInvalidType2,
-  # 			Integer.valueOf(objType)));
-  # }
-  # end
+
+  def check(%__MODULE__{} = _checker, _id, 3, _data) do
+    # ^^ type 3 == Constants.obj_blob()
+    # BlobObjectChecker checker = newBlobObjectChecker();
+    # if (checker == null) {
+    # 	checkBlob(raw);
+    # } else {
+    # 	checker.update(raw, 0, raw.length);
+    # 	checker.endBlob(id);
+    # }
+    :ok
+  end
 
   def check(%__MODULE__{} = checker, id, obj_type, _data),
     do: report(checker, ErrorType.UNKNOWN_TYPE, id, "invalid type #{obj_type}")
@@ -346,6 +377,7 @@ defmodule Xgit.Lib.ObjectChecker do
   #  *             if any error was detected.
   #  */
   # public void checkCommit(byte[] raw) throws CorruptObjectException {
+  #   NOTE: Remember to check strategy.
   # 	checkCommit(idFor(OBJ_COMMIT, raw), raw);
   # }
   #
@@ -362,6 +394,7 @@ defmodule Xgit.Lib.ObjectChecker do
   #  */
   # public void checkCommit(@Nullable AnyObjectId id, byte[] raw)
   # 		throws CorruptObjectException {
+  #   NOTE: Remember to check strategy.
   # 	bufPtr.value = 0;
   #
   # 	if (!match(raw, tree)) {
@@ -1134,6 +1167,7 @@ defmodule Xgit.Lib.ObjectChecker do
   #  */
   # @Nullable
   # public BlobObjectChecker newBlobObjectChecker() {
+  #   NOTE: Remember to check strategy.
   # 	return null;
   # }
   #
@@ -1150,6 +1184,7 @@ defmodule Xgit.Lib.ObjectChecker do
   #  *             if any error was detected.
   #  */
   # public void checkBlob(byte[] raw) throws CorruptObjectException {
+  #   NOTE: Remember to check strategy.
   # 	// We can always assume the blob is valid.
   # }
   #

@@ -52,24 +52,14 @@ defmodule Xgit.Lib.ObjectCheckerTest do
     assert_corrupt("Object (unknown) is corrupt: invalid type -1", Constants.obj_bad(), [])
   end
 
-  # @Test
-  # public void testInvalidType() {
-  # 	String msg = MessageFormat.format(
-  # 			JGitText.get().corruptObjectInvalidType2,
-  # 			valueOf(OBJ_BAD));
-  # 	assertCorrupt(msg, OBJ_BAD, new byte[0]);
-  # }
-  #
-  # @Test
-  # public void testCheckBlob() throws CorruptObjectException {
-  # 	// Any blob should pass...
-  # 	checker.checkBlob(new byte[0]);
-  # 	checker.checkBlob(new byte[1]);
-  #
-  # 	checker.check(OBJ_BLOB, new byte[0]);
-  # 	checker.check(OBJ_BLOB, new byte[1]);
-  # }
-  #
+  test "any blob should pass" do
+    # checker.checkBlob(new byte[0]);
+    # checker.checkBlob(new byte[1]);
+
+    ObjectChecker.check(%ObjectChecker{}, Constants.obj_blob(), [0])
+    ObjectChecker.check(%ObjectChecker{}, Constants.obj_blob(), [1])
+  end
+
   # @Test
   # public void testCheckBlobNotCorrupt() throws CorruptObjectException {
   # 	SECRET_KEY_CHECKER.check(OBJ_BLOB, encodeASCII("key = \"public_key\""));
