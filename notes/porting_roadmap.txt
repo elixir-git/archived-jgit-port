@@ -46,11 +46,6 @@ MockSystemReader TRACE
 
 SystemReader
   FileBasedConfig
-  ObjectChecker
 
 FileBasedConfig
   StoredConfig -> xgit.lib.Config.Storage
-
-ObjectChecker
-  FileMode
-  ObjectIdSet -> MapSet
