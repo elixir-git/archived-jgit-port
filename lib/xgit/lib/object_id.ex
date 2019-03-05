@@ -35,6 +35,18 @@ defmodule Xgit.Lib.ObjectId do
   end
 
   @doc ~S"""
+  Read an ObjectID from a hex string (charlist).
+
+  If a valid ID is found, returns `{id, next}` where `id` is the matched ID string
+  and `next` is the remainder of the charlist after the matched ID.
+
+  If no such ID is found, returns `false`.
+  """
+  def from_hex_charlist(b) when is_list(b) do
+    
+  end
+
+  @doc ~S"""
   Compute the git "name" of an object.
 
   `obj_type` is the type of the object. Must be one of the `obj_*()` values from
