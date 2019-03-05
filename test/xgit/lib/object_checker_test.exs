@@ -18,7 +18,7 @@ defmodule Xgit.Lib.ObjectCheckerTest do
     ObjectChecker.check(%ObjectChecker{}, Constants.obj_blob(), [1])
   end
 
-  describe "Xgit.Lib.ObjectChecker.Strategy check_blob!/2 override" do
+  describe "check_blob!/2 strategy hook" do
     test "blob not corrupt" do
       checker = %ObjectChecker{strategy: %SecretKeyCheckerStrategy{}}
       assert :ok = ObjectChecker.check(checker, Constants.obj_blob(), 'public_key')
