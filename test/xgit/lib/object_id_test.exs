@@ -20,6 +20,12 @@ defmodule Xgit.Lib.ObjectIdTest do
     refute ObjectId.valid?("1234567890abcdef123451234567890abcdef1234")
     refute ObjectId.valid?("1234567890abCdef12341234567890abcdef1234")
     refute ObjectId.valid?("1234567890abXdef12341234567890abcdef1234")
+
+    assert ObjectId.valid?('1234567890abcdef12341234567890abcdef1234')
+    refute ObjectId.valid?('1234567890abcdef1231234567890abcdef1234')
+    refute ObjectId.valid?('1234567890abcdef123451234567890abcdef1234')
+    refute ObjectId.valid?('1234567890abCdef12341234567890abcdef1234')
+    refute ObjectId.valid?('1234567890abXdef12341234567890abcdef1234')
   end
 
   test "from_raw_bytes/1" do
