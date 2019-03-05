@@ -51,58 +51,58 @@ defmodule Xgit.Lib.ObjectChecker do
 
   # Potential issues that can be identified by the checker.
   # These names match git-core so that fsck section keys also match.
-  defenum ErrorType do
-    value(NULL_SHA1, 0)
-    value(DUPLICATE_ENTRIES, 1)
-    value(TREE_NOT_SORTED, 2)
-    value(ZERO_PADDED_FILEMODE, 3)
-    value(EMPTY_NAME, 4)
-    value(FULL_PATHNAME, 5)
-    value(HAS_DOT, 6)
-    value(HAS_DOTDOT, 7)
-    value(HAS_DOTGIT, 8)
-    value(BAD_OBJECT_SHA1, 9)
-    value(BAD_PARENT_SHA1, 10)
-    value(BAD_TREE_SHA1, 11)
-    value(MISSING_AUTHOR, 12)
-    value(MISSING_COMMITTER, 13)
-    value(MISSING_OBJECT, 14)
-    value(MISSING_TREE, 15)
-    value(MISSING_TYPE_ENTRY, 16)
-    value(MISSING_TAG_ENTRY, 17)
-    value(BAD_DATE, 18)
-    value(BAD_EMAIL, 19)
-    value(BAD_TIMEZONE, 20)
-    value(MISSING_EMAIL, 21)
-    value(MISSING_SPACE_BEFORE_DATE, 22)
-    value(GITMODULES_BLOB, 23)
-    value(GITMODULES_LARGE, 24)
-    value(GITMODULES_NAME, 25)
-    value(GITMODULES_PARSE, 26)
-    value(GITMODULES_PATH, 27)
-    value(GITMODULES_SYMLINK, 28)
-    value(GITMODULES_URL, 29)
-    value(UNKNOWN_TYPE, 30)
-
-    # The following items are unique to xgit.
-    value(WIN32_BAD_NAME, 31)
-    value(BAD_UTF8, 32)
-
-    # /** @return camelCaseVersion of the name. */
-    # public String getMessageId() {
-    # 	String n = name();
-    # 	StringBuilder r = new StringBuilder(n.length());
-    # 	for (int i = 0; i < n.length(); i++) {
-    # 		char c = n.charAt(i);
-    # 		if (c != '_') {
-    # 			r.append(StringUtils.toLowerCase(c));
-    # 		} else {
-    # 			r.append(n.charAt(++i));
-    # 		}
-    # 	}
-    # 	return r.toString();
-    # }
-  end
+  # defenum ErrorType do
+  #   value(NULL_SHA1, 0)
+  #   value(DUPLICATE_ENTRIES, 1)
+  #   value(TREE_NOT_SORTED, 2)
+  #   value(ZERO_PADDED_FILEMODE, 3)
+  #   value(EMPTY_NAME, 4)
+  #   value(FULL_PATHNAME, 5)
+  #   value(HAS_DOT, 6)
+  #   value(HAS_DOTDOT, 7)
+  #   value(HAS_DOTGIT, 8)
+  #   value(BAD_OBJECT_SHA1, 9)
+  #   value(BAD_PARENT_SHA1, 10)
+  #   value(BAD_TREE_SHA1, 11)
+  #   value(MISSING_AUTHOR, 12)
+  #   value(MISSING_COMMITTER, 13)
+  #   value(MISSING_OBJECT, 14)
+  #   value(MISSING_TREE, 15)
+  #   value(MISSING_TYPE_ENTRY, 16)
+  #   value(MISSING_TAG_ENTRY, 17)
+  #   value(BAD_DATE, 18)
+  #   value(BAD_EMAIL, 19)
+  #   value(BAD_TIMEZONE, 20)
+  #   value(MISSING_EMAIL, 21)
+  #   value(MISSING_SPACE_BEFORE_DATE, 22)
+  #   value(GITMODULES_BLOB, 23)
+  #   value(GITMODULES_LARGE, 24)
+  #   value(GITMODULES_NAME, 25)
+  #   value(GITMODULES_PARSE, 26)
+  #   value(GITMODULES_PATH, 27)
+  #   value(GITMODULES_SYMLINK, 28)
+  #   value(GITMODULES_URL, 29)
+  #   value(UNKNOWN_TYPE, 30)
+  #
+  #   # The following items are unique to xgit.
+  #   value(WIN32_BAD_NAME, 31)
+  #   value(BAD_UTF8, 32)
+  #
+  #   # /** @return camelCaseVersion of the name. */
+  #   # public String getMessageId() {
+  #   # 	String n = name();
+  #   # 	StringBuilder r = new StringBuilder(n.length());
+  #   # 	for (int i = 0; i < n.length(); i++) {
+  #   # 		char c = n.charAt(i);
+  #   # 		if (c != '_') {
+  #   # 			r.append(StringUtils.toLowerCase(c));
+  #   # 		} else {
+  #   # 			r.append(n.charAt(++i));
+  #   # 		}
+  #   # 	}
+  #   # 	return r.toString();
+  #   # }
+  # end
 
   # PORTING NOTE: Need to account for configuration vs current state (which probably
   # needs to be passed around, rather than accumulated). Struct is configuration.
