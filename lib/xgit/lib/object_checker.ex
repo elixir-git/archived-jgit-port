@@ -11,6 +11,8 @@ defmodule Xgit.Lib.ObjectChecker do
   alias Xgit.Errors.CorruptObjectError
   alias Xgit.Lib.ObjectId
 
+  import Xgit.Util.RawParseUtils, only: [match_prefix?: 2]
+
   use EnumType
 
   defprotocol Strategy do
@@ -38,7 +40,7 @@ defmodule Xgit.Lib.ObjectChecker do
   end
 
   # Header strings defined by git object format (uncomment as needed below)
-  # @header_tree 'tree '
+  @header_tree 'tree '
   # @header_parent 'parent '
   # @header_author 'author '
   # @header_committer 'committer '
@@ -51,58 +53,58 @@ defmodule Xgit.Lib.ObjectChecker do
 
   # Potential issues that can be identified by the checker.
   # These names match git-core so that fsck section keys also match.
-  # defenum ErrorType do
-  #   value(NULL_SHA1, 0)
-  #   value(DUPLICATE_ENTRIES, 1)
-  #   value(TREE_NOT_SORTED, 2)
-  #   value(ZERO_PADDED_FILEMODE, 3)
-  #   value(EMPTY_NAME, 4)
-  #   value(FULL_PATHNAME, 5)
-  #   value(HAS_DOT, 6)
-  #   value(HAS_DOTDOT, 7)
-  #   value(HAS_DOTGIT, 8)
-  #   value(BAD_OBJECT_SHA1, 9)
-  #   value(BAD_PARENT_SHA1, 10)
-  #   value(BAD_TREE_SHA1, 11)
-  #   value(MISSING_AUTHOR, 12)
-  #   value(MISSING_COMMITTER, 13)
-  #   value(MISSING_OBJECT, 14)
-  #   value(MISSING_TREE, 15)
-  #   value(MISSING_TYPE_ENTRY, 16)
-  #   value(MISSING_TAG_ENTRY, 17)
-  #   value(BAD_DATE, 18)
-  #   value(BAD_EMAIL, 19)
-  #   value(BAD_TIMEZONE, 20)
-  #   value(MISSING_EMAIL, 21)
-  #   value(MISSING_SPACE_BEFORE_DATE, 22)
-  #   value(GITMODULES_BLOB, 23)
-  #   value(GITMODULES_LARGE, 24)
-  #   value(GITMODULES_NAME, 25)
-  #   value(GITMODULES_PARSE, 26)
-  #   value(GITMODULES_PATH, 27)
-  #   value(GITMODULES_SYMLINK, 28)
-  #   value(GITMODULES_URL, 29)
-  #   value(UNKNOWN_TYPE, 30)
-  #
-  #   # The following items are unique to xgit.
-  #   value(WIN32_BAD_NAME, 31)
-  #   value(BAD_UTF8, 32)
-  #
-  #   # /** @return camelCaseVersion of the name. */
-  #   # public String getMessageId() {
-  #   # 	String n = name();
-  #   # 	StringBuilder r = new StringBuilder(n.length());
-  #   # 	for (int i = 0; i < n.length(); i++) {
-  #   # 		char c = n.charAt(i);
-  #   # 		if (c != '_') {
-  #   # 			r.append(StringUtils.toLowerCase(c));
-  #   # 		} else {
-  #   # 			r.append(n.charAt(++i));
-  #   # 		}
-  #   # 	}
-  #   # 	return r.toString();
-  #   # }
-  # end
+  defenum ErrorType do
+    value(NULL_SHA1, 0)
+    value(DUPLICATE_ENTRIES, 1)
+    value(TREE_NOT_SORTED, 2)
+    value(ZERO_PADDED_FILEMODE, 3)
+    value(EMPTY_NAME, 4)
+    value(FULL_PATHNAME, 5)
+    value(HAS_DOT, 6)
+    value(HAS_DOTDOT, 7)
+    value(HAS_DOTGIT, 8)
+    value(BAD_OBJECT_SHA1, 9)
+    value(BAD_PARENT_SHA1, 10)
+    value(BAD_TREE_SHA1, 11)
+    value(MISSING_AUTHOR, 12)
+    value(MISSING_COMMITTER, 13)
+    value(MISSING_OBJECT, 14)
+    value(MISSING_TREE, 15)
+    value(MISSING_TYPE_ENTRY, 16)
+    value(MISSING_TAG_ENTRY, 17)
+    value(BAD_DATE, 18)
+    value(BAD_EMAIL, 19)
+    value(BAD_TIMEZONE, 20)
+    value(MISSING_EMAIL, 21)
+    value(MISSING_SPACE_BEFORE_DATE, 22)
+    value(GITMODULES_BLOB, 23)
+    value(GITMODULES_LARGE, 24)
+    value(GITMODULES_NAME, 25)
+    value(GITMODULES_PARSE, 26)
+    value(GITMODULES_PATH, 27)
+    value(GITMODULES_SYMLINK, 28)
+    value(GITMODULES_URL, 29)
+    value(UNKNOWN_TYPE, 30)
+
+    # The following items are unique to xgit.
+    value(WIN32_BAD_NAME, 31)
+    value(BAD_UTF8, 32)
+
+    # /** @return camelCaseVersion of the name. */
+    # public String getMessageId() {
+    # 	String n = name();
+    # 	StringBuilder r = new StringBuilder(n.length());
+    # 	for (int i = 0; i < n.length(); i++) {
+    # 		char c = n.charAt(i);
+    # 		if (c != '_') {
+    # 			r.append(StringUtils.toLowerCase(c));
+    # 		} else {
+    # 			r.append(n.charAt(++i));
+    # 		}
+    # 	}
+    # 	return r.toString();
+    # }
+  end
 
   # PORTING NOTE: Need to account for configuration vs current state (which probably
   # needs to be passed around, rather than accumulated). Struct is configuration.
@@ -261,10 +263,10 @@ defmodule Xgit.Lib.ObjectChecker do
 
   # type 1 = commit
 
-  def check!(%__MODULE__{strategy: nil}, id, 1, data),
+  def check!(%__MODULE__{strategy: nil} = checker, id, 1, data),
     do: check_commit!(checker, id, data)
 
-  def check!(%__MODULE__{strategy: strategy}, id, 1, data) do
+  def check!(%__MODULE__{strategy: strategy} = checker, id, 1, data) do
     case Strategy.check_commit!(strategy, data) do
       :default -> check_commit!(checker, id, data)
       x -> x
@@ -364,11 +366,15 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	}
   # }
 
-  defp check_commit!(%__MODULE__{strategy: strategy}, id, data) do
-    # OMG: bufPtr is mutable object state!
+  defp check_commit!(%__MODULE__{} = checker, id, data) do
+    _data =
+      match_or_report!(checker, data,
+        prefix: @header_tree,
+        error_type: ErrorType.MISSING_TREE,
+        id: id,
+        why: "no tree header"
+      )
 
-    # bufPtr.value = 0;
-    #
     # if (!match(raw, tree)) {
     # 	report(MISSING_TREE, id, JGitText.get().corruptObjectNotreeHeader);
     # } else if (!checkId(raw)) {
@@ -394,6 +400,7 @@ defmodule Xgit.Lib.ObjectChecker do
     # 	report(MISSING_COMMITTER, id,
     # 			JGitText.get().corruptObjectNoCommitter);
     # }
+    :ok
   end
 
   # /**
@@ -630,6 +637,22 @@ defmodule Xgit.Lib.ObjectChecker do
       ObjectId.id_for(obj_type, raw)
     rescue
       _ -> nil
+    end
+  end
+
+  defp match_or_report!(%__MODULE__{} = checker, data,
+         prefix: prefix,
+         error_type: error_type,
+         id: id,
+         why: why
+       ) do
+    case match_prefix?(data, prefix) do
+      {true, after_match} ->
+        after_match
+
+      _ ->
+        report(checker, error_type, id, why)
+        data
     end
   end
 
@@ -1111,16 +1134,7 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	}
   # 	return false;
   # }
-  #
-  # private boolean match(byte[] b, byte[] src) {
-  # 	int r = RawParseUtils.match(b, bufPtr.value, src);
-  # 	if (r < 0) {
-  # 		return false;
-  # 	}
-  # 	bufPtr.value = r;
-  # 	return true;
-  # }
-  #
+
   # private static char toLower(byte b) {
   # 	if ('A' <= b && b <= 'Z')
   # 		return (char) (b + ('a' - 'A'));

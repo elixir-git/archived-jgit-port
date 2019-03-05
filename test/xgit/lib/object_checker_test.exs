@@ -38,7 +38,6 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       committer A. U. Thor <author@localhost> 1 +0000
       """
 
-      ObjectChecker.check_commit!(%ObjectChecker{}, data)
       ObjectChecker.check!(%ObjectChecker{}, Constants.obj_commit(), data)
     end
 
