@@ -6,25 +6,17 @@ defmodule Xgit.Util.RawParseUtils do
   alias Xgit.Errors.UnsupportedCharsetError
   alias Xgit.Lib.PersonIdent
 
-  # /**
-  #  * Determine if b[ptr] matches src.
-  #  *
-  #  * @param b
-  #  *            the buffer to scan.
-  #  * @param ptr
-  #  *            first position within b, this should match src[0].
-  #  * @param src
-  #  *            the buffer to test for equality with b.
-  #  * @return ptr + src.length if b[ptr..src.length] == src; else -1.
-  #  */
-  # public static final int match(byte[] b, int ptr, byte[] src) {
-  # 	if (ptr + src.length > b.length)
-  # 		return -1;
-  # 	for (int i = 0; i < src.length; i++, ptr++)
-  # 		if (b[ptr] != src[i])
-  # 			return -1;
-  # 	return ptr;
-  # }
+  @doc ~S"""
+  Does the charlist `b` start with the same characters as `str`?
+
+  If so, returns `{true, next}` where `next` is the remaining portion of `b`
+  after the matched `str.
+
+  If not, returns `false`.
+  """
+  def match_prefix?(b, []), do: {true, b}
+  def match_prefix?([c | b], [c | str]), do: match_prefix?(b, str)
+  def match_prefix?(_, _), do: false
 
   # /**
   #  * Format a base 10 numeric into a temporary buffer.
