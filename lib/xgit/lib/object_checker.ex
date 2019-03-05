@@ -244,9 +244,9 @@ defmodule Xgit.Lib.ObjectChecker do
 
   Raises `Xgit.Errors.CorruptObjectError` if an error is identified.
   """
-  def check(%__MODULE__{} = checker, obj_type, data)
+  def check!(%__MODULE__{} = checker, obj_type, data)
       when is_integer(obj_type) and is_list(data),
-      do: check(checker, id_for(checker, obj_type, data), obj_type, data)
+      do: check!(checker, id_for(checker, obj_type, data), obj_type, data)
 
   @doc ~S"""
   Check an object for parsing errors.
@@ -254,7 +254,7 @@ defmodule Xgit.Lib.ObjectChecker do
   Like `check/3` but `id` has already been calculated.
   def
   """
-  def check(checker, id, obj_type, data)
+  def check!(checker, id, obj_type, data)
 
   # def check(%ObjectChecker{} = checker, id, obj_type, data) when is_binary(id) is_integer(obj_type) and is_list(data) do
   # switch (objType) {
@@ -270,12 +270,12 @@ defmodule Xgit.Lib.ObjectChecker do
 
   # type 3 = blob
 
-  def check(%__MODULE__{strategy: nil} = _checker, _id, 3, _data), do: :ok
+  def check!(%__MODULE__{strategy: nil} = _checker, _id, 3, _data), do: :ok
 
-  def check(%__MODULE__{strategy: strategy} = _checker, _id, 3, blob_data),
+  def check!(%__MODULE__{strategy: strategy} = _checker, _id, 3, blob_data),
     do: Strategy.check_blob!(strategy, blob_data)
 
-  def check(%__MODULE__{} = checker, id, obj_type, _data),
+  def check!(%__MODULE__{} = checker, id, obj_type, _data),
     do: report(checker, ErrorType.UNKNOWN_TYPE, id, "invalid type #{obj_type}")
 
   # private boolean checkId(byte[] raw) {

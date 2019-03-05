@@ -6,29 +6,29 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   alias Xgit.Lib.ObjectChecker
   alias Xgit.Lib.ObjectChecker.SecretKeyCheckerStrategy
 
-  test "invalid type" do
+  test "invalid object type" do
     assert_corrupt("Object (unknown) is corrupt: invalid type -1", Constants.obj_bad(), [])
   end
 
-  test "any blob should pass" do
-    # checker.checkBlob(new byte[0]);
-    # checker.checkBlob(new byte[1]);
+  describe "check blob" do
+    test "any blob should pass" do
+      # checker.checkBlob(new byte[0]);
+      # checker.checkBlob(new byte[1]);
 
-    ObjectChecker.check(%ObjectChecker{}, Constants.obj_blob(), [0])
-    ObjectChecker.check(%ObjectChecker{}, Constants.obj_blob(), [1])
-  end
-
-  describe "check_blob!/2 strategy hook" do
-    test "blob not corrupt" do
-      checker = %ObjectChecker{strategy: %SecretKeyCheckerStrategy{}}
-      assert :ok = ObjectChecker.check(checker, Constants.obj_blob(), 'public_key')
+      ObjectChecker.check!(%ObjectChecker{}, Constants.obj_blob(), [0])
+      ObjectChecker.check!(%ObjectChecker{}, Constants.obj_blob(), [1])
     end
 
-    test "blob corrupt" do
+    test "strategy hooK: blob not corrupt" do
+      checker = %ObjectChecker{strategy: %SecretKeyCheckerStrategy{}}
+      assert :ok = ObjectChecker.check!(checker, Constants.obj_blob(), 'public_key')
+    end
+
+    test "strategy hook: blob corrupt" do
       checker = %ObjectChecker{strategy: %SecretKeyCheckerStrategy{}}
 
       assert_raise CorruptObjectError, fn ->
-        ObjectChecker.check(checker, Constants.obj_blob(), 'secret_key')
+        ObjectChecker.check!(checker, Constants.obj_blob(), 'secret_key')
       end
     end
   end
@@ -1600,7 +1600,7 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   defp assert_corrupt(msg, type, data)
        when is_binary(msg) and is_integer(type) and is_list(data) do
     assert_raise CorruptObjectError, msg, fn ->
-      ObjectChecker.check(%ObjectChecker{}, type, data)
+      ObjectChecker.check!(%ObjectChecker{}, type, data)
     end
   end
 
