@@ -1139,23 +1139,6 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	return '1' <= b && b <= '9';
   # }
 
-  # /**
-  #  * Check a blob for errors.
-  #  *
-  #  * <p>
-  #  * This may not be called from PackParser in some cases. Use
-  #  * {@link #newBlobObjectChecker} instead.
-  #  *
-  #  * @param raw
-  #  *            the blob data. The array is never modified.
-  #  * @throws org.eclipse.jgit.errors.CorruptObjectException
-  #  *             if any error was detected.
-  #  */
-  # public void checkBlob(byte[] raw) throws CorruptObjectException {
-  #   NOTE: Remember to check strategy.
-  # 	// We can always assume the blob is valid.
-  # }
-  #
   # private String normalize(byte[] raw, int ptr, int end) {
   # 	String n = RawParseUtils.decode(raw, ptr, end).toLowerCase(Locale.US);
   # 	return macosx ? Normalizer.normalize(n, Normalizer.Form.NFC) : n;

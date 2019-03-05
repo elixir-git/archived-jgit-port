@@ -12,9 +12,6 @@ defmodule Xgit.Lib.ObjectCheckerTest do
 
   describe "check blob" do
     test "any blob should pass" do
-      # checker.checkBlob(new byte[0]);
-      # checker.checkBlob(new byte[1]);
-
       ObjectChecker.check!(%ObjectChecker{}, Constants.obj_blob(), [0])
       ObjectChecker.check!(%ObjectChecker{}, Constants.obj_blob(), [1])
     end
