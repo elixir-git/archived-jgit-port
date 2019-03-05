@@ -9,17 +9,17 @@ defmodule Xgit.Lib.ObjectIdTest do
   test "zero/0" do
     zero = ObjectId.zero()
     assert is_binary(zero)
-    assert String.length(zero) == 20
+    assert String.length(zero) == 40
     assert ObjectId.valid?(zero)
     assert String.match?(zero, ~r/^0+$/)
   end
 
   test "valid?/1" do
-    assert ObjectId.valid?("1234567890abcdef1234")
-    refute ObjectId.valid?("1234567890abcdef123")
-    refute ObjectId.valid?("1234567890abcdef12345")
-    refute ObjectId.valid?("1234567890abCdef1234")
-    refute ObjectId.valid?("1234567890abXdef1234")
+    assert ObjectId.valid?("1234567890abcdef12341234567890abcdef1234")
+    refute ObjectId.valid?("1234567890abcdef1231234567890abcdef1234")
+    refute ObjectId.valid?("1234567890abcdef123451234567890abcdef1234")
+    refute ObjectId.valid?("1234567890abCdef12341234567890abcdef1234")
+    refute ObjectId.valid?("1234567890abXdef12341234567890abcdef1234")
   end
 
   test "from_raw_bytes/1" do

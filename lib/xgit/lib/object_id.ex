@@ -14,13 +14,13 @@ defmodule Xgit.Lib.ObjectId do
   @doc ~S"""
   Get the special all-null ObjectId, often used to stand-in for no object.
   """
-  def zero, do: "00000000000000000000"
+  def zero, do: "0000000000000000000000000000000000000000"
 
   @doc ~S"""
-  Return true if the string is a valid ObjectID. (In other words, is it 20 characters
+  Return true if the string is a valid ObjectID. (In other words, is it 40 characters
   of lowercase hex?)
   """
-  def valid?(s) when is_binary(s), do: String.length(s) == 20 && String.match?(s, ~r/^[0-9a-f]+$/)
+  def valid?(s) when is_binary(s), do: String.length(s) == 40 && String.match?(s, ~r/^[0-9a-f]+$/)
 
   @doc ~S"""
   Read a raw ObjectID from a byte list.
