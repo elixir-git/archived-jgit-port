@@ -5,6 +5,24 @@ defmodule Xgit.Util.RawParseUtilsTest do
   alias Xgit.Lib.PersonIdent
   alias Xgit.Util.RawParseUtils, as: RPU
 
+  describe "match_prefix?/2" do
+    test "equal" do
+      assert RPU.match_prefix?(' differ\n', ' differ\n') == {true, []}
+    end
+
+    test "not equal" do
+      assert RPU.match_prefix?(' differ\n', 'a differ\n') == false
+    end
+
+    test "prefix" do
+      assert RPU.match_prefix?('author A. U. Thor', 'author') == {true, ' A. U. Thor'}
+    end
+
+    test "incomplete match" do
+      assert RPU.match_prefix?('author ', 'author autho') == false
+    end
+  end
+
   @commit 'tree e3a1035abd2b319bb01e57d69b0ba6cab289297e\n' ++
             'parent 54e895b87c0768d2317a2b17062e3ad9f76a8105\n' ++
             'committer A U Thor <author@xample.com 1528968566 +0200\n' ++
