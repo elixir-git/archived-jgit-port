@@ -21,11 +21,6 @@ defimpl Xgit.Lib.ObjectChecker.Strategy, for: Xgit.Lib.ObjectChecker.SecretKeyCh
       else: :ok
   end
 
-  @doc ~S"""
-  Create a new `BlobObjectChecker`.
-
-  Can return `nil`.
-  """
   @impl Xgit.Lib.ObjectChecker.Strategy
   def new_blob_object_checker(_strategy), do: nil
     # @Override
