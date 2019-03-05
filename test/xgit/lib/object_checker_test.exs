@@ -30,443 +30,445 @@ defmodule Xgit.Lib.ObjectCheckerTest do
     end
   end
 
-  # @Test
-  # public void testValidCommitNoParent() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  #
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  #
-  # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
-  # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	checker.checkCommit(data);
-  # 	checker.check(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testValidCommitBlankAuthor() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  #
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  #
-  # 	b.append("author <> 0 +0000\n");
-  # 	b.append("committer <> 0 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	checker.checkCommit(data);
-  # 	checker.check(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testCommitCorruptAuthor() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n");
-  # 	b.append("author b <b@c> <b@c> 0 +0000\n");
-  # 	b.append("committer <> 0 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("bad date", OBJ_COMMIT, data);
-  # 	checker.setAllowInvalidPersonIdent(true);
-  # 	checker.checkCommit(data);
-  #
-  # 	checker.setAllowInvalidPersonIdent(false);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testCommitCorruptCommitter() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n");
-  # 	b.append("author <> 0 +0000\n");
-  # 	b.append("committer b <b@c> <b@c> 0 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("bad date", OBJ_COMMIT, data);
-  # 	checker.setAllowInvalidPersonIdent(true);
-  # 	checker.checkCommit(data);
-  #
-  # 	checker.setAllowInvalidPersonIdent(false);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testValidCommit1Parent() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  #
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  #
-  # 	b.append("parent ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  #
-  # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
-  # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	checker.checkCommit(data);
-  # 	checker.check(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testValidCommit2Parent() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  #
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  #
-  # 	b.append("parent ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  #
-  # 	b.append("parent ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  #
-  # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
-  # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	checker.checkCommit(data);
-  # 	checker.check(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testValidCommit128Parent() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  #
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  #
-  # 	for (int i = 0; i < 128; i++) {
-  # 		b.append("parent ");
-  # 		b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 		b.append('\n');
-  # 	}
-  #
-  # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
-  # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	checker.checkCommit(data);
-  # 	checker.check(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testValidCommitNormalTime() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	String when = "1222757360 -0730";
-  #
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  #
-  # 	b.append("author A. U. Thor <author@localhost> " + when + "\n");
-  # 	b.append("committer A. U. Thor <author@localhost> " + when + "\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	checker.checkCommit(data);
-  # 	checker.check(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitNoTree1() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("parent ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	assertCorrupt("no tree header", OBJ_COMMIT, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitNoTree2() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("trie ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	assertCorrupt("no tree header", OBJ_COMMIT, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitNoTree3() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	assertCorrupt("no tree header", OBJ_COMMIT, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitNoTree4() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree\t");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	assertCorrupt("no tree header", OBJ_COMMIT, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidTree1() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("zzzzfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	assertCorrupt("invalid tree", OBJ_COMMIT, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidTree2() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append("z\n");
-  # 	assertCorrupt("invalid tree", OBJ_COMMIT, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidTree3() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9b");
-  # 	b.append("\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("invalid tree", OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidTree4() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree  ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	assertCorrupt("invalid tree", OBJ_COMMIT, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidParent1() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("parent ");
-  # 	b.append("\n");
-  # 	assertCorrupt("invalid parent", OBJ_COMMIT, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidParent2() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("parent ");
-  # 	b.append("zzzzfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append("\n");
-  # 	assertCorrupt("invalid parent", OBJ_COMMIT, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidParent3() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("parent  ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append("\n");
-  # 	assertCorrupt("invalid parent", OBJ_COMMIT, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidParent4() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("parent  ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append("z\n");
-  # 	assertCorrupt("invalid parent", OBJ_COMMIT, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidParent5() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("parent\t");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append("\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	// Yes, really, we complain about author not being
-  # 	// found as the invalid parent line wasn't consumed.
-  # 	assertCorrupt("no author", OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitNoAuthor() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("no author", OBJ_COMMIT, data);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitNoCommitter1() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("no committer", OBJ_COMMIT, data);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitNoCommitter2() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
-  # 	b.append("\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("no committer", OBJ_COMMIT, data);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidAuthor1()
-  # 		throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("author A. U. Thor <foo 1 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("bad email", OBJ_COMMIT, data);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidAuthor2()
-  # 		throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("author A. U. Thor foo> 1 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("missing email", OBJ_COMMIT, data);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidAuthor3()
-  # 		throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("author 1 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("missing email", OBJ_COMMIT, data);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidAuthor4()
-  # 		throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("author a <b> +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("bad date", OBJ_COMMIT, data);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidAuthor5()
-  # 		throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("author a <b>\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("bad date", OBJ_COMMIT, data);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidAuthor6()
-  # 		throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("author a <b> z");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("bad date", OBJ_COMMIT, data);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidAuthor7()
-  # 		throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("author a <b> 1 z");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("bad time zone", OBJ_COMMIT, data);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidCommitInvalidCommitter()
-  # 		throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("tree ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("author a <b> 1 +0000\n");
-  # 	b.append("committer a <");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("bad email", OBJ_COMMIT, data);
-  # 	assertSkipListAccepts(OBJ_COMMIT, data);
-  # }
-  #
+  describe "check commit" do
+    # @Test
+    # public void testValidCommitNoParent() throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    #
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    #
+    # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
+    # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	checker.checkCommit(data);
+    # 	checker.check(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testValidCommitBlankAuthor() throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    #
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    #
+    # 	b.append("author <> 0 +0000\n");
+    # 	b.append("committer <> 0 +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	checker.checkCommit(data);
+    # 	checker.check(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testCommitCorruptAuthor() throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n");
+    # 	b.append("author b <b@c> <b@c> 0 +0000\n");
+    # 	b.append("committer <> 0 +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("bad date", OBJ_COMMIT, data);
+    # 	checker.setAllowInvalidPersonIdent(true);
+    # 	checker.checkCommit(data);
+    #
+    # 	checker.setAllowInvalidPersonIdent(false);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testCommitCorruptCommitter() throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n");
+    # 	b.append("author <> 0 +0000\n");
+    # 	b.append("committer b <b@c> <b@c> 0 +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("bad date", OBJ_COMMIT, data);
+    # 	checker.setAllowInvalidPersonIdent(true);
+    # 	checker.checkCommit(data);
+    #
+    # 	checker.setAllowInvalidPersonIdent(false);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testValidCommit1Parent() throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    #
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    #
+    # 	b.append("parent ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    #
+    # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
+    # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	checker.checkCommit(data);
+    # 	checker.check(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testValidCommit2Parent() throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    #
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    #
+    # 	b.append("parent ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    #
+    # 	b.append("parent ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    #
+    # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
+    # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	checker.checkCommit(data);
+    # 	checker.check(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testValidCommit128Parent() throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    #
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    #
+    # 	for (int i = 0; i < 128; i++) {
+    # 		b.append("parent ");
+    # 		b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 		b.append('\n');
+    # 	}
+    #
+    # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
+    # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	checker.checkCommit(data);
+    # 	checker.check(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testValidCommitNormalTime() throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	String when = "1222757360 -0730";
+    #
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    #
+    # 	b.append("author A. U. Thor <author@localhost> " + when + "\n");
+    # 	b.append("committer A. U. Thor <author@localhost> " + when + "\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	checker.checkCommit(data);
+    # 	checker.check(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitNoTree1() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("parent ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	assertCorrupt("no tree header", OBJ_COMMIT, b);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitNoTree2() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("trie ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	assertCorrupt("no tree header", OBJ_COMMIT, b);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitNoTree3() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	assertCorrupt("no tree header", OBJ_COMMIT, b);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitNoTree4() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree\t");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	assertCorrupt("no tree header", OBJ_COMMIT, b);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidTree1() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("zzzzfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	assertCorrupt("invalid tree", OBJ_COMMIT, b);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidTree2() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append("z\n");
+    # 	assertCorrupt("invalid tree", OBJ_COMMIT, b);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidTree3() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9b");
+    # 	b.append("\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("invalid tree", OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidTree4() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree  ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	assertCorrupt("invalid tree", OBJ_COMMIT, b);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidParent1() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("parent ");
+    # 	b.append("\n");
+    # 	assertCorrupt("invalid parent", OBJ_COMMIT, b);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidParent2() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("parent ");
+    # 	b.append("zzzzfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append("\n");
+    # 	assertCorrupt("invalid parent", OBJ_COMMIT, b);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidParent3() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("parent  ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append("\n");
+    # 	assertCorrupt("invalid parent", OBJ_COMMIT, b);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidParent4() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("parent  ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append("z\n");
+    # 	assertCorrupt("invalid parent", OBJ_COMMIT, b);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidParent5() {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("parent\t");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append("\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	// Yes, really, we complain about author not being
+    # 	// found as the invalid parent line wasn't consumed.
+    # 	assertCorrupt("no author", OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitNoAuthor() throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("no author", OBJ_COMMIT, data);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitNoCommitter1() throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("no committer", OBJ_COMMIT, data);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitNoCommitter2() throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
+    # 	b.append("\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("no committer", OBJ_COMMIT, data);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidAuthor1()
+    # 		throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("author A. U. Thor <foo 1 +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("bad email", OBJ_COMMIT, data);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidAuthor2()
+    # 		throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("author A. U. Thor foo> 1 +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("missing email", OBJ_COMMIT, data);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidAuthor3()
+    # 		throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("author 1 +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("missing email", OBJ_COMMIT, data);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidAuthor4()
+    # 		throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("author a <b> +0000\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("bad date", OBJ_COMMIT, data);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidAuthor5()
+    # 		throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("author a <b>\n");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("bad date", OBJ_COMMIT, data);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidAuthor6()
+    # 		throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("author a <b> z");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("bad date", OBJ_COMMIT, data);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidAuthor7()
+    # 		throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("author a <b> 1 z");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("bad time zone", OBJ_COMMIT, data);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+    #
+    # @Test
+    # public void testInvalidCommitInvalidCommitter()
+    # 		throws CorruptObjectException {
+    # 	StringBuilder b = new StringBuilder();
+    # 	b.append("tree ");
+    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
+    # 	b.append('\n');
+    # 	b.append("author a <b> 1 +0000\n");
+    # 	b.append("committer a <");
+    #
+    # 	byte[] data = encodeASCII(b.toString());
+    # 	assertCorrupt("bad email", OBJ_COMMIT, data);
+    # 	assertSkipListAccepts(OBJ_COMMIT, data);
+    # }
+  end
+
   # @Test
   # public void testValidTag() throws CorruptObjectException {
   # 	StringBuilder b = new StringBuilder();
