@@ -6,39 +6,6 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   alias Xgit.Lib.ObjectChecker
   alias Xgit.Lib.ObjectChecker.SecretKeyCheckerStrategy
 
-  # private static final ObjectChecker SECRET_KEY_BLOB_CHECKER = new ObjectChecker() {
-  # 	@Override
-  # 	public BlobObjectChecker newBlobObjectChecker() {
-  # 		return new BlobObjectChecker() {
-  # 			private boolean containSecretKey;
-  #
-  # 			@Override
-  # 			public void update(byte[] in, int offset, int len) {
-  # 				String str = decode(in, offset, offset + len);
-  # 				if (str.contains("secret_key")) {
-  # 					containSecretKey = true;
-  # 				}
-  # 			}
-  #
-  # 			@Override
-  # 			public void endBlob(AnyObjectId id)
-  # 					throws CorruptObjectException {
-  # 				if (containSecretKey) {
-  # 					throw new CorruptObjectException(
-  # 							"don't add a secret key");
-  # 				}
-  # 			}
-  # 		};
-  # 	}
-  # };
-  #
-  # private ObjectChecker checker;
-  #
-  # @Before
-  # public void setUp() throws Exception {
-  # 	checker = new ObjectChecker();
-  # }
-
   test "invalid type" do
     assert_corrupt("Object (unknown) is corrupt: invalid type -1", Constants.obj_bad(), [])
   end
@@ -66,17 +33,6 @@ defmodule Xgit.Lib.ObjectCheckerTest do
     end
   end
 
-  # @Test
-  # public void testCheckBlobNotCorrupt() throws CorruptObjectException {
-  # 	SECRET_KEY_CHECKER.check(OBJ_BLOB, encodeASCII("key = \"public_key\""));
-  # }
-  #
-  # @Test
-  # public void testCheckBlobCorrupt() throws CorruptObjectException {
-  # 	thrown.expect(CorruptObjectException.class);
-  # 	SECRET_KEY_CHECKER.check(OBJ_BLOB, encodeASCII("key = \"secret_key\""));
-  # }
-  #
   # @Test
   # public void testCheckBlobWithBlobObjectCheckerNotCorrupt()
   # 		throws CorruptObjectException {
