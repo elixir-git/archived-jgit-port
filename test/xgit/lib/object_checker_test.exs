@@ -4,17 +4,8 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   alias Xgit.Errors.CorruptObjectError
   alias Xgit.Lib.Constants
   alias Xgit.Lib.ObjectChecker
+  alias Xgit.Lib.ObjectChecker.SecretKeyCheckerStrategy
 
-  # private static final ObjectChecker SECRET_KEY_CHECKER = new ObjectChecker() {
-  # 	@Override
-  # 	public void checkBlob(byte[] raw) throws CorruptObjectException {
-  # 		String in = decode(raw);
-  # 		if (in.contains("secret_key")) {
-  # 			throw new CorruptObjectException("don't add a secret key");
-  # 		}
-  # 	}
-  # };
-  #
   # private static final ObjectChecker SECRET_KEY_BLOB_CHECKER = new ObjectChecker() {
   # 	@Override
   # 	public BlobObjectChecker newBlobObjectChecker() {
@@ -58,6 +49,21 @@ defmodule Xgit.Lib.ObjectCheckerTest do
 
     ObjectChecker.check(%ObjectChecker{}, Constants.obj_blob(), [0])
     ObjectChecker.check(%ObjectChecker{}, Constants.obj_blob(), [1])
+  end
+
+  describe "Xgit.Lib.ObjectChecker.Strategy check_blob!/2 override" do
+    test "blob not corrupt" do
+      checker = %ObjectChecker{strategy: %SecretKeyCheckerStrategy{}}
+      assert :ok = ObjectChecker.check(checker, Constants.obj_blob(), 'public_key')
+    end
+
+    test "blob corrupt" do
+      checker = %ObjectChecker{strategy: %SecretKeyCheckerStrategy{}}
+
+      assert_raise CorruptObjectError, fn ->
+        ObjectChecker.check(checker, Constants.obj_blob(), 'secret_key')
+      end
+    end
   end
 
   # @Test

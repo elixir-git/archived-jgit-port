@@ -117,8 +117,6 @@ defmodule Xgit.Lib.ObjectChecker do
     # }
   end
 
-
-
   # PORTING NOTE: Need to account for configuration vs current state (which probably
   # needs to be passed around, rather than accumulated). Struct is configuration.
 
@@ -283,8 +281,13 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	checkTree(id, raw);
   # 	break;
 
-  def check(%__MODULE__{} = _checker, _id, 3, _data) do
+  def check(%__MODULE__{strategy: nil} = _checker, _id, 3, _data), do: :ok
+
+  def check(%__MODULE__{strategy: strategy} = _checker, _id, 3, blob_data) do
     # ^^ type 3 == Constants.obj_blob()
+
+    Strategy.check_blob!(strategy, blob_data)
+
     # BlobObjectChecker checker = newBlobObjectChecker();
     # if (checker == null) {
     # 	checkBlob(raw);
@@ -292,7 +295,6 @@ defmodule Xgit.Lib.ObjectChecker do
     # 	checker.update(raw, 0, raw.length);
     # 	checker.endBlob(id);
     # }
-    :ok
   end
 
   def check(%__MODULE__{} = checker, id, obj_type, _data),
