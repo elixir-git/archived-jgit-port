@@ -31,6 +31,17 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   end
 
   describe "check commit" do
+    test "valid: no parent" do
+      data = ~C"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author A. U. Thor <author@localhost> 1 +0000
+      committer A. U. Thor <author@localhost> 1 +0000
+      """
+
+      ObjectChecker.check_commit!(%ObjectChecker{}, data)
+      ObjectChecker.check!(%ObjectChecker{}, Constants.obj_commit(), data)
+    end
+
     # @Test
     # public void testValidCommitNoParent() throws CorruptObjectException {
     # 	StringBuilder b = new StringBuilder();

@@ -258,9 +258,19 @@ defmodule Xgit.Lib.ObjectChecker do
 
   # def check(%ObjectChecker{} = checker, id, obj_type, data) when is_binary(id) is_integer(obj_type) and is_list(data) do
   # switch (objType) {
-  # case OBJ_COMMIT:
-  # 	checkCommit(id, raw);
-  # 	break;
+
+  # type 1 = commit
+
+  def check!(%__MODULE__{strategy: nil}, id, 1, data),
+    do: check_commit!(checker, id, data)
+
+  def check!(%__MODULE__{strategy: strategy}, id, 1, data) do
+    case Strategy.check_commit!(strategy, data) do
+      :default -> check_commit!(checker, id, data)
+      x -> x
+    end
+  end
+
   # case OBJ_TAG:
   # 	checkTag(id, raw);
   # 	break;
@@ -272,8 +282,14 @@ defmodule Xgit.Lib.ObjectChecker do
 
   def check!(%__MODULE__{strategy: nil} = _checker, _id, 3, _data), do: :ok
 
-  def check!(%__MODULE__{strategy: strategy} = _checker, _id, 3, blob_data),
-    do: Strategy.check_blob!(strategy, blob_data)
+  def check!(%__MODULE__{strategy: strategy} = _checker, _id, 3, blob_data) do
+    case Strategy.check_blob!(strategy, blob_data) do
+      :default -> :ok
+      x -> x
+    end
+  end
+
+  # unknown type
 
   def check!(%__MODULE__{} = checker, id, obj_type, _data),
     do: report(checker, ErrorType.UNKNOWN_TYPE, id, "invalid type #{obj_type}")
@@ -347,63 +363,39 @@ defmodule Xgit.Lib.ObjectChecker do
   # 		bufPtr.value = nextLF(raw, p);
   # 	}
   # }
-  #
-  # /**
-  #  * Check a commit for errors.
-  #  *
-  #  * @param raw
-  #  *            the commit data. The array is never modified.
-  #  * @throws org.eclipse.jgit.errors.CorruptObjectException
-  #  *             if any error was detected.
-  #  */
-  # public void checkCommit(byte[] raw) throws CorruptObjectException {
-  #   NOTE: Remember to check strategy.
-  # 	checkCommit(idFor(OBJ_COMMIT, raw), raw);
-  # }
-  #
-  # /**
-  #  * Check a commit for errors.
-  #  *
-  #  * @param id
-  #  *            identity of the object being checked.
-  #  * @param raw
-  #  *            the commit data. The array is never modified.
-  #  * @throws org.eclipse.jgit.errors.CorruptObjectException
-  #  *             if any error was detected.
-  #  * @since 4.2
-  #  */
-  # public void checkCommit(@Nullable AnyObjectId id, byte[] raw)
-  # 		throws CorruptObjectException {
-  #   NOTE: Remember to check strategy.
-  # 	bufPtr.value = 0;
-  #
-  # 	if (!match(raw, tree)) {
-  # 		report(MISSING_TREE, id, JGitText.get().corruptObjectNotreeHeader);
-  # 	} else if (!checkId(raw)) {
-  # 		report(BAD_TREE_SHA1, id, JGitText.get().corruptObjectInvalidTree);
-  # 	}
-  #
-  # 	while (match(raw, parent)) {
-  # 		if (!checkId(raw)) {
-  # 			report(BAD_PARENT_SHA1, id,
-  # 					JGitText.get().corruptObjectInvalidParent);
-  # 		}
-  # 	}
-  #
-  # 	if (match(raw, author)) {
-  # 		checkPersonIdent(raw, id);
-  # 	} else {
-  # 		report(MISSING_AUTHOR, id, JGitText.get().corruptObjectNoAuthor);
-  # 	}
-  #
-  # 	if (match(raw, committer)) {
-  # 		checkPersonIdent(raw, id);
-  # 	} else {
-  # 		report(MISSING_COMMITTER, id,
-  # 				JGitText.get().corruptObjectNoCommitter);
-  # 	}
-  # }
-  #
+
+  defp check_commit!(%__MODULE__{strategy: strategy}, id, data) do
+    # OMG: bufPtr is mutable object state!
+
+    # bufPtr.value = 0;
+    #
+    # if (!match(raw, tree)) {
+    # 	report(MISSING_TREE, id, JGitText.get().corruptObjectNotreeHeader);
+    # } else if (!checkId(raw)) {
+    # 	report(BAD_TREE_SHA1, id, JGitText.get().corruptObjectInvalidTree);
+    # }
+    #
+    # while (match(raw, parent)) {
+    # 	if (!checkId(raw)) {
+    # 		report(BAD_PARENT_SHA1, id,
+    # 				JGitText.get().corruptObjectInvalidParent);
+    # 	}
+    # }
+    #
+    # if (match(raw, author)) {
+    # 	checkPersonIdent(raw, id);
+    # } else {
+    # 	report(MISSING_AUTHOR, id, JGitText.get().corruptObjectNoAuthor);
+    # }
+    #
+    # if (match(raw, committer)) {
+    # 	checkPersonIdent(raw, id);
+    # } else {
+    # 	report(MISSING_COMMITTER, id,
+    # 			JGitText.get().corruptObjectNoCommitter);
+    # }
+  end
+
   # /**
   #  * Check an annotated tag for errors.
   #  *
