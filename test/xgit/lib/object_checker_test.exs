@@ -34,21 +34,6 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   end
 
   # @Test
-  # public void testCheckBlobWithBlobObjectCheckerNotCorrupt()
-  # 		throws CorruptObjectException {
-  # 	SECRET_KEY_BLOB_CHECKER.check(OBJ_BLOB,
-  # 			encodeASCII("key = \"public_key\""));
-  # }
-  #
-  # @Test
-  # public void testCheckBlobWithBlobObjectCheckerCorrupt()
-  # 		throws CorruptObjectException {
-  # 	thrown.expect(CorruptObjectException.class);
-  # 	SECRET_KEY_BLOB_CHECKER.check(OBJ_BLOB,
-  # 			encodeASCII("key = \"secret_key\""));
-  # }
-  #
-  # @Test
   # public void testValidCommitNoParent() throws CorruptObjectException {
   # 	StringBuilder b = new StringBuilder();
   #

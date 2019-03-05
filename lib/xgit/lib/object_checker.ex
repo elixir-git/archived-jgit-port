@@ -35,20 +35,7 @@ defmodule Xgit.Lib.ObjectChecker do
     Raise `CorruptObjectError` if the blob is invalid.
     """
     def check_blob!(strategy, blob_data)
-
-    @doc ~S"""
-    Create a new `BlobObjectChecker`.
-
-    Can return `nil`.
-    """
-    def new_blob_object_checker(strategy)
   end
-
-  # PORTING NOTE:
-  # The following methods are dynamically overridden in jgit:
-  # * checkCommit
-  # * checkBlob
-  # * newBlobObjectChecker
 
   # Header strings defined by git object format (uncomment as needed below)
   # @header_tree 'tree '
@@ -281,21 +268,12 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	checkTree(id, raw);
   # 	break;
 
+  # type 3 = blob
+
   def check(%__MODULE__{strategy: nil} = _checker, _id, 3, _data), do: :ok
 
-  def check(%__MODULE__{strategy: strategy} = _checker, _id, 3, blob_data) do
-    # ^^ type 3 == Constants.obj_blob()
-
-    Strategy.check_blob!(strategy, blob_data)
-
-    # BlobObjectChecker checker = newBlobObjectChecker();
-    # if (checker == null) {
-    # 	checkBlob(raw);
-    # } else {
-    # 	checker.update(raw, 0, raw.length);
-    # 	checker.endBlob(id);
-    # }
-  end
+  def check(%__MODULE__{strategy: strategy} = _checker, _id, 3, blob_data),
+    do: Strategy.check_blob!(strategy, blob_data)
 
   def check(%__MODULE__{} = checker, id, obj_type, _data),
     do: report(checker, ErrorType.UNKNOWN_TYPE, id, "invalid type #{obj_type}")
@@ -1160,19 +1138,7 @@ defmodule Xgit.Lib.ObjectChecker do
   # private static boolean isPositiveDigit(byte b) {
   # 	return '1' <= b && b <= '9';
   # }
-  #
-  # /**
-  #  * Create a new {@link org.eclipse.jgit.lib.BlobObjectChecker}.
-  #  *
-  #  * @return new BlobObjectChecker or null if it's not provided.
-  #  * @since 4.9
-  #  */
-  # @Nullable
-  # public BlobObjectChecker newBlobObjectChecker() {
-  #   NOTE: Remember to check strategy.
-  # 	return null;
-  # }
-  #
+
   # /**
   #  * Check a blob for errors.
   #  *
