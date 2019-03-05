@@ -2,6 +2,7 @@
 # Otherwise, we miss the window of opportunity for protocol consolidation.
 
 defmodule Xgit.Lib.ObjectChecker.SecretKeyCheckerStrategy do
+  @moduledoc false
   defstruct [:ignore_me]
 end
 
