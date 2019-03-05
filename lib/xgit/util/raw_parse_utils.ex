@@ -14,9 +14,9 @@ defmodule Xgit.Util.RawParseUtils do
 
   If not, returns `false`.
   """
-  def match?(b, []), do: {true, b}
-  def match?([c | b], [c | str]), do: __MODULE__.match?(b, str)
-  def match?(_, _), do: false
+  def match_prefix?(b, []), do: {true, b}
+  def match_prefix?([c | b], [c | str]), do: match_prefix?(b, str)
+  def match_prefix?(_, _), do: false
 
   # /**
   #  * Format a base 10 numeric into a temporary buffer.
