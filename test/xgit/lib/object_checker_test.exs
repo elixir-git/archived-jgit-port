@@ -38,41 +38,19 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       committer A. U. Thor <author@localhost> 1 +0000
       """
 
-      ObjectChecker.check!(%ObjectChecker{}, Constants.obj_commit(), data)
+      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_commit(), data)
     end
 
-    # @Test
-    # public void testValidCommitNoParent() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    #
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    #
-    # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
-    # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.checkCommit(data);
-    # 	checker.check(OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testValidCommitBlankAuthor() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    #
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    #
-    # 	b.append("author <> 0 +0000\n");
-    # 	b.append("committer <> 0 +0000\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.checkCommit(data);
-    # 	checker.check(OBJ_COMMIT, data);
-    # }
-    #
+    test "valid: blank author" do
+      data = ~C"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author <> 0 +0000
+      committer <> 0 +0000
+      """
+
+      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_commit(), data)
+    end
+
     # @Test
     # public void testCommitCorruptAuthor() throws CorruptObjectException {
     # 	StringBuilder b = new StringBuilder();

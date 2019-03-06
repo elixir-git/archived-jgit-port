@@ -317,16 +317,12 @@ defmodule Xgit.Lib.ObjectChecker do
     do: RawParseUtils.next_lf(data)
 
   defp check_person_ident_or_report!(checker, id, data) do
-    IO.inspect(data, label: "CPI start")
-
     with {:missing_email, [?< | email_start]} <-
            {:missing_email, RawParseUtils.next_lf(data, ?<)},
-         _ <- IO.inspect(email_start, label: "324"),
          {:bad_email, [?> | after_email]} <- {:bad_email, RawParseUtils.next_lf(email_start, ?>)},
-         _ <- IO.inspect(after_email, label: "326"),
          {:missing_space_before_date, [?\s | date]} <- {:missing_space_before_date, after_email},
-         {:bad_date, {_date, [?\s | tz]}} <- RawParseUtils.parse_base_10(date),
-         {:bad_timezone, {_tz, [?\n | next]}} <- RawParseUtils.parse_base_10(tz) do
+         {:bad_date, {_date, [?\s | tz]}} <- {:bad_date, RawParseUtils.parse_base_10(date)},
+         {:bad_timezone, {_tz, [?\n | next]}} <- {:bad_timezone, RawParseUtils.parse_base_10(tz)} do
       next
     else
       {cause, _} ->
@@ -377,20 +373,18 @@ defmodule Xgit.Lib.ObjectChecker do
         why: "no author"
       )
 
-    _data = check_person_ident_or_report!(checker, id, data)
+    data = check_person_ident_or_report!(checker, id, data)
 
-    # if (match(raw, author)) {
-    # 	checkPersonIdent(raw, id);
-    # } else {
-    # 	report(MISSING_AUTHOR, id, JGitText.get().corruptObjectNoAuthor);
-    # }
-    #
-    # if (match(raw, committer)) {
-    # 	checkPersonIdent(raw, id);
-    # } else {
-    # 	report(MISSING_COMMITTER, id,
-    # 			JGitText.get().corruptObjectNoCommitter);
-    # }
+    data =
+      match_or_report!(checker, data,
+        prefix: 'committer ',
+        error_type: ErrorType.MISSING_COMMITTER,
+        id: id,
+        why: "no committer"
+      )
+
+    check_person_ident_or_report!(checker, id, data)
+
     :ok
   end
 
