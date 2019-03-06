@@ -10,8 +10,7 @@ defmodule Xgit.Lib.ObjectChecker do
 
   alias Xgit.Errors.CorruptObjectError
   alias Xgit.Lib.ObjectId
-
-  import Xgit.Util.RawParseUtils, only: [match_prefix?: 2]
+  alias Xgit.Util.RawParseUtils
 
   use EnumType
 
@@ -39,9 +38,6 @@ defmodule Xgit.Lib.ObjectChecker do
     def check_blob!(strategy, blob_data)
   end
 
-  # Header strings defined by git object format (uncomment as needed below)
-  @header_tree 'tree '
-  # @header_parent 'parent '
   # @header_author 'author '
   # @header_committer 'committer '
   # @header_encoding 'encoding '
@@ -296,98 +292,93 @@ defmodule Xgit.Lib.ObjectChecker do
   def check!(%__MODULE__{} = checker, id, obj_type, _data),
     do: report(checker, ErrorType.UNKNOWN_TYPE, id, "invalid type #{obj_type}")
 
-  # private boolean checkId(byte[] raw) {
-  # 	int p = bufPtr.value;
-  # 	try {
-  # 		tempId.fromString(raw, p);
-  # 	} catch (IllegalArgumentException e) {
-  # 		bufPtr.value = nextLF(raw, p);
-  # 		return false;
-  # 	}
-  #
-  # 	p += OBJECT_ID_STRING_LENGTH;
-  # 	if (raw[p] == '\n') {
-  # 		bufPtr.value = p + 1;
-  # 		return true;
-  # 	}
-  # 	bufPtr.value = nextLF(raw, p);
-  # 	return false;
-  # }
-  #
-  # private void checkPersonIdent(byte[] raw, @Nullable AnyObjectId id)
-  # 		throws CorruptObjectException {
-  # 	if (allowInvalidPersonIdent) {
-  # 		bufPtr.value = nextLF(raw, bufPtr.value);
-  # 		return;
-  # 	}
-  #
-  # 	final int emailB = nextLF(raw, bufPtr.value, '<');
-  # 	if (emailB == bufPtr.value || raw[emailB - 1] != '<') {
-  # 		report(MISSING_EMAIL, id, JGitText.get().corruptObjectMissingEmail);
-  # 		bufPtr.value = nextLF(raw, bufPtr.value);
-  # 		return;
-  # 	}
-  #
-  # 	final int emailE = nextLF(raw, emailB, '>');
-  # 	if (emailE == emailB || raw[emailE - 1] != '>') {
-  # 		report(BAD_EMAIL, id, JGitText.get().corruptObjectBadEmail);
-  # 		bufPtr.value = nextLF(raw, bufPtr.value);
-  # 		return;
-  # 	}
-  # 	if (emailE == raw.length || raw[emailE] != ' ') {
-  # 		report(MISSING_SPACE_BEFORE_DATE, id,
-  # 				JGitText.get().corruptObjectBadDate);
-  # 		bufPtr.value = nextLF(raw, bufPtr.value);
-  # 		return;
-  # 	}
-  #
-  # 	parseBase10(raw, emailE + 1, bufPtr); // when
-  # 	if (emailE + 1 == bufPtr.value || bufPtr.value == raw.length
-  # 			|| raw[bufPtr.value] != ' ') {
-  # 		report(BAD_DATE, id, JGitText.get().corruptObjectBadDate);
-  # 		bufPtr.value = nextLF(raw, bufPtr.value);
-  # 		return;
-  # 	}
-  #
-  # 	int p = bufPtr.value + 1;
-  # 	parseBase10(raw, p, bufPtr); // tz offset
-  # 	if (p == bufPtr.value) {
-  # 		report(BAD_TIMEZONE, id, JGitText.get().corruptObjectBadTimezone);
-  # 		bufPtr.value = nextLF(raw, bufPtr.value);
-  # 		return;
-  # 	}
-  #
-  # 	p = bufPtr.value;
-  # 	if (raw[p] == '\n') {
-  # 		bufPtr.value = p + 1;
-  # 	} else {
-  # 		report(BAD_TIMEZONE, id, JGitText.get().corruptObjectBadTimezone);
-  # 		bufPtr.value = nextLF(raw, p);
-  # 	}
-  # }
+  defp check_id(data) do
+    case ObjectId.from_hex_charlist(data) do
+      {_id, remainder} ->
+        {true, RawParseUtils.next_lf(remainder)}
+
+      false ->
+        {false, RawParseUtils.next_lf(data)}
+    end
+  end
+
+  defp check_id_or_report!(%__MODULE__{} = checker, data, error_type: error_type, id: id, why: why) do
+    case check_id(data) do
+      {true, data} ->
+        data
+
+      {false, data} ->
+        report(checker, error_type, id, why)
+        data
+    end
+  end
+
+  defp check_person_ident_or_report!(%__MODULE__{allow_invalid_person_ident?: true}, _id, data),
+    do: RawParseUtils.next_lf(data)
+
+  defp check_person_ident_or_report!(checker, id, data) do
+    IO.inspect(data, label: "CPI start")
+
+    with {:missing_email, [?< | email_start]} <-
+           {:missing_email, RawParseUtils.next_lf(data, ?<)},
+         _ <- IO.inspect(email_start, label: "324"),
+         {:bad_email, [?> | after_email]} <- {:bad_email, RawParseUtils.next_lf(email_start, ?>)},
+         _ <- IO.inspect(after_email, label: "326"),
+         {:missing_space_before_date, [?\s | date]} <- {:missing_space_before_date, after_email},
+         {:bad_date, {_date, [?\s | tz]}} <- RawParseUtils.parse_base_10(date),
+         {:bad_timezone, {_tz, [?\n | next]}} <- RawParseUtils.parse_base_10(tz) do
+      next
+    else
+      {cause, _} ->
+        {error_type, why} = error_type_and_message_for_cause(cause)
+        report(checker, error_type, id, why)
+        RawParseUtils.next_lf(data)
+    end
+  end
+
+  defp error_type_and_message_for_cause(:missing_email),
+    do: {ErrorType.MISSING_EMAIL, "missing email"}
+
+  defp error_type_and_message_for_cause(:bad_email),
+    do: {ErrorType.MISSING_EMAIL, "bad email"}
+
+  defp error_type_and_message_for_cause(:missing_space_before_date),
+    do: {ErrorType.MISSING_SPACE_BEFORE_DATE, "bad date"}
+
+  defp error_type_and_message_for_cause(:bad_date),
+    do: {ErrorType.BAD_DATE, "bad date"}
+
+  defp error_type_and_message_for_cause(:bad_tz),
+    do: {ErrorType.BAD_TIMEZONE, "bad time zone"}
 
   defp check_commit!(%__MODULE__{} = checker, id, data) do
-    _data =
+    data =
       match_or_report!(checker, data,
-        prefix: @header_tree,
+        prefix: 'tree ',
         error_type: ErrorType.MISSING_TREE,
         id: id,
         why: "no tree header"
       )
 
-    # if (!match(raw, tree)) {
-    # 	report(MISSING_TREE, id, JGitText.get().corruptObjectNotreeHeader);
-    # } else if (!checkId(raw)) {
-    # 	report(BAD_TREE_SHA1, id, JGitText.get().corruptObjectInvalidTree);
-    # }
-    #
-    # while (match(raw, parent)) {
-    # 	if (!checkId(raw)) {
-    # 		report(BAD_PARENT_SHA1, id,
-    # 				JGitText.get().corruptObjectInvalidParent);
-    # 	}
-    # }
-    #
+    data =
+      check_id_or_report!(checker, data,
+        error_type: ErrorType.BAD_TREE_SHA1,
+        id: id,
+        why: "corruptObjectInvalidTree"
+      )
+
+    data = check_commit_parents!(checker, id, data)
+
+    data =
+      match_or_report!(checker, data,
+        prefix: 'author ',
+        error_type: ErrorType.MISSING_AUTHOR,
+        id: id,
+        why: "no author"
+      )
+
+    _data = check_person_ident_or_report!(checker, id, data)
+
     # if (match(raw, author)) {
     # 	checkPersonIdent(raw, id);
     # } else {
@@ -401,6 +392,23 @@ defmodule Xgit.Lib.ObjectChecker do
     # 			JGitText.get().corruptObjectNoCommitter);
     # }
     :ok
+  end
+
+  defp check_commit_parents!(checker, id, data) do
+    case RawParseUtils.match_prefix?(data, 'parent ') do
+      {true, after_match} ->
+        data =
+          check_id_or_report!(checker, after_match,
+            error_type: ErrorType.BAD_PARENT_SHA1,
+            id: id,
+            why: "invalid_parent"
+          )
+
+        check_commit_parents!(checker, id, data)
+
+      _ ->
+        data
+    end
   end
 
   # /**
@@ -646,7 +654,7 @@ defmodule Xgit.Lib.ObjectChecker do
          id: id,
          why: why
        ) do
-    case match_prefix?(data, prefix) do
+    case RawParseUtils.match_prefix?(data, prefix) do
       {true, after_match} ->
         after_match
 
