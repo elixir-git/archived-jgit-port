@@ -67,22 +67,21 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert_skiplist_accepts(Constants.obj_commit(), data)
     end
 
-    # @Test
-    # public void testCommitCorruptCommitter() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n");
-    # 	b.append("author <> 0 +0000\n");
-    # 	b.append("committer b <b@c> <b@c> 0 +0000\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("bad date", OBJ_COMMIT, data);
-    # 	checker.setAllowInvalidPersonIdent(true);
-    # 	checker.checkCommit(data);
-    #
-    # 	checker.setAllowInvalidPersonIdent(false);
-    # 	assertSkipListAccepts(OBJ_COMMIT, data);
-    # }
-    #
+    test "invalid: corrupt committer" do
+      data = ~C"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author <> 0 +0000
+      committer b <b@c> <b@c> 0 +0000
+      """
+
+      assert_corrupt("bad date", Constants.obj_commit(), data)
+
+      checker = %ObjectChecker{allow_invalid_person_ident?: true}
+      assert :ok = ObjectChecker.check!(checker, Constants.obj_commit(), data)
+
+      assert_skiplist_accepts(Constants.obj_commit(), data)
+    end
+
     # @Test
     # public void testValidCommit1Parent() throws CorruptObjectException {
     # 	StringBuilder b = new StringBuilder();
