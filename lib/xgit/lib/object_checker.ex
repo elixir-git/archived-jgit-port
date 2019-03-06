@@ -384,7 +384,6 @@ defmodule Xgit.Lib.ObjectChecker do
       )
 
     check_person_ident_or_report!(checker, id, data)
-
     :ok
   end
 

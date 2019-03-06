@@ -5,9 +5,10 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   alias Xgit.Lib.Constants
   alias Xgit.Lib.ObjectChecker
   alias Xgit.Lib.ObjectChecker.SecretKeyCheckerStrategy
+  alias Xgit.Lib.ObjectId
 
   test "invalid object type" do
-    assert_corrupt("Object (unknown) is corrupt: invalid type -1", Constants.obj_bad(), [])
+    assert_corrupt("invalid type -1", Constants.obj_bad(), [])
   end
 
   describe "check blob" do
@@ -51,22 +52,21 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_commit(), data)
     end
 
-    # @Test
-    # public void testCommitCorruptAuthor() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n");
-    # 	b.append("author b <b@c> <b@c> 0 +0000\n");
-    # 	b.append("committer <> 0 +0000\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("bad date", OBJ_COMMIT, data);
-    # 	checker.setAllowInvalidPersonIdent(true);
-    # 	checker.checkCommit(data);
-    #
-    # 	checker.setAllowInvalidPersonIdent(false);
-    # 	assertSkipListAccepts(OBJ_COMMIT, data);
-    # }
-    #
+    test "invalid: corrupt author" do
+      data = ~C"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author b <b@c> <b@c> 0 +0000
+      committer <> 0 +0000
+      """
+
+      assert_corrupt("bad date", Constants.obj_commit(), data)
+
+      checker = %ObjectChecker{allow_invalid_person_ident?: true}
+      assert :ok = ObjectChecker.check!(checker, Constants.obj_commit(), data)
+
+      assert_skiplist_accepts(Constants.obj_commit(), data)
+    end
+
     # @Test
     # public void testCommitCorruptCommitter() throws CorruptObjectException {
     # 	StringBuilder b = new StringBuilder();
@@ -1586,19 +1586,18 @@ defmodule Xgit.Lib.ObjectCheckerTest do
 
   defp assert_corrupt(msg, type, data)
        when is_binary(msg) and is_integer(type) and is_list(data) do
-    assert_raise CorruptObjectError, msg, fn ->
+    assert_raise CorruptObjectError, "Object (unknown) is corrupt: #{msg}", fn ->
       ObjectChecker.check!(%ObjectChecker{}, type, data)
     end
   end
 
-  # private void assertSkipListAccepts(int type, byte[] data)
-  # 		throws CorruptObjectException {
-  # 	ObjectId id = idFor(type, data);
-  # 	checker.setSkipList(set(id));
-  # 	checker.check(id, type, data);
-  # 	checker.setSkipList(null);
-  # }
-  #
+  defp assert_skiplist_accepts(type, data) do
+    id = ObjectId.id_for(type, data)
+    skiplist = MapSet.new([id])
+    checker = %ObjectChecker{skiplist: skiplist}
+    assert :ok = ObjectChecker.check!(checker, type, data)
+  end
+
   # private void assertSkipListRejects(String msg, int type, byte[] data) {
   # 	ObjectId id = idFor(type, data);
   # 	checker.setSkipList(set(id));
