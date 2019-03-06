@@ -194,12 +194,12 @@ defmodule Xgit.Util.RawParseUtils do
   def next_lf(b), do: next(b, ?\n)
 
   @doc ~S"""
-  Locate the first position after either the given character or LF.
+  Locate the first position of either the given character or LF.
 
   This method stops on the first match it finds from either `char` or `\n`.
   """
-  def next_lf([char | b], char) when is_integer(char), do: b
-  def next_lf([?\n | b], char) when is_integer(char), do: b
+  def next_lf([char | _] = b, char) when is_integer(char), do: b
+  def next_lf([?\n | _] = b, char) when is_integer(char), do: b
   def next_lf([_ | b], char) when is_integer(char), do: next_lf(b, char)
   def next_lf([], char) when is_integer(char), do: []
 
@@ -399,7 +399,7 @@ defmodule Xgit.Util.RawParseUtils do
   Returns `%PersonIdent{}` or `nil` in case the identity could not be parsed.
   """
   def parse_person_ident(b) when is_list(b) do
-    with [_ | _] = email_start <- next_lf(b, ?<),
+    with [?< | email_start] <- next_lf(b, ?<),
          true <- has_closing_angle_bracket?(email_start),
          email <- until_next_lf(email_start, ?>),
          name <- parse_name(b),
@@ -434,7 +434,7 @@ defmodule Xgit.Util.RawParseUtils do
     # before the LF in case of LF termination resp. the penultimate
     # character if there is no trailing LF.
 
-    first_email_end = next_lf(first_email_start, ?>)
+    [?> | first_email_end] = next_lf(first_email_start, ?>)
     rev = Enum.reverse(first_email_end)
 
     {tz, rev} = trim_word_and_rev(rev)
