@@ -105,72 +105,61 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_commit(), data)
     end
 
-    # @Test
-    # public void testValidCommit128Parent() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    #
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    #
-    # 	for (int i = 0; i < 128; i++) {
-    # 		b.append("parent ");
-    # 		b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 		b.append('\n');
-    # 	}
-    #
-    # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
-    # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.checkCommit(data);
-    # 	checker.check(OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testValidCommitNormalTime() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	String when = "1222757360 -0730";
-    #
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    #
-    # 	b.append("author A. U. Thor <author@localhost> " + when + "\n");
-    # 	b.append("committer A. U. Thor <author@localhost> " + when + "\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.checkCommit(data);
-    # 	checker.check(OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitNoTree1() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("parent ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	assertCorrupt("no tree header", OBJ_COMMIT, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitNoTree2() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("trie ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	assertCorrupt("no tree header", OBJ_COMMIT, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitNoTree3() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	assertCorrupt("no tree header", OBJ_COMMIT, b);
-    # }
-    #
+    test "valid: 128 parents" do
+      data =
+        'tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n' ++
+          (Enum.map(1..128, fn _ -> 'parent be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n' end)
+           |> Enum.concat()) ++
+          'author A. U. Thor <author@localhost> 1 +0000\n' ++
+          'committer A. U. Thor <author@localhost> 1 +0000\n'
+
+      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_commit(), data)
+    end
+
+    test "valid: normal time" do
+      ts = "1222757360 -0730"
+
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author A. U. Thor <author@localhost> #{ts}
+      committer A. U. Thor <author@localhost> #{ts}
+      """
+
+      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_commit(), data)
+    end
+
+    test "invalid: no tree 1" do
+      data = ~C"""
+      parent be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      """
+
+      assert_corrupt("no tree header", Constants.obj_commit(), data)
+    end
+
+    test "invalid: no tree 2" do
+      data = ~C"""
+      trie be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      """
+
+      assert_corrupt("no tree header", Constants.obj_commit(), data)
+    end
+
+    test "invalid: no tree 3" do
+      data = ~C"""
+      treebe9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      """
+
+      assert_corrupt("no tree header", Constants.obj_commit(), data)
+    end
+
+    test "invalid: no tree 4" do
+      data = ~c"""
+      tree\tbe9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      """
+
+      assert_corrupt("no tree header", Constants.obj_commit(), data)
+    end
+
     # @Test
     # public void testInvalidCommitNoTree4() {
     # 	StringBuilder b = new StringBuilder();
