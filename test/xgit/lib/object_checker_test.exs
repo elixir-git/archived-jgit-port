@@ -161,116 +161,84 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert_corrupt("no tree header", Constants.obj_commit(), data)
     end
 
-    # @Test
-    # public void testInvalidCommitNoTree4() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree\t");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	assertCorrupt("no tree header", OBJ_COMMIT, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidTree1() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("zzzzfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	assertCorrupt("invalid tree", OBJ_COMMIT, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidTree2() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append("z\n");
-    # 	assertCorrupt("invalid tree", OBJ_COMMIT, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidTree3() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9b");
-    # 	b.append("\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid tree", OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidTree4() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree  ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	assertCorrupt("invalid tree", OBJ_COMMIT, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidParent1() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("parent ");
-    # 	b.append("\n");
-    # 	assertCorrupt("invalid parent", OBJ_COMMIT, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidParent2() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("parent ");
-    # 	b.append("zzzzfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append("\n");
-    # 	assertCorrupt("invalid parent", OBJ_COMMIT, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidParent3() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("parent  ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append("\n");
-    # 	assertCorrupt("invalid parent", OBJ_COMMIT, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidParent4() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("parent  ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append("z\n");
-    # 	assertCorrupt("invalid parent", OBJ_COMMIT, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidParent5() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("parent\t");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append("\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	// Yes, really, we complain about author not being
-    # 	// found as the invalid parent line wasn't consumed.
-    # 	assertCorrupt("no author", OBJ_COMMIT, data);
-    # }
-    #
+    test "invalid: invalid tree 1" do
+      data = ~c"""
+      tree zzzzfa841874ccc9f2ef7c48d0c76226f89b7189
+      """
+
+      assert_corrupt("invalid tree", Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid tree 2" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189z
+      """
+
+      assert_corrupt("invalid tree", Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid tree 3" do
+      data = ~c"""
+      tree be9b
+      """
+
+      assert_corrupt("invalid tree", Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid tree 4" do
+      data = ~c"""
+      tree  be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      """
+
+      assert_corrupt("invalid tree", Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid parent 1" do
+      data =
+        'tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n' ++
+          'parent \n'
+
+      assert_corrupt("invalid parent", Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid parent 2" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      parent zzzzfa841874ccc9f2ef7c48d0c76226f89b7189
+      """
+
+      assert_corrupt("invalid parent", Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid parent 3" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      parent  be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      """
+
+      assert_corrupt("invalid parent", Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid parent 4" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      parent  be9bfa841874ccc9f2ef7c48d0c76226f89b7189z
+      """
+
+      assert_corrupt("invalid parent", Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid parent 5" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      parent\tbe9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      """
+
+      # Yes, really, we complain about author not being
+      # found as the invalid parent line wasn't consumed.
+      assert_corrupt("no author", Constants.obj_commit(), data)
+    end
+
     # @Test
     # public void testInvalidCommitNoAuthor() throws CorruptObjectException {
     # 	StringBuilder b = new StringBuilder();

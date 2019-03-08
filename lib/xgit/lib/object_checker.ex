@@ -294,8 +294,11 @@ defmodule Xgit.Lib.ObjectChecker do
 
   defp check_id(data) do
     case ObjectId.from_hex_charlist(data) do
-      {_id, remainder} ->
-        {true, RawParseUtils.next_lf(remainder)}
+      {_id, [?\n | remainder]} ->
+        {true, remainder}
+
+      {_id, _remainder} ->
+        {false, RawParseUtils.next_lf(data)}
 
       false ->
         {false, RawParseUtils.next_lf(data)}
@@ -360,7 +363,7 @@ defmodule Xgit.Lib.ObjectChecker do
       check_id_or_report!(checker, data,
         error_type: ErrorType.BAD_TREE_SHA1,
         id: id,
-        why: "corruptObjectInvalidTree"
+        why: "invalid tree"
       )
 
     data = check_commit_parents!(checker, id, data)
@@ -394,7 +397,7 @@ defmodule Xgit.Lib.ObjectChecker do
           check_id_or_report!(checker, after_match,
             error_type: ErrorType.BAD_PARENT_SHA1,
             id: id,
-            why: "invalid_parent"
+            why: "invalid parent"
           )
 
         check_commit_parents!(checker, id, data)
