@@ -17,7 +17,7 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       ObjectChecker.check!(%ObjectChecker{}, Constants.obj_blob(), [1])
     end
 
-    test "strategy hooK: blob not corrupt" do
+    test "strategy hook: blob not corrupt" do
       checker = %ObjectChecker{strategy: %SecretKeyCheckerStrategy{}}
       assert :ok = ObjectChecker.check!(checker, Constants.obj_blob(), 'public_key')
     end
@@ -351,188 +351,155 @@ defmodule Xgit.Lib.ObjectCheckerTest do
     end
   end
 
-  # @Test
-  # public void testValidTag() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("type commit\n");
-  # 	b.append("tag test-tag\n");
-  # 	b.append("tagger A. U. Thor <author@localhost> 1 +0000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	checker.checkTag(data);
-  # 	checker.check(OBJ_TAG, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoObject1() {
-  # 	assertCorrupt("no object header", OBJ_TAG, new byte[0]);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoObject2() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object\t");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	assertCorrupt("no object header", OBJ_TAG, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoObject3() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("obejct ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	assertCorrupt("no object header", OBJ_TAG, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoObject4() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("zz9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	assertCorrupt("invalid object", OBJ_TAG, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoObject5() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append(" \n");
-  # 	assertCorrupt("invalid object", OBJ_TAG, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoObject6() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9");
-  # 	assertCorrupt("invalid object", OBJ_TAG, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoType1() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	assertCorrupt("no type header", OBJ_TAG, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoType2() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("type\tcommit\n");
-  # 	assertCorrupt("no type header", OBJ_TAG, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoType3() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("tpye commit\n");
-  # 	assertCorrupt("no type header", OBJ_TAG, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoType4() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("type commit");
-  # 	assertCorrupt("no tag header", OBJ_TAG, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoTagHeader1() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("type commit\n");
-  # 	assertCorrupt("no tag header", OBJ_TAG, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoTagHeader2() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("type commit\n");
-  # 	b.append("tag\tfoo\n");
-  # 	assertCorrupt("no tag header", OBJ_TAG, b);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagNoTagHeader3() {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("type commit\n");
-  # 	b.append("tga foo\n");
-  # 	assertCorrupt("no tag header", OBJ_TAG, b);
-  # }
-  #
-  # @Test
-  # public void testValidTagHasNoTaggerHeader() throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("type commit\n");
-  # 	b.append("tag foo\n");
-  # 	checker.checkTag(encodeASCII(b.toString()));
-  # }
-  #
-  # @Test
-  # public void testInvalidTagInvalidTaggerHeader1()
-  # 		throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("type commit\n");
-  # 	b.append("tag foo\n");
-  # 	b.append("tagger \n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("missing email", OBJ_TAG, data);
-  # 	checker.setAllowInvalidPersonIdent(true);
-  # 	checker.checkTag(data);
-  #
-  # 	checker.setAllowInvalidPersonIdent(false);
-  # 	assertSkipListAccepts(OBJ_TAG, data);
-  # }
-  #
-  # @Test
-  # public void testInvalidTagInvalidTaggerHeader3()
-  # 		throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	b.append("object ");
-  # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-  # 	b.append('\n');
-  # 	b.append("type commit\n");
-  # 	b.append("tag foo\n");
-  # 	b.append("tagger a < 1 +000\n");
-  #
-  # 	byte[] data = encodeASCII(b.toString());
-  # 	assertCorrupt("bad email", OBJ_TAG, data);
-  # 	assertSkipListAccepts(OBJ_TAG, data);
-  # }
-  #
+  describe "check tag" do
+    test "valid" do
+      data = ~c"""
+      object be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      type commit
+      tag test-tag
+      tagger A. U. Thor <author@localhost> 1 +0000
+      """
+
+      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tag(), data)
+    end
+
+    test "invalid: no object 1" do
+      assert_corrupt("no object header", Constants.obj_tag(), [])
+    end
+
+    test "invalid: no object 2" do
+      data = 'object\tbe9bfa841874ccc9f2ef7c48d0c76226f89b7189\n'
+      assert_corrupt("no object header", Constants.obj_tag(), data)
+    end
+
+    test "invalid: no object 3" do
+      data = ~c"""
+      obejct be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      """
+
+      assert_corrupt("no object header", Constants.obj_tag(), data)
+    end
+
+    test "invalid: no object 4" do
+      data = ~c"""
+      object zz9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      """
+
+      assert_corrupt("invalid object", Constants.obj_tag(), data)
+    end
+
+    test "invalid: no object 5" do
+      data = 'object be9bfa841874ccc9f2ef7c48d0c76226f89b7189 \n'
+      assert_corrupt("invalid object", Constants.obj_tag(), data)
+    end
+
+    test "invalid: no object 6" do
+      data = 'object be9'
+      assert_corrupt("invalid object", Constants.obj_tag(), data)
+    end
+
+    test "invalid: no type 1" do
+      data = ~c"""
+      object be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      """
+
+      assert_corrupt("no type header", Constants.obj_tag(), data)
+    end
+
+    test "invalid: no type 2" do
+      data =
+        'object be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n' ++
+          'type\tcommit\n'
+
+      assert_corrupt("no type header", Constants.obj_tag(), data)
+    end
+
+    test "invalid: no type 3" do
+      data = ~c"""
+      object be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      tpye commit
+      """
+
+      assert_corrupt("no type header", Constants.obj_tag(), data)
+    end
+
+    test "invalid: no type 4" do
+      data =
+        'object be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n' ++
+          'type commit'
+
+      assert_corrupt("no tag header", Constants.obj_tag(), data)
+    end
+
+    test "invalid: no tag header 1" do
+      data = ~c"""
+      object be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      type commit
+      """
+
+      assert_corrupt("no tag header", Constants.obj_tag(), data)
+    end
+
+    test "invalid: no tag header 2" do
+      data =
+        'object be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n' ++
+          'type commit\n' ++
+          'tag\tfoo\n'
+
+      assert_corrupt("no tag header", Constants.obj_tag(), data)
+    end
+
+    test "invalid: no tag header 3" do
+      data = ~c"""
+      object be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      type commit
+      tga foo
+      """
+
+      assert_corrupt("no tag header", Constants.obj_tag(), data)
+    end
+
+    test "valid: has no tagger header" do
+      data = ~c"""
+      object be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      type commit
+      tag foo
+      """
+
+      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tag(), data)
+    end
+
+    test "invalid: invalid tagger header 1" do
+      data =
+        'object be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n' ++
+          'type commit\n' ++
+          'tag foo\n' ++
+          'tagger \n'
+
+      assert_corrupt("missing email", Constants.obj_tag(), data)
+
+      assert :ok =
+               ObjectChecker.check!(
+                 %ObjectChecker{allow_invalid_person_ident?: true},
+                 Constants.obj_tag(),
+                 data
+               )
+
+      assert_skiplist_accepts(Constants.obj_tag(), data)
+    end
+
+    test "invalid: invalid tagger header 3" do
+      data = ~c"""
+      object be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      type commit
+      tag foo
+      tagger a < 1 +000
+      """
+
+      assert_corrupt("bad email", Constants.obj_tag(), data)
+    end
+  end
+
   # @Test
   # public void testValidEmptyTree() throws CorruptObjectException {
   # 	checker.checkTree(new byte[0]);

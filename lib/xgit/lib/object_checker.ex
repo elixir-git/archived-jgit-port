@@ -41,8 +41,6 @@ defmodule Xgit.Lib.ObjectChecker do
   # @header_author 'author '
   # @header_committer 'committer '
   # @header_encoding 'encoding '
-  # @header_object 'object '
-  # @header_type 'type '
   # @header_tag 'tag '
   # @header_tagger 'tagger '
   # @dot_git_modules '.gitmodules'
@@ -269,9 +267,10 @@ defmodule Xgit.Lib.ObjectChecker do
     end
   end
 
-  # case OBJ_TAG:
-  # 	checkTag(id, raw);
-  # 	break;
+  # type 4 = tag
+
+  def check!(%__MODULE__{} = checker, id, 4, data), do: check_tag!(checker, id, data)
+
   # case OBJ_TREE:
   # 	checkTree(id, raw);
   # 	break;
@@ -407,57 +406,50 @@ defmodule Xgit.Lib.ObjectChecker do
     end
   end
 
-  # /**
-  #  * Check an annotated tag for errors.
-  #  *
-  #  * @param raw
-  #  *            the tag data. The array is never modified.
-  #  * @throws org.eclipse.jgit.errors.CorruptObjectException
-  #  *             if any error was detected.
-  #  */
-  # public void checkTag(byte[] raw) throws CorruptObjectException {
-  # 	checkTag(idFor(OBJ_TAG, raw), raw);
-  # }
-  #
-  # /**
-  #  * Check an annotated tag for errors.
-  #  *
-  #  * @param id
-  #  *            identity of the object being checked.
-  #  * @param raw
-  #  *            the tag data. The array is never modified.
-  #  * @throws org.eclipse.jgit.errors.CorruptObjectException
-  #  *             if any error was detected.
-  #  * @since 4.2
-  #  */
-  # public void checkTag(@Nullable AnyObjectId id, byte[] raw)
-  # 		throws CorruptObjectException {
-  # 	bufPtr.value = 0;
-  # 	if (!match(raw, object)) {
-  # 		report(MISSING_OBJECT, id,
-  # 				JGitText.get().corruptObjectNoObjectHeader);
-  # 	} else if (!checkId(raw)) {
-  # 		report(BAD_OBJECT_SHA1, id,
-  # 				JGitText.get().corruptObjectInvalidObject);
-  # 	}
-  #
-  # 	if (!match(raw, type)) {
-  # 		report(MISSING_TYPE_ENTRY, id,
-  # 				JGitText.get().corruptObjectNoTypeHeader);
-  # 	}
-  # 	bufPtr.value = nextLF(raw, bufPtr.value);
-  #
-  # 	if (!match(raw, tag)) {
-  # 		report(MISSING_TAG_ENTRY, id,
-  # 				JGitText.get().corruptObjectNoTagHeader);
-  # 	}
-  # 	bufPtr.value = nextLF(raw, bufPtr.value);
-  #
-  # 	if (match(raw, tagger)) {
-  # 		checkPersonIdent(raw, id);
-  # 	}
-  # }
-  #
+  defp check_tag!(%__MODULE__{} = checker, id, data) do
+    data =
+      match_or_report!(checker, data,
+        prefix: 'object ',
+        error_type: ErrorType.MISSING_TREE,
+        id: id,
+        why: "no object header"
+      )
+
+    data =
+      check_id_or_report!(checker, data,
+        error_type: ErrorType.BAD_TREE_SHA1,
+        id: id,
+        why: "invalid object"
+      )
+
+    data =
+      match_or_report!(checker, data,
+        prefix: 'type ',
+        error_type: ErrorType.MISSING_TREE,
+        id: id,
+        why: "no type header"
+      )
+
+    data = RawParseUtils.next_lf(data)
+
+    data =
+      match_or_report!(checker, data,
+        prefix: 'tag ',
+        error_type: ErrorType.MISSING_TAG,
+        id: id,
+        why: "no tag header"
+      )
+
+    data = RawParseUtils.next_lf(data)
+
+    case RawParseUtils.match_prefix?(data, 'tagger ') do
+      {true, after_match} -> check_person_ident_or_report!(checker, id, after_match)
+      _ -> :ignore
+    end
+
+    :ok
+  end
+
   # private static boolean duplicateName(final byte[] raw,
   # 		final int thisNamePos, final int thisNameEnd) {
   # 	final int sz = raw.length;
