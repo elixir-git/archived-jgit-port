@@ -108,7 +108,8 @@ defmodule Xgit.Lib.ObjectCheckerTest do
     test "valid: 128 parents" do
       data =
         'tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n' ++
-          (Enum.map(1..128, fn _ -> 'parent be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n' end)
+          (1..128
+           |> Enum.map(fn _ -> 'parent be9bfa841874ccc9f2ef7c48d0c76226f89b7189\n' end)
            |> Enum.concat()) ++
           'author A. U. Thor <author@localhost> 1 +0000\n' ++
           'committer A. U. Thor <author@localhost> 1 +0000\n'
