@@ -347,7 +347,7 @@ defmodule Xgit.Lib.ObjectChecker do
   defp error_type_and_message_for_cause(:bad_date),
     do: {ErrorType.BAD_DATE, "bad date"}
 
-  defp error_type_and_message_for_cause(:bad_tz),
+  defp error_type_and_message_for_cause(:bad_timezone),
     do: {ErrorType.BAD_TIMEZONE, "bad time zone"}
 
   defp check_commit!(%__MODULE__{} = checker, id, data) do

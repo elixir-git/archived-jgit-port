@@ -239,144 +239,107 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert_corrupt("no author", Constants.obj_commit(), data)
     end
 
-    # @Test
-    # public void testInvalidCommitNoAuthor() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("committer A. U. Thor <author@localhost> 1 +0000\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("no author", OBJ_COMMIT, data);
-    # 	assertSkipListAccepts(OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitNoCommitter1() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("no committer", OBJ_COMMIT, data);
-    # 	assertSkipListAccepts(OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitNoCommitter2() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("author A. U. Thor <author@localhost> 1 +0000\n");
-    # 	b.append("\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("no committer", OBJ_COMMIT, data);
-    # 	assertSkipListAccepts(OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidAuthor1()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("author A. U. Thor <foo 1 +0000\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("bad email", OBJ_COMMIT, data);
-    # 	assertSkipListAccepts(OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidAuthor2()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("author A. U. Thor foo> 1 +0000\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("missing email", OBJ_COMMIT, data);
-    # 	assertSkipListAccepts(OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidAuthor3()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("author 1 +0000\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("missing email", OBJ_COMMIT, data);
-    # 	assertSkipListAccepts(OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidAuthor4()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("author a <b> +0000\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("bad date", OBJ_COMMIT, data);
-    # 	assertSkipListAccepts(OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidAuthor5()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("author a <b>\n");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("bad date", OBJ_COMMIT, data);
-    # 	assertSkipListAccepts(OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidAuthor6()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("author a <b> z");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("bad date", OBJ_COMMIT, data);
-    # 	assertSkipListAccepts(OBJ_COMMIT, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidCommitInvalidAuthor7()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("tree ");
-    # 	b.append("be9bfa841874ccc9f2ef7c48d0c76226f89b7189");
-    # 	b.append('\n');
-    # 	b.append("author a <b> 1 z");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("bad time zone", OBJ_COMMIT, data);
-    # 	assertSkipListAccepts(OBJ_COMMIT, data);
-    # }
-    #
+    test "invalid: no author" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      committer A. U. Thor <author@localhost> 1 +0000
+      """
+
+      assert_corrupt("no author", Constants.obj_commit(), data)
+      assert_skiplist_accepts(Constants.obj_commit(), data)
+    end
+
+    test "invalid: no committer 1" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author A. U. Thor <author@localhost> 1 +0000
+      """
+
+      assert_corrupt("no committer", Constants.obj_commit(), data)
+      assert_skiplist_accepts(Constants.obj_commit(), data)
+    end
+
+    test "invalid: no committer 2" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author A. U. Thor <author@localhost> 1 +0000
+
+      """
+
+      assert_corrupt("no committer", Constants.obj_commit(), data)
+      assert_skiplist_accepts(Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid author 1" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author A. U. Thor <foo 1 +0000
+      """
+
+      assert_corrupt("bad email", Constants.obj_commit(), data)
+      assert_skiplist_accepts(Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid author 2" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author A. U. Thor foo> 1 +0000
+      """
+
+      assert_corrupt("missing email", Constants.obj_commit(), data)
+      assert_skiplist_accepts(Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid author 3" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author 1 +0000
+      """
+
+      assert_corrupt("missing email", Constants.obj_commit(), data)
+      assert_skiplist_accepts(Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid author 4" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author a <b> +0000
+      """
+
+      assert_corrupt("bad date", Constants.obj_commit(), data)
+      assert_skiplist_accepts(Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid author 5" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author a <b>
+      """
+
+      assert_corrupt("bad date", Constants.obj_commit(), data)
+      assert_skiplist_accepts(Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid author 6" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author a <b> z
+      """
+
+      assert_corrupt("bad date", Constants.obj_commit(), data)
+      assert_skiplist_accepts(Constants.obj_commit(), data)
+    end
+
+    test "invalid: invalid author 7" do
+      data = ~c"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author a <b> 1 z
+      """
+
+      assert_corrupt("bad time zone", Constants.obj_commit(), data)
+      assert_skiplist_accepts(Constants.obj_commit(), data)
+    end
+
     # @Test
     # public void testInvalidCommitInvalidCommitter()
     # 		throws CorruptObjectException {
