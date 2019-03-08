@@ -38,13 +38,6 @@ defmodule Xgit.Lib.ObjectChecker do
     def check_blob!(strategy, blob_data)
   end
 
-  # @header_author 'author '
-  # @header_committer 'committer '
-  # @header_encoding 'encoding '
-  # @header_tag 'tag '
-  # @header_tagger 'tagger '
-  # @dot_git_modules '.gitmodules'
-
   # Potential issues that can be identified by the checker.
   # These names match git-core so that fsck section keys also match.
   defenum ErrorType do
@@ -103,8 +96,6 @@ defmodule Xgit.Lib.ObjectChecker do
   # PORTING NOTE: Need to account for configuration vs current state (which probably
   # needs to be passed around, rather than accumulated). Struct is configuration.
 
-  # private final MutableObjectId tempId = new MutableObjectId();
-  # private final MutableInteger bufPtr = new MutableInteger();
   # private EnumSet<ErrorType> errors = EnumSet.allOf(ErrorType.class);
   # private final List<GitmoduleEntry> gitsubmodules = new ArrayList<>();
 
