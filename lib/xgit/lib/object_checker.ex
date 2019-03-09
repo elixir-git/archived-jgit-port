@@ -95,12 +95,6 @@ defmodule Xgit.Lib.ObjectChecker do
     # }
   end
 
-  # PORTING NOTE: Need to account for configuration vs current state (which probably
-  # needs to be passed around, rather than accumulated). Struct is configuration.
-
-  # private EnumSet<ErrorType> errors = EnumSet.allOf(ErrorType.class);
-  # private final List<GitmoduleEntry> gitsubmodules = new ArrayList<>();
-
   defstruct strategy: nil,
             skiplist: nil,
             ignore_error_types: nil,
@@ -121,8 +115,9 @@ defmodule Xgit.Lib.ObjectChecker do
   Raises `Xgit.Errors.CorruptObjectError` if an error is identified.
   """
   def check!(%__MODULE__{} = checker, obj_type, data)
-      when is_integer(obj_type) and is_list(data),
-      do: check!(checker, id_for(checker, obj_type, data), obj_type, data)
+      when is_integer(obj_type) and is_list(data) do
+    check!(checker, id_for(checker, obj_type, data), obj_type, data)
+  end
 
   @doc ~S"""
   Check an object for parsing errors.
@@ -137,10 +132,13 @@ defmodule Xgit.Lib.ObjectChecker do
 
   # type 1 = commit
 
-  def check!(%__MODULE__{strategy: nil} = checker, id, 1, data),
-    do: check_commit!(checker, id, data)
+  def check!(%__MODULE__{strategy: nil} = checker, id, 1, data)
+      when (is_binary(id) or id == nil) and is_list(data) do
+    check_commit!(checker, id, data)
+  end
 
-  def check!(%__MODULE__{strategy: strategy} = checker, id, 1, data) do
+  def check!(%__MODULE__{strategy: strategy} = checker, id, 1, data)
+      when (is_binary(id) or id == nil) and is_list(data) do
     case Strategy.check_commit!(strategy, data) do
       :default -> check_commit!(checker, id, data)
       x -> x
@@ -149,18 +147,28 @@ defmodule Xgit.Lib.ObjectChecker do
 
   # type 4 = tag
 
-  def check!(%__MODULE__{} = checker, id, 4, data), do: check_tag!(checker, id, data)
+  def check!(%__MODULE__{} = checker, id, 4, data)
+      when (is_binary(id) or id == nil) and is_list(data) do
+    check_tag!(checker, id, data)
+  end
 
   # type 2 = tree
 
-  def check!(%__MODULE__{} = checker, id, 2, data), do: check_tree!(checker, id, data)
+  def check!(%__MODULE__{} = checker, id, 2, data)
+      when (is_binary(id) or id == nil) and is_list(data) do
+    check_tree!(checker, id, data)
+  end
 
   # type 3 = blob
 
-  def check!(%__MODULE__{strategy: nil} = _checker, _id, 3, _data), do: :ok
+  def check!(%__MODULE__{strategy: nil} = _checker, id, 3, data)
+      when (is_binary(id) or id == nil) and is_list(data) do
+    :ok
+  end
 
-  def check!(%__MODULE__{strategy: strategy} = _checker, _id, 3, blob_data) do
-    case Strategy.check_blob!(strategy, blob_data) do
+  def check!(%__MODULE__{strategy: strategy} = _checker, id, 3, data)
+      when (is_binary(id) or id == nil) and is_list(data) do
+    case Strategy.check_blob!(strategy, data) do
       :default -> :ok
       x -> x
     end
@@ -168,8 +176,10 @@ defmodule Xgit.Lib.ObjectChecker do
 
   # unknown type
 
-  def check!(%__MODULE__{} = checker, id, obj_type, _data),
-    do: report(checker, ErrorType.UNKNOWN_TYPE, id, "invalid type #{obj_type}")
+  def check!(%__MODULE__{} = checker, id, obj_type, data)
+      when (is_binary(id) or id == nil) and is_list(data) do
+    report(checker, ErrorType.UNKNOWN_TYPE, id, "invalid type #{obj_type}")
+  end
 
   defp check_id(data) do
     case ObjectId.from_hex_charlist(data) do
