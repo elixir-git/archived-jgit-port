@@ -507,44 +507,34 @@ defmodule Xgit.Lib.ObjectCheckerTest do
 
     test "valid tree 1" do
       data = entry("100644 regular-file")
-      ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    # @Test
-    # public void testValidTree2() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100755 executable");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
-    # @Test
-    # public void testValidTree3() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "40000 tree");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
-    # @Test
-    # public void testValidTree4() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "120000 symlink");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
-    # @Test
-    # public void testValidTree5() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "160000 git link");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
-    # @Test
-    # public void testValidTree6() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .a");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
+    test "valid tree 2" do
+      data = entry("100755 executable")
+      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid tree 3" do
+      data = entry("40000 tree")
+      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid tree 4" do
+      data = entry("120000 symlink")
+      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid tree 5" do
+      data = entry("160000 git link")
+      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid tree 6" do
+      data = entry("100644 .a")
+      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
     # @Test
     # public void testValidTreeWithGitmodules() throws CorruptObjectException {
     # 	ObjectId treeId = ObjectId
