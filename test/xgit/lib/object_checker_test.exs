@@ -505,13 +505,11 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), [])
     end
 
-    # @Test
-    # public void testValidTree1() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 regular-file");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
+    test "valid tree 1" do
+      data = entry("100644 regular-file")
+      ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
     # @Test
     # public void testValidTree2() throws CorruptObjectException {
     # 	StringBuilder b = new StringBuilder();
@@ -1424,26 +1422,10 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   # 	entry(b, "100644 " + name);
   # 	checker.checkTree(encodeASCII(b.toString()));
   # }
-  #
-  # /*
-  #  * Returns the id generated for the entry
-  #  */
-  # private static ObjectId entry(StringBuilder b, String modeName) {
-  # 	byte[] id = new byte[OBJECT_ID_LENGTH];
-  #
-  # 	b.append(modeName);
-  # 	b.append('\0');
-  # 	for (int i = 0; i < OBJECT_ID_LENGTH; i++) {
-  # 		b.append((char) i);
-  # 		id[i] = (byte) i;
-  # 	}
-  #
-  # 	return ObjectId.fromRaw(id);
-  # }
-  #
-  # private void assertCorrupt(String msg, int type, StringBuilder b) {
-  # 	assertCorrupt(msg, type, encodeASCII(b.toString()));
-  # }
+
+  @placeholder_object_id '000102030405060708090a0b0c0d0e0f10111213'
+
+  defp entry(mode_name), do: '#{mode_name}\0#{@placeholder_object_id}'
 
   defp assert_corrupt(msg, type, data)
        when is_binary(msg) and is_integer(type) and is_list(data) do

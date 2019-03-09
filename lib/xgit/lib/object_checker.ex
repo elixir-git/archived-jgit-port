@@ -9,6 +9,8 @@ defmodule Xgit.Lib.ObjectChecker do
   """
 
   alias Xgit.Errors.CorruptObjectError
+  alias Xgit.Lib.Constants
+  alias Xgit.Lib.FileMode
   alias Xgit.Lib.ObjectId
   alias Xgit.Util.RawParseUtils
 
@@ -367,88 +369,88 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	}
   # }
 
-  defp check_tree!(%__MODULE__{} = checker, id, data) do
-  	# final int sz = raw.length;
-  	# int ptr = 0;
-  	# int lastNameB = 0, lastNameE = 0, lastMode = 0;
-  	# Set<String> normalized = windows || macosx
-  	# 		? new HashSet<>()
-  	# 		: null;
+  defp check_tree!(%__MODULE__{} = checker, id, data),
+    do: check_tree!(checker, id, data, MapSet.new())
+
+  defp check_tree!(_checker, _id, [] = _data, _normalized_paths), do: :ok
+
+  defp check_tree!(%__MODULE__{} = checker, id, data, %MapSet{} = normalized_paths) do
+    # Scan one entry then recurse to scan remaining entries.
+
+    IO.inspect(data, label: "check_tree")
+
+    {file_mode, data} = check_file_mode!(checker, id, data, 0)
+
+    file_mode_type = FileMode.from_bits(file_mode).object_type
+
+    if file_mode_type == Constants.obj_bad(),
+      do: raise(CorruptObjectError, why: "invalid mode #{file_mode}")
+
+    # final int thisNameB = ptr;
+    # ptr = scanPathSegment(raw, ptr, sz, id);
+    # if (ptr == sz || raw[ptr] != 0) {
+    # 	throw new CorruptObjectException(
+    # 			JGitText.get().corruptObjectTruncatedInName);
+    # }
+    # checkPathSegment2(raw, thisNameB, ptr, id);
+    # if (normalized != null) {
+    # 	if (!normalized.add(normalize(raw, thisNameB, ptr))) {
+    # 		report(DUPLICATE_ENTRIES, id,
+    # 				JGitText.get().corruptObjectDuplicateEntryNames);
+    # 	}
+    # } else if (duplicateName(raw, thisNameB, ptr)) {
+    # 	report(DUPLICATE_ENTRIES, id,
+    # 			JGitText.get().corruptObjectDuplicateEntryNames);
+    # }
     #
-  	# while (ptr < sz) {
-  	# 	int thisMode = 0;
-  	# 	for (;;) {
-  	# 		if (ptr == sz) {
-  	# 			throw new CorruptObjectException(
-  	# 					JGitText.get().corruptObjectTruncatedInMode);
-  	# 		}
-  	# 		final byte c = raw[ptr++];
-  	# 		if (' ' == c)
-  	# 			break;
-  	# 		if (c < '0' || c > '7') {
-  	# 			throw new CorruptObjectException(
-  	# 					JGitText.get().corruptObjectInvalidModeChar);
-  	# 		}
-  	# 		if (thisMode == 0 && c == '0') {
-  	# 			report(ZERO_PADDED_FILEMODE, id,
-  	# 					JGitText.get().corruptObjectInvalidModeStartsZero);
-  	# 		}
-  	# 		thisMode <<= 3;
-  	# 		thisMode += c - '0';
-  	# 	}
+    # if (lastNameB != 0) {
+    # 	int cmp = compare(
+    # 			raw, lastNameB, lastNameE, lastMode,
+    # 			raw, thisNameB, ptr, thisMode);
+    # 	if (cmp > 0) {
+    # 		report(TREE_NOT_SORTED, id,
+    # 				JGitText.get().corruptObjectIncorrectSorting);
+    # 	}
+    # }
     #
-  	# 	if (FileMode.fromBits(thisMode).getObjectType() == OBJ_BAD) {
-  	# 		throw new CorruptObjectException(MessageFormat.format(
-  	# 				JGitText.get().corruptObjectInvalidMode2,
-  	# 				Integer.valueOf(thisMode)));
-  	# 	}
+    # lastNameB = thisNameB;
+    # lastNameE = ptr;
+    # lastMode = thisMode;
     #
-  	# 	final int thisNameB = ptr;
-  	# 	ptr = scanPathSegment(raw, ptr, sz, id);
-  	# 	if (ptr == sz || raw[ptr] != 0) {
-  	# 		throw new CorruptObjectException(
-  	# 				JGitText.get().corruptObjectTruncatedInName);
-  	# 	}
-  	# 	checkPathSegment2(raw, thisNameB, ptr, id);
-  	# 	if (normalized != null) {
-  	# 		if (!normalized.add(normalize(raw, thisNameB, ptr))) {
-  	# 			report(DUPLICATE_ENTRIES, id,
-  	# 					JGitText.get().corruptObjectDuplicateEntryNames);
-  	# 		}
-  	# 	} else if (duplicateName(raw, thisNameB, ptr)) {
-  	# 		report(DUPLICATE_ENTRIES, id,
-  	# 				JGitText.get().corruptObjectDuplicateEntryNames);
-  	# 	}
+    # ptr += 1 + OBJECT_ID_LENGTH;
+    # if (ptr > sz) {
+    # 	throw new CorruptObjectException(
+    # 			JGitText.get().corruptObjectTruncatedInObjectId);
+    # }
     #
-  	# 	if (lastNameB != 0) {
-  	# 		int cmp = compare(
-  	# 				raw, lastNameB, lastNameE, lastMode,
-  	# 				raw, thisNameB, ptr, thisMode);
-  	# 		if (cmp > 0) {
-  	# 			report(TREE_NOT_SORTED, id,
-  	# 					JGitText.get().corruptObjectIncorrectSorting);
-  	# 		}
-  	# 	}
+    # if (ObjectId.zeroId().compareTo(raw, ptr - OBJECT_ID_LENGTH) == 0) {
+    # 	report(NULL_SHA1, id, JGitText.get().corruptObjectZeroId);
+    # }
     #
-  	# 	lastNameB = thisNameB;
-  	# 	lastNameE = ptr;
-  	# 	lastMode = thisMode;
-    #
-  	# 	ptr += 1 + OBJECT_ID_LENGTH;
-  	# 	if (ptr > sz) {
-  	# 		throw new CorruptObjectException(
-  	# 				JGitText.get().corruptObjectTruncatedInObjectId);
-  	# 	}
-    #
-  	# 	if (ObjectId.zeroId().compareTo(raw, ptr - OBJECT_ID_LENGTH) == 0) {
-  	# 		report(NULL_SHA1, id, JGitText.get().corruptObjectZeroId);
-  	# 	}
-    #
-  	# 	if (id != null && isGitmodules(raw, lastNameB, lastNameE, id)) {
-  	# 		ObjectId blob = ObjectId.fromRaw(raw, ptr - OBJECT_ID_LENGTH);
-  	# 		gitsubmodules.add(new GitmoduleEntry(id, blob));
-  	# 	}
-  	# }
+    # if (id != null && isGitmodules(raw, lastNameB, lastNameE, id)) {
+    # 	ObjectId blob = ObjectId.fromRaw(raw, ptr - OBJECT_ID_LENGTH);
+    # 	gitsubmodules.add(new GitmoduleEntry(id, blob));
+    # }
+
+    check_tree!(checker, id, data, normalized_paths)
+  end
+
+  defp check_file_mode!(_checker, _id, [], _mode),
+    do: raise(CorruptObjectError, why: "truncated in mode")
+
+  defp check_file_mode!(_checker, _id, [?\s | data], mode),
+    do: {mode, data}
+
+  defp check_file_mode!(checker, id, [c | data], mode) when c >= ?0 and c <= ?7 do
+    if c == ?0 and mode == 0,
+      do: report(checker, ErrorType.ZERO_PADDED_FILEMODE, id, "mode starts with '0'")
+
+    check_file_mode!(checker, id, data, mode * 8 + (c - ?0))
+  end
+
+  defp check_file_mode!(_checker, _id, [c | data], _mode) do
+    IO.inspect([c | data], label: "CFM invalid case")
+    raise(CorruptObjectError, why: "invalid mode character")
   end
 
   # private int scanPathSegment(byte[] raw, int ptr, int end,
