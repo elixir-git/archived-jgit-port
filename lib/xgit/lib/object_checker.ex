@@ -369,15 +369,19 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	}
   # }
 
+  defp check_tree!(%__MODULE__{windows?: true} = checker, id, data),
+    do: check_tree!(checker, id, data, MapSet.new(), [])
+
+  defp check_tree!(%__MODULE__{macosx?: true} = checker, id, data),
+    do: check_tree!(checker, id, data, MapSet.new(), [])
+
   defp check_tree!(%__MODULE__{} = checker, id, data),
-    do: check_tree!(checker, id, data, MapSet.new())
+    do: check_tree!(checker, id, data, nil, [])
 
-  defp check_tree!(_checker, _id, [] = _data, _normalized_paths), do: :ok
+  defp check_tree!(_checker, _id, [] = _data, _maybe_normalized_paths, _previous_name), do: :ok
 
-  defp check_tree!(%__MODULE__{} = checker, id, data, %MapSet{} = normalized_paths) do
+  defp check_tree!(%__MODULE__{} = checker, id, data, maybe_normalized_paths, _previous_name) do
     # Scan one entry then recurse to scan remaining entries.
-
-    IO.inspect(data, label: "check_tree")
 
     {file_mode, data} = check_file_mode!(checker, id, data, 0)
 
@@ -386,13 +390,14 @@ defmodule Xgit.Lib.ObjectChecker do
     if file_mode_type == Constants.obj_bad(),
       do: raise(CorruptObjectError, why: "invalid mode #{file_mode}")
 
-    # final int thisNameB = ptr;
-    # ptr = scanPathSegment(raw, ptr, sz, id);
-    # if (ptr == sz || raw[ptr] != 0) {
-    # 	throw new CorruptObjectException(
-    # 			JGitText.get().corruptObjectTruncatedInName);
-    # }
-    # checkPathSegment2(raw, thisNameB, ptr, id);
+    # need to port that..
+    {this_name, data} = scan_path_segment(checker, data, id)
+
+    unless [0 | data] = data, do: raise(CorruptObjectError, why: "truncated in name")
+
+    check_path_segment2(checker, this_name, id)
+
+    # PORTING NOTE: normalized became maybe_normalized_paths
     # if (normalized != null) {
     # 	if (!normalized.add(normalize(raw, thisNameB, ptr))) {
     # 		report(DUPLICATE_ENTRIES, id,
@@ -412,27 +417,22 @@ defmodule Xgit.Lib.ObjectChecker do
     # 				JGitText.get().corruptObjectIncorrectSorting);
     # 	}
     # }
-    #
-    # lastNameB = thisNameB;
-    # lastNameE = ptr;
-    # lastMode = thisMode;
-    #
-    # ptr += 1 + OBJECT_ID_LENGTH;
-    # if (ptr > sz) {
-    # 	throw new CorruptObjectException(
-    # 			JGitText.get().corruptObjectTruncatedInObjectId);
-    # }
-    #
-    # if (ObjectId.zeroId().compareTo(raw, ptr - OBJECT_ID_LENGTH) == 0) {
-    # 	report(NULL_SHA1, id, JGitText.get().corruptObjectZeroId);
-    # }
-    #
+
+    {raw_object_id, data} = Enum.split(data, Constants.object_id_length())
+
+    if Enum.count(raw_object_id) != Constants.object_id_length(),
+      do: raise(CorruptObjectError, why: "truncated in object id")
+
+    if Enum.all?(raw_object_id, &(&1 == 0)),
+      do: report(checker, ErrorType.NULL_SHA1, id, "entry points to null SHA-1")
+
+    # TODO
     # if (id != null && isGitmodules(raw, lastNameB, lastNameE, id)) {
     # 	ObjectId blob = ObjectId.fromRaw(raw, ptr - OBJECT_ID_LENGTH);
     # 	gitsubmodules.add(new GitmoduleEntry(id, blob));
     # }
 
-    check_tree!(checker, id, data, normalized_paths)
+    check_tree!(checker, id, data, maybe_normalized_paths, this_name)
   end
 
   defp check_file_mode!(_checker, _id, [], _mode),
@@ -448,35 +448,30 @@ defmodule Xgit.Lib.ObjectChecker do
     check_file_mode!(checker, id, data, mode * 8 + (c - ?0))
   end
 
-  defp check_file_mode!(_checker, _id, [c | data], _mode) do
-    IO.inspect([c | data], label: "CFM invalid case")
-    raise(CorruptObjectError, why: "invalid mode character")
-  end
+  defp check_file_mode!(_checker, _id, _data, _mode),
+    do: raise(CorruptObjectError, why: "invalid mode character")
 
-  # private int scanPathSegment(byte[] raw, int ptr, int end,
-  # 		@Nullable AnyObjectId id) throws CorruptObjectException {
-  # 	for (; ptr < end; ptr++) {
-  # 		byte c = raw[ptr];
-  # 		if (c == 0) {
-  # 			return ptr;
-  # 		}
-  # 		if (c == '/') {
-  # 			report(FULL_PATHNAME, id,
-  # 					JGitText.get().corruptObjectNameContainsSlash);
-  # 		}
-  # 		if (windows && isInvalidOnWindows(c)) {
-  # 			if (c > 31) {
-  # 				throw new CorruptObjectException(String.format(
-  # 						JGitText.get().corruptObjectNameContainsChar,
-  # 						Byte.valueOf(c)));
-  # 			}
-  # 			throw new CorruptObjectException(String.format(
-  # 					JGitText.get().corruptObjectNameContainsByte,
-  # 					Integer.valueOf(c & 0xff)));
-  # 		}
-  # 	}
-  # 	return ptr;
-  # }
+  defp scan_path_segment(%{windows?: windows?} = checker, data, id) do
+    {name, data} = Enum.split_while(data, &(&1 != 0))
+
+    Enum.each(name, fn c ->
+      if c == ?/, do: report(checker, ErrorType.FULL_PATHNAME, id, "name contains '/'")
+
+      if windows? and invalid_on_windows?(c) do
+        if c > 31,
+          do:
+            raise(CorruptObjectError,
+              why: "name contains '#{List.to_string([c])}'",
+              else:
+                raise(CorruptObjectError,
+                  why: "name contains byte 0x'#{Integer.to_string(c, 16)}'"
+                )
+            )
+      end
+    end)
+
+    {name, data}
+  end
 
   # private ObjectId idFor(int objType, byte[] raw) {
   #   PORTING NOTE: This is available as ObjectId.id_for/2.
@@ -615,63 +610,55 @@ defmodule Xgit.Lib.ObjectChecker do
   # 				JGitText.get().corruptObjectNameContainsNullByte);
   # 	checkPathSegment2(raw, ptr, end, null);
   # }
-  #
-  # private void checkPathSegment2(byte[] raw, int ptr, int end,
-  # 		@Nullable AnyObjectId id) throws CorruptObjectException {
-  # 	if (ptr == end) {
-  # 		report(EMPTY_NAME, id, JGitText.get().corruptObjectNameZeroLength);
-  # 		return;
-  # 	}
-  #
-  # 	if (raw[ptr] == '.') {
-  # 		switch (end - ptr) {
-  # 		case 1:
-  # 			report(HAS_DOT, id, JGitText.get().corruptObjectNameDot);
-  # 			break;
-  # 		case 2:
-  # 			if (raw[ptr + 1] == '.') {
-  # 				report(HAS_DOTDOT, id,
-  # 						JGitText.get().corruptObjectNameDotDot);
-  # 			}
-  # 			break;
-  # 		case 4:
-  # 			if (isGit(raw, ptr + 1)) {
-  # 				report(HAS_DOTGIT, id, String.format(
-  # 						JGitText.get().corruptObjectInvalidName,
-  # 						RawParseUtils.decode(raw, ptr, end)));
-  # 			}
-  # 			break;
-  # 		default:
-  # 			if (end - ptr > 4 && isNormalizedGit(raw, ptr + 1, end)) {
-  # 				report(HAS_DOTGIT, id, String.format(
-  # 						JGitText.get().corruptObjectInvalidName,
-  # 						RawParseUtils.decode(raw, ptr, end)));
-  # 			}
-  # 		}
-  # 	} else if (isGitTilde1(raw, ptr, end)) {
-  # 		report(HAS_DOTGIT, id, String.format(
-  # 				JGitText.get().corruptObjectInvalidName,
-  # 				RawParseUtils.decode(raw, ptr, end)));
-  # 	}
-  # 	if (macosx && isMacHFSGit(raw, ptr, end, id)) {
-  # 		report(HAS_DOTGIT, id, String.format(
-  # 				JGitText.get().corruptObjectInvalidNameIgnorableUnicode,
-  # 				RawParseUtils.decode(raw, ptr, end)));
-  # 	}
-  #
-  # 	if (windows) {
-  # 		// Windows ignores space and dot at end of file name.
-  # 		if (raw[end - 1] == ' ' || raw[end - 1] == '.') {
-  # 			report(WIN32_BAD_NAME, id, String.format(
-  # 					JGitText.get().corruptObjectInvalidNameEnd,
-  # 					Character.valueOf(((char) raw[end - 1]))));
-  # 		}
-  # 		if (end - ptr >= 3) {
-  # 			checkNotWindowsDevice(raw, ptr, end, id);
-  # 		}
-  # 	}
-  # }
-  #
+
+  defp check_path_segment2(checker, [], id),
+    do: report(checker, ErrorType.EMPTY_NAME, id, "zero length name")
+
+  defp check_path_segment2(checker, name, id) do
+    check_path_segment_with_dot(checker, name, id)
+
+    # TODO
+    # if (macosx && isMacHFSGit(raw, ptr, end, id)) {
+    # 	report(HAS_DOTGIT, id, String.format(
+    # 			JGitText.get().corruptObjectInvalidNameIgnorableUnicode,
+    # 			RawParseUtils.decode(raw, ptr, end)));
+    # }
+    #
+    # if (windows) {
+    # 	// Windows ignores space and dot at end of file name.
+    # 	if (raw[end - 1] == ' ' || raw[end - 1] == '.') {
+    # 		report(WIN32_BAD_NAME, id, String.format(
+    # 				JGitText.get().corruptObjectInvalidNameEnd,
+    # 				Character.valueOf(((char) raw[end - 1]))));
+    # 	}
+    # 	if (end - ptr >= 3) {
+    # 		checkNotWindowsDevice(raw, ptr, end, id);
+    # 	}
+    # }
+  end
+
+  defp check_path_segment_with_dot(checker, '.', id),
+    do: report(checker, ErrorType.HAS_DOT, id, "invalid name '.'")
+
+  defp check_path_segment_with_dot(checker, '..', id),
+    do: report(checker, ErrorType.HAS_DOTDOT, id, "invalid name '..'")
+
+  defp check_path_segment_with_dot(checker, '.git', id),
+    do: report(checker, ErrorType.HAS_DOTGIT, id, "invalid name '.git'")
+
+  defp check_path_segment_with_dot(checker, [?. | _] = name, id) do
+    if normalized_git?(name),
+      do: report(checker, ErrorType.HAS_DOTGIT, id, "invalid name '#{name}'")
+  end
+
+  defp check_path_segment_with_dot(_checker, _name, _id) do
+    # TODO
+    # 	} else if (isGitTilde1(raw, ptr, end)) {
+    # 		report(HAS_DOTGIT, id, String.format(
+    # 				JGitText.get().corruptObjectInvalidName,
+    # 				RawParseUtils.decode(raw, ptr, end)));
+  end
+
   # // Mac's HFS+ folds permutations of ".git" and Unicode ignorable characters
   # // to ".git" therefore we should prevent such names
   # private boolean isMacHFSPath(byte[] raw, int ptr, int end, byte[] path,
@@ -840,29 +827,33 @@ defmodule Xgit.Lib.ObjectChecker do
   # 		break;
   # 	}
   # }
-  #
-  # private static boolean isInvalidOnWindows(byte c) {
-  # 	// Windows disallows "special" characters in a path component.
-  # 	switch (c) {
-  # 	case '"':
-  # 	case '*':
-  # 	case ':':
-  # 	case '<':
-  # 	case '>':
-  # 	case '?':
-  # 	case '\\':
-  # 	case '|':
-  # 		return true;
-  # 	}
-  # 	return 1 <= c && c <= 31;
-  # }
-  #
-  # private static boolean isGit(byte[] buf, int p) {
-  # 	return toLower(buf[p]) == 'g'
-  # 			&& toLower(buf[p + 1]) == 'i'
-  # 			&& toLower(buf[p + 2]) == 't';
-  # }
-  #
+
+  defp invalid_on_windows?(?"), do: true
+  defp invalid_on_windows?(?*), do: true
+  defp invalid_on_windows?(?:), do: true
+  defp invalid_on_windows?(?<), do: true
+  defp invalid_on_windows?(?>), do: true
+  defp invalid_on_windows?(??), do: true
+  defp invalid_on_windows?(?\\), do: true
+  defp invalid_on_windows?(?|), do: true
+  defp invalid_on_windows?(c) when c >= 1 and c <= 31, do: true
+  defp invalid_on_windows?(_), do: false
+
+  # The simpler approach would be to convert this to a string and use
+  # String.downcase/1 on it. But that would create a lot of garbage to collect.
+  # This approach is a bit more cumbersome, but more efficient.
+  defp git_name_prefix?([?g | it]), do: it_name_prefix?(it)
+  defp git_name_prefix?([?G | it]), do: it_name_prefix?(it)
+  defp git_name_prefix?(_), do: false
+
+  defp it_name_prefix?([?i | it]), do: t_name_prefix?(it)
+  defp it_name_prefix?([?I | it]), do: t_name_prefix?(it)
+  defp it_name_prefix?(_), do: false
+
+  defp t_name_prefix?([?t | _]), do: true
+  defp t_name_prefix?([?T | _]), do: true
+  defp t_name_prefix?(_), do: false
+
   # /**
   #  * Check if the filename contained in buf[start:end] could be read as a
   #  * .gitmodules file when checked out to the working directory.
@@ -968,24 +959,22 @@ defmodule Xgit.Lib.ObjectChecker do
   # 			&& toLower(buf[p + 2]) == 't' && buf[p + 3] == '~'
   # 			&& buf[p + 4] == '1';
   # }
-  #
-  # private static boolean isNormalizedGit(byte[] raw, int ptr, int end) {
-  # 	if (isGit(raw, ptr)) {
-  # 		int dots = 0;
-  # 		boolean space = false;
-  # 		int p = end - 1;
-  # 		for (; (ptr + 2) < p; p--) {
-  # 			if (raw[p] == '.')
-  # 				dots++;
-  # 			else if (raw[p] == ' ')
-  # 				space = true;
-  # 			else
-  # 				break;
-  # 		}
-  # 		return p == ptr + 2 && (dots == 1 || space);
-  # 	}
-  # 	return false;
-  # }
+
+  defp normalized_git?(name) do
+    if git_name_prefix?(name) do
+      name
+      |> Enum.drop(3)
+      |> valid_git_suffix?()
+    else
+      false
+    end
+  end
+
+  defp valid_git_suffix?([]), do: true
+  defp valid_git_suffix?('.'), do: true
+  defp valid_git_suffix?('. '), do: true
+  defp valid_git_suffix?(' .'), do: true
+  defp valid_git_suffix?(_), do: false
 
   # private static char toLower(byte b) {
   # 	if ('A' <= b && b <= 'Z')

@@ -1423,7 +1423,7 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   # 	checker.checkTree(encodeASCII(b.toString()));
   # }
 
-  @placeholder_object_id '000102030405060708090a0b0c0d0e0f10111213'
+  @placeholder_object_id 0..19 |> Enum.to_list()
 
   defp entry(mode_name), do: '#{mode_name}\0#{@placeholder_object_id}'
 
