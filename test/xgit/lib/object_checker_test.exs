@@ -502,37 +502,53 @@ defmodule Xgit.Lib.ObjectCheckerTest do
 
   describe "check tree" do
     test "valid: empty tree" do
-      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), [])
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), [])
     end
 
     test "valid tree 1" do
       data = entry("100644 regular-file")
-      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
     test "valid tree 2" do
       data = entry("100755 executable")
-      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
     test "valid tree 3" do
       data = entry("40000 tree")
-      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
     test "valid tree 4" do
       data = entry("120000 symlink")
-      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
     test "valid tree 5" do
       data = entry("160000 git link")
-      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
     test "valid tree 6" do
       data = entry("100644 .a")
-      assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid tree with .gitmodules" do
+      data = entry("100644 .gitmodules")
+
+      assert {:ok,
+              [
+                {"0123012301230123012301230123012301230123",
+                 "000102030405060708090a0b0c0d0e0f10111213"}
+              ]} =
+               ObjectChecker.check!(
+                 %ObjectChecker{},
+                 "0123012301230123012301230123012301230123",
+                 Constants.obj_tree(),
+                 data
+               )
     end
 
     # @Test

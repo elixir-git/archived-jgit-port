@@ -113,6 +113,14 @@ defmodule Xgit.Lib.ObjectChecker do
   the object).
 
   Raises `Xgit.Errors.CorruptObjectError` if an error is identified.
+
+  If the object is of type `tree`, returns `{:ok, gitsubmodules}` where `gitsubmodules`
+  is a list of all submodule entries found. `gitsubmodules` is a list of tuples
+  of the form `{tree_id, blob_id}` where `tree_id` is the object ID of the tree
+  containing the submodule reference and `blob_id` is the object ID of the
+  submodule that was referenced.
+
+  For all other object types, returns `:ok` if the object is successfully validated.
   """
   def check!(%__MODULE__{} = checker, obj_type, data)
       when is_integer(obj_type) and is_list(data) do
@@ -380,17 +388,32 @@ defmodule Xgit.Lib.ObjectChecker do
   # }
 
   defp check_tree!(%__MODULE__{windows?: true} = checker, id, data),
-    do: check_tree!(checker, id, data, MapSet.new(), [])
+    do: check_tree!(checker, id, data, MapSet.new(), [], [])
 
   defp check_tree!(%__MODULE__{macosx?: true} = checker, id, data),
-    do: check_tree!(checker, id, data, MapSet.new(), [])
+    do: check_tree!(checker, id, data, MapSet.new(), [], [])
 
   defp check_tree!(%__MODULE__{} = checker, id, data),
-    do: check_tree!(checker, id, data, nil, [])
+    do: check_tree!(checker, id, data, nil, [], [])
 
-  defp check_tree!(_checker, _id, [] = _data, _maybe_normalized_paths, _previous_name), do: :ok
+  defp check_tree!(
+         _checker,
+         _id,
+         [] = _data,
+         _maybe_normalized_paths,
+         _previous_name,
+         gitsubmodules
+       ),
+       do: {:ok, Enum.reverse(gitsubmodules)}
 
-  defp check_tree!(%__MODULE__{} = checker, id, data, maybe_normalized_paths, _previous_name) do
+  defp check_tree!(
+         %__MODULE__{} = checker,
+         id,
+         data,
+         maybe_normalized_paths,
+         _previous_name,
+         gitsubmodules
+       ) do
     # Scan one entry then recurse to scan remaining entries.
 
     {file_mode, data} = check_file_mode!(checker, id, data, 0)
@@ -436,13 +459,12 @@ defmodule Xgit.Lib.ObjectChecker do
     if Enum.all?(raw_object_id, &(&1 == 0)),
       do: report(checker, ErrorType.NULL_SHA1, id, "entry points to null SHA-1")
 
-    # TODO
-    # if (id != null && isGitmodules(raw, lastNameB, lastNameE, id)) {
-    # 	ObjectId blob = ObjectId.fromRaw(raw, ptr - OBJECT_ID_LENGTH);
-    # 	gitsubmodules.add(new GitmoduleEntry(id, blob));
-    # }
+    gitsubmodules =
+      if id != nil and gitmodules?(checker, this_name, id),
+        do: [{id, ObjectId.from_raw_bytes(raw_object_id)} | gitsubmodules],
+        else: gitsubmodules
 
-    check_tree!(checker, id, data, maybe_normalized_paths, this_name)
+    check_tree!(checker, id, data, maybe_normalized_paths, this_name, gitsubmodules)
   end
 
   defp check_file_mode!(_checker, _id, [], _mode),
@@ -748,12 +770,14 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	byte[] git = new byte[] { '.', 'g', 'i', 't' };
   # 	return isMacHFSPath(raw, ptr, end, git, id);
   # }
-  #
-  # private boolean isMacHFSGitmodules(byte[] raw, int ptr, int end,
-  # 		@Nullable AnyObjectId id) throws CorruptObjectException {
+
+  # defp mac_hfs_gitmodules?(%__MODULE__{macosx?: true}, name, id) do
+  #   TODO
   # 	return isMacHFSPath(raw, ptr, end, dotGitmodules, id);
-  # }
-  #
+  # end
+
+  defp mac_hfs_gitmodules?(_checker, _name, _id), do: false
+
   # private boolean checkTruncatedIgnorableUTF8(byte[] raw, int ptr, int end,
   # 		@Nullable AnyObjectId id) throws CorruptObjectException {
   # 	if ((ptr + 2) >= end) {
@@ -864,33 +888,26 @@ defmodule Xgit.Lib.ObjectChecker do
   defp t_name_prefix?([?T | _]), do: true
   defp t_name_prefix?(_), do: false
 
-  # /**
-  #  * Check if the filename contained in buf[start:end] could be read as a
-  #  * .gitmodules file when checked out to the working directory.
-  #  *
-  #  * This ought to be a simple comparison, but some filesystems have peculiar
-  #  * rules for normalizing filenames:
-  #  *
-  #  * NTFS has backward-compatibility support for 8.3 synonyms of long file
-  #  * names (see
-  #  * https://web.archive.org/web/20160318181041/https://usn.pw/blog/gen/2015/06/09/filenames/
-  #  * for details). NTFS is also case-insensitive.
-  #  *
-  #  * MacOS's HFS+ folds away ignorable Unicode characters in addition to case
-  #  * folding.
-  #  *
-  #  * @param buf
-  #  *            byte array to decode
-  #  * @param start
-  #  *            position where a supposed filename is starting
-  #  * @param end
-  #  *            position where a supposed filename is ending
-  #  * @param id
-  #  *            object id for error reporting
-  #  *
-  #  * @return true if the filename in buf could be a ".gitmodules" file
-  #  * @throws CorruptObjectException
-  #  */
+  # Check if the filename contained in buf[start:end] could be read as a
+  # .gitmodules file when checked out to the working directory.
+  #
+  # This ought to be a simple comparison, but some filesystems have peculiar
+  # rules for normalizing filenames:
+  #
+  # NTFS has backward-compatibility support for 8.3 synonyms of long file
+  # names (see
+  # https://web.archive.org/web/20160318181041/https://usn.pw/blog/gen/2015/06/09/filenames/
+  # for details). NTFS is also case-insensitive.
+  #
+  # MacOS's HFS+ folds away ignorable Unicode characters in addition to case
+  # folding.
+  defp gitmodules?(_checker, '.gitmodules', _id), do: true
+
+  defp gitmodules?(checker, name, id) do
+    IO.inspect(name, label: ".gitmodules miss")
+    mac_hfs_gitmodules?(checker, name, id) || ntfs_gitmodules?(checker, name, id)
+  end
+
   # private boolean isGitmodules(byte[] buf, int start, int end, @Nullable AnyObjectId id)
   # 		throws CorruptObjectException {
   # 	// Simple cases first.
@@ -914,9 +931,8 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	}
   # 	return true;
   # }
-  #
-  # // .gitmodules, case-insensitive, or an 8.3 abbreviation of the same.
-  # private boolean isNTFSGitmodules(byte[] buf, int start, int end) {
+
+  # defp ntfs_gitmodules?(%__MODULE__{windows?: true}, name, id) do
   # 	if (end - start == 11) {
   # 		return matchLowerCase(buf, start, dotGitmodules);
   # 	}
@@ -960,8 +976,10 @@ defmodule Xgit.Lib.ObjectChecker do
   # 		}
   # 	}
   # 	return true;
-  # }
-  #
+  # end
+
+  defp ntfs_gitmodules?(_checker, _name, _id), do: false
+
   # private static boolean isGitTilde1(byte[] buf, int p, int end) {
   # 	if (end - p != 5)
   # 		return false;
