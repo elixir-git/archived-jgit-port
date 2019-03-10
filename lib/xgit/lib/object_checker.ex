@@ -426,7 +426,11 @@ defmodule Xgit.Lib.ObjectChecker do
     # need to port that..
     {this_name, data} = scan_path_segment(checker, data, id)
 
-    unless [0 | data] = data, do: raise(CorruptObjectError, why: "truncated in name")
+    data =
+      case data do
+        [0 | data] -> data
+        _ -> raise(CorruptObjectError, why: "truncated in name")
+      end
 
     check_path_segment2(checker, this_name, id)
 
@@ -489,21 +493,17 @@ defmodule Xgit.Lib.ObjectChecker do
     Enum.each(name, fn c ->
       if c == ?/, do: report(checker, ErrorType.FULL_PATHNAME, id, "name contains '/'")
 
-      if windows? and invalid_on_windows?(c) do
-        if c > 31,
-          do:
-            raise(CorruptObjectError,
-              why: "name contains '#{List.to_string([c])}'",
-              else:
-                raise(CorruptObjectError,
-                  why: "name contains byte 0x'#{Integer.to_string(c, 16)}'"
-                )
-            )
-      end
+      if windows? and invalid_on_windows?(c), do: raise_invalid_on_windows(c)
     end)
 
     {name, data}
   end
+
+  defp raise_invalid_on_windows(c) when c > 31,
+    do: raise(CorruptObjectError, why: "name contains '#{List.to_string([c])}'")
+
+  defp raise_invalid_on_windows(c),
+    do: raise(CorruptObjectError, why: "name contains byte 0x'#{Integer.to_string(c, 16)}'")
 
   # private ObjectId idFor(int objType, byte[] raw) {
   #   PORTING NOTE: This is available as ObjectId.id_for/2.
@@ -903,10 +903,8 @@ defmodule Xgit.Lib.ObjectChecker do
   # folding.
   defp gitmodules?(_checker, '.gitmodules', _id), do: true
 
-  defp gitmodules?(checker, name, id) do
-    IO.inspect(name, label: ".gitmodules miss")
-    mac_hfs_gitmodules?(checker, name, id) || ntfs_gitmodules?(checker, name, id)
-  end
+  defp gitmodules?(checker, name, id),
+    do: mac_hfs_gitmodules?(checker, name, id) || ntfs_gitmodules?(checker, name, id)
 
   # private boolean isGitmodules(byte[] buf, int start, int end, @Nullable AnyObjectId id)
   # 		throws CorruptObjectException {
