@@ -551,78 +551,62 @@ defmodule Xgit.Lib.ObjectCheckerTest do
                )
     end
 
-    # @Test
-    # public void testValidTreeWithGitmodules() throws CorruptObjectException {
-    # 	ObjectId treeId = ObjectId
-    # 			.fromString("0123012301230123012301230123012301230123");
-    # 	StringBuilder b = new StringBuilder();
-    # 	ObjectId blobId = entry(b, "100644 .gitmodules");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.checkTree(treeId, data);
-    # 	assertEquals(1, checker.getGitsubmodules().size());
-    # 	assertEquals(treeId, checker.getGitsubmodules().get(0).getTreeId());
-    # 	assertEquals(blobId, checker.getGitsubmodules().get(0).getBlobId());
-    # }
-    #
-    # /*
-    #  * Windows case insensitivity and long file name handling
-    #  * means that .gitmodules has many synonyms.
-    #  *
-    #  * Examples inspired by git.git's t/t0060-path-utils.sh, by
-    #  * Johannes Schindelin and Congyi Wu.
-    #  */
-    # @Test
-    # public void testNTFSGitmodules() throws CorruptObjectException {
-    # 	for (String gitmodules : new String[] {
-    # 		".GITMODULES",
-    # 		".gitmodules",
-    # 		".Gitmodules",
-    # 		".gitmoduleS",
-    # 		"gitmod~1",
-    # 		"GITMOD~1",
-    # 		"gitmod~4",
-    # 		"GI7EBA~1",
-    # 		"gi7eba~9",
-    # 		"GI7EB~10",
-    # 		"GI7E~123",
-    # 		"~1000000",
-    # 		"~9999999"
-    # 	}) {
-    # 		checker = new ObjectChecker(); // Reset the ObjectChecker state.
-    # 		checker.setSafeForWindows(true);
-    # 		ObjectId treeId = ObjectId
-    # 				.fromString("0123012301230123012301230123012301230123");
-    # 		StringBuilder b = new StringBuilder();
-    # 		ObjectId blobId = entry(b, "100644 " + gitmodules);
-    #
-    # 		byte[] data = encodeASCII(b.toString());
-    # 		checker.checkTree(treeId, data);
-    # 		assertEquals(1, checker.getGitsubmodules().size());
-    # 		assertEquals(treeId, checker.getGitsubmodules().get(0).getTreeId());
-    # 		assertEquals(blobId, checker.getGitsubmodules().get(0).getBlobId());
-    # 	}
-    # }
-    #
-    # @Test
-    # public void testNotGitmodules() throws CorruptObjectException {
-    # 	for (String notGitmodules : new String[] {
-    # 		".gitmodu",
-    # 		".gitmodules oh never mind",
-    # 	}) {
-    # 		checker = new ObjectChecker(); // Reset the ObjectChecker state.
-    # 		checker.setSafeForWindows(true);
-    # 		ObjectId treeId = ObjectId
-    # 				.fromString("0123012301230123012301230123012301230123");
-    # 		StringBuilder b = new StringBuilder();
-    # 		entry(b, "100644 " + notGitmodules);
-    #
-    # 		byte[] data = encodeASCII(b.toString());
-    # 		checker.checkTree(treeId, data);
-    # 		assertEquals(0, checker.getGitsubmodules().size());
-    # 	}
-    # }
-    #
+    @ntfs_gitmodules [
+      ".GITMODULES",
+      ".gitmodules",
+      ".Gitmodules",
+      ".gitmoduleS",
+      "gitmod~1",
+      "GITMOD~1",
+      "gitmod~4",
+      "GI7EBA~1",
+      "gi7eba~9",
+      "GI7EB~10",
+      "GI7E~123",
+      "~1000000",
+      "~9999999"
+    ]
+
+    test "valid tree with NTFS .gitmodules" do
+      # Windows case insensitivity and long file name handling
+      # means that .gitmodules has many synonyms.
+      #
+      # Examples inspired by git.git's t/t0060-path-utils.sh, by
+      # Johannes Schindelin and Congyi Wu.
+
+      Enum.each(@ntfs_gitmodules, fn gitmodules_name ->
+        data = entry("100644 #{gitmodules_name}")
+
+        assert {:ok,
+                [
+                  {"0123012301230123012301230123012301230123",
+                   "000102030405060708090a0b0c0d0e0f10111213"}
+                ]} =
+                 ObjectChecker.check!(
+                   %ObjectChecker{windows?: true},
+                   "0123012301230123012301230123012301230123",
+                   Constants.obj_tree(),
+                   data
+                 )
+      end)
+    end
+
+    @not_gitmodules [".gitmodu", ".gitmodules oh never mind"]
+
+    test "valid tree with NTFS names that aren't .gitmodules" do
+      Enum.each(@not_gitmodules, fn not_gitmodules_name ->
+        data = entry("100644 #{not_gitmodules_name}")
+
+        assert {:ok, []} =
+                 ObjectChecker.check!(
+                   %ObjectChecker{windows?: true},
+                   "0123012301230123012301230123012301230123",
+                   Constants.obj_tree(),
+                   data
+                 )
+      end)
+    end
+
     # /*
     #  * TODO HFS: match ".gitmodules" case-insensitively, after stripping out
     #  * certain zero-length Unicode code points that HFS+ strips out

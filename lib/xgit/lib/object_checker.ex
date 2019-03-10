@@ -904,7 +904,7 @@ defmodule Xgit.Lib.ObjectChecker do
   defp gitmodules?(_checker, '.gitmodules', _id), do: true
 
   defp gitmodules?(checker, name, id),
-    do: mac_hfs_gitmodules?(checker, name, id) || ntfs_gitmodules?(checker, name, id)
+    do: mac_hfs_gitmodules?(checker, name, id) || ntfs_gitmodules?(checker, name)
 
   # private boolean isGitmodules(byte[] buf, int start, int end, @Nullable AnyObjectId id)
   # 		throws CorruptObjectException {
@@ -930,53 +930,36 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	return true;
   # }
 
-  # defp ntfs_gitmodules?(%__MODULE__{windows?: true}, name, id) do
-  # 	if (end - start == 11) {
-  # 		return matchLowerCase(buf, start, dotGitmodules);
-  # 	}
-  #
-  # 	if (end - start != 8) {
-  # 		return false;
-  # 	}
-  #
-  # 	// "gitmod" or a prefix of "gi7eba", followed by...
-  # 	byte[] gitmod = new byte[]{'g', 'i', 't', 'm', 'o', 'd', '~'};
-  # 	if (matchLowerCase(buf, start, gitmod)) {
-  # 		start += 6;
-  # 	} else {
-  # 		byte[] gi7eba = new byte[]{'g', 'i', '7', 'e', 'b', 'a'};
-  # 		for (int i = 0; i < gi7eba.length; i++, start++) {
-  # 			byte c = (byte) toLower(buf[start]);
-  # 			if (c == '~') {
-  # 				break;
-  # 			}
-  # 			if (c != gi7eba[i]) {
-  # 				return false;
-  # 			}
-  # 		}
-  # 	}
-  #
-  # 	// ... ~ and a number
-  # 	if (end - start < 2) {
-  # 		return false;
-  # 	}
-  # 	if (buf[start] != '~') {
-  # 		return false;
-  # 	}
-  # 	start++;
-  # 	if (buf[start] < '1' || buf[start] > '9') {
-  # 		return false;
-  # 	}
-  # 	start++;
-  # 	for (; start != end; start++) {
-  # 		if (buf[start] < '0' || buf[start] > '9') {
-  # 			return false;
-  # 		}
-  # 	}
-  # 	return true;
-  # end
+  defp ntfs_gitmodules?(%__MODULE__{windows?: true}, name) do
+    length = Enum.count(name)
 
-  defp ntfs_gitmodules?(_checker, _name, _id), do: false
+    if length == 8 || length == 11,
+      do: ntfs_gitmodules?(Enum.map(name, &to_lower(&1))),
+      else: false
+  end
+
+  defp ntfs_gitmodules?(_checker, _name), do: false
+
+  defp ntfs_gitmodules?('.gitmodules'), do: true
+  defp ntfs_gitmodules?('gitmod~' ++ rem), do: ntfs_numeric_suffix?(rem)
+  defp ntfs_gitmodules?('gi7eba~' ++ rem), do: ntfs_numeric_suffix?(rem)
+  defp ntfs_gitmodules?('gi7eb~' ++ rem), do: ntfs_numeric_suffix?(rem)
+  defp ntfs_gitmodules?('gi7e~' ++ rem), do: ntfs_numeric_suffix?(rem)
+  defp ntfs_gitmodules?('gi7~' ++ rem), do: ntfs_numeric_suffix?(rem)
+  defp ntfs_gitmodules?('gi~' ++ rem), do: ntfs_numeric_suffix?(rem)
+  defp ntfs_gitmodules?('g~' ++ rem), do: ntfs_numeric_suffix?(rem)
+  defp ntfs_gitmodules?('~' ++ rem), do: ntfs_numeric_suffix?(rem)
+  defp ntfs_gitmodules?(_), do: false
+
+  # The first digit of the numeric suffix must not be zero.
+  defp ntfs_numeric_suffix?([?0 | _rem]), do: false
+  defp ntfs_numeric_suffix?(rem), do: ntfs_numeric_suffix_zero_ok?(rem)
+
+  defp ntfs_numeric_suffix_zero_ok?([c | rem]) when c >= ?0 and c <= ?9,
+    do: ntfs_numeric_suffix_zero_ok?(rem)
+
+  defp ntfs_numeric_suffix_zero_ok?([]), do: true
+  defp ntfs_numeric_suffix_zero_ok?(_), do: false
 
   # private static boolean isGitTilde1(byte[] buf, int p, int end) {
   # 	if (end - p != 5)
@@ -1002,12 +985,9 @@ defmodule Xgit.Lib.ObjectChecker do
   defp valid_git_suffix?(' .'), do: true
   defp valid_git_suffix?(_), do: false
 
-  # private static char toLower(byte b) {
-  # 	if ('A' <= b && b <= 'Z')
-  # 		return (char) (b + ('a' - 'A'));
-  # 	return (char) b;
-  # }
-  #
+  defp to_lower(b) when b >= ?A and b <= ?Z, do: b + 32
+  defp to_lower(b), do: b
+
   # private static boolean isPositiveDigit(byte b) {
   # 	return '1' <= b && b <= '9';
   # }
