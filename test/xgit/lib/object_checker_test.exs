@@ -995,54 +995,38 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert_skiplist_rejects("truncated in object id", Constants.obj_tree(), data)
     end
 
-    # @Test
-    # public void testInvalidTreeBadSorting1() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 foobar");
-    # 	entry(b, "100644 fooaaa");
-    # 	byte[] data = encodeASCII(b.toString());
-    #
-    # 	assertCorrupt("incorrectly sorted", OBJ_TREE, data);
-    #
-    # 	ObjectId id = idFor(OBJ_TREE, data);
-    # 	try {
-    # 		checker.check(id, OBJ_TREE, data);
-    # 		fail("Did not throw CorruptObjectException");
-    # 	} catch (CorruptObjectException e) {
-    # 		assertSame(TREE_NOT_SORTED, e.getErrorType());
-    # 		assertEquals("treeNotSorted: object " + id.name()
-    # 				+ ": incorrectly sorted", e.getMessage());
-    # 	}
-    #
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(TREE_NOT_SORTED, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeBadSorting2() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "40000 a");
-    # 	entry(b, "100644 a.c");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("incorrectly sorted", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(TREE_NOT_SORTED, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeBadSorting3() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 a0c");
-    # 	entry(b, "40000 a");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("incorrectly sorted", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(TREE_NOT_SORTED, true);
-    # 	checker.checkTree(data);
-    # }
-    #
+    @badly_sorted_trees [
+      ["100644 foobar", "100644 fooaaa"],
+      ["40000 a", "100644 a.c"],
+      ["100644 a0c", "40000 a"]
+    ]
+
+    test "invalid: bad sorting" do
+      Enum.each(@badly_sorted_trees, fn badly_sorted_names ->
+        data =
+          badly_sorted_names
+          |> Enum.map(&entry/1)
+          |> Enum.concat()
+
+        assert_corrupt(%ObjectChecker{}, "incorrectly sorted", Constants.obj_tree(), data)
+
+        id = ObjectId.id_for(Constants.obj_tree(), data)
+
+        assert_raise CorruptObjectError, "Object #{id} is corrupt: incorrectly sorted", fn ->
+          ObjectChecker.check!(%ObjectChecker{}, id, Constants.obj_tree(), data)
+        end
+
+        assert_skiplist_accepts(%ObjectChecker{}, Constants.obj_tree(), data)
+
+        assert {:ok, []} =
+                 ObjectChecker.check!(
+                   %ObjectChecker{ignore_error_types: %{tree_not_sorted: true}},
+                   Constants.obj_tree(),
+                   data
+                 )
+      end)
+    end
+
     # @Test
     # public void testInvalidTreeDuplicateNames1_File()
     # 		throws CorruptObjectException {

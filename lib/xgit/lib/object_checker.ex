@@ -12,6 +12,7 @@ defmodule Xgit.Lib.ObjectChecker do
   alias Xgit.Lib.Constants
   alias Xgit.Lib.FileMode
   alias Xgit.Lib.ObjectId
+  alias Xgit.Util.Paths
   alias Xgit.Util.RawParseUtils
 
   defprotocol Strategy do
@@ -331,13 +332,13 @@ defmodule Xgit.Lib.ObjectChecker do
   # }
 
   defp check_tree!(%__MODULE__{windows?: true} = checker, id, data),
-    do: check_tree!(checker, id, data, MapSet.new(), [], [])
+    do: check_tree!(checker, id, data, MapSet.new(), [], 0, [])
 
   defp check_tree!(%__MODULE__{macosx?: true} = checker, id, data),
-    do: check_tree!(checker, id, data, MapSet.new(), [], [])
+    do: check_tree!(checker, id, data, MapSet.new(), [], 0, [])
 
   defp check_tree!(%__MODULE__{} = checker, id, data),
-    do: check_tree!(checker, id, data, nil, [], [])
+    do: check_tree!(checker, id, data, nil, [], 0, [])
 
   defp check_tree!(
          _checker,
@@ -345,6 +346,7 @@ defmodule Xgit.Lib.ObjectChecker do
          [] = _data,
          _maybe_normalized_paths,
          _previous_name,
+         _previous_mode,
          gitsubmodules
        ),
        do: {:ok, Enum.reverse(gitsubmodules)}
@@ -354,7 +356,8 @@ defmodule Xgit.Lib.ObjectChecker do
          id,
          data,
          maybe_normalized_paths,
-         _previous_name,
+         previous_name,
+         previous_mode,
          gitsubmodules
        ) do
     # Scan one entry then recurse to scan remaining entries.
@@ -390,16 +393,12 @@ defmodule Xgit.Lib.ObjectChecker do
     # 	report(DUPLICATE_ENTRIES, id,
     # 			JGitText.get().corruptObjectDuplicateEntryNames);
     # }
-    #
-    # if (lastNameB != 0) {
-    # 	int cmp = compare(
-    # 			raw, lastNameB, lastNameE, lastMode,
-    # 			raw, thisNameB, ptr, thisMode);
-    # 	if (cmp > 0) {
-    # 		report(TREE_NOT_SORTED, id,
-    # 				JGitText.get().corruptObjectIncorrectSorting);
-    # 	}
-    # }
+
+    if previous_name != nil do
+      if Paths.compare(previous_name, previous_mode, this_name, file_mode) == :gt do
+        report(checker, :tree_not_sorted, id, "incorrectly sorted")
+      end
+    end
 
     {raw_object_id, data} = Enum.split(data, Constants.object_id_length())
 
@@ -414,7 +413,7 @@ defmodule Xgit.Lib.ObjectChecker do
         do: [{id, ObjectId.from_raw_bytes(raw_object_id)} | gitsubmodules],
         else: gitsubmodules
 
-    check_tree!(checker, id, data, maybe_normalized_paths, this_name, gitsubmodules)
+    check_tree!(checker, id, data, maybe_normalized_paths, this_name, file_mode, gitsubmodules)
   end
 
   defp check_file_mode!(_checker, _id, [], _mode),
