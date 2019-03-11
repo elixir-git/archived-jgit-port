@@ -660,72 +660,46 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       check_one_name("NUL")
     end
 
-    # @Test
-    # public void testValidTreeSorting1() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 fooaaa");
-    # 	entry(b, "100755 foobar");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
-    # @Test
-    # public void testValidTreeSorting2() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100755 fooaaa");
-    # 	entry(b, "100644 foobar");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
-    # @Test
-    # public void testValidTreeSorting3() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "40000 a");
-    # 	entry(b, "100644 b");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
-    # @Test
-    # public void testValidTreeSorting4() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 a");
-    # 	entry(b, "40000 b");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
-    # @Test
-    # public void testValidTreeSorting5() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 a.c");
-    # 	entry(b, "40000 a");
-    # 	entry(b, "100644 a0c");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
-    # @Test
-    # public void testValidTreeSorting6() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "40000 a");
-    # 	entry(b, "100644 apple");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
-    # @Test
-    # public void testValidTreeSorting7() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "40000 an orang");
-    # 	entry(b, "40000 an orange");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
-    # @Test
-    # public void testValidTreeSorting8() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 a");
-    # 	entry(b, "100644 a0c");
-    # 	entry(b, "100644 b");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
+    test "valid: tree sorting 1" do
+      data = entry("100644 fooaaa") ++ entry("100755 foobar")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid: tree sorting 2" do
+      data = entry("100755 fooaaa") ++ entry("100644 foobar")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid: tree sorting 3" do
+      data = entry("40000 a") ++ entry("100644 b")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid: tree sorting 4" do
+      data = entry("100644 a") ++ entry("40000 b")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid: tree sorting 5" do
+      data = entry("100644 a.c") ++ entry("40000 a") ++ entry("100644 a0c")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid: tree sorting 6" do
+      data = entry("40000 a") ++ entry("100644 apple")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid: tree sorting 7" do
+      data = entry("40000 an orang") ++ entry("40000 an orange")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid: tree sorting 8" do
+      data = entry("100644 a") ++ entry("100644 a0c") ++ entry("100644 b")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
     # @Test
     # public void testAcceptTreeModeWithZero() throws CorruptObjectException {
     # 	StringBuilder b = new StringBuilder();
