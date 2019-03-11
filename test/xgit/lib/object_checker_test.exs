@@ -653,14 +653,13 @@ defmodule Xgit.Lib.ObjectCheckerTest do
                )
     end
 
-    # @Test
-    # public void testValidPosixTree() throws CorruptObjectException {
-    # 	checkOneName("a<b>c:d|e");
-    # 	checkOneName("test ");
-    # 	checkOneName("test.");
-    # 	checkOneName("NUL");
-    # }
-    #
+    test "valid: posix tree" do
+      check_one_name("a<b>c:d|e")
+      check_one_name("test ")
+      check_one_name("test.")
+      check_one_name("NUL")
+    end
+
     # @Test
     # public void testValidTreeSorting1() throws CorruptObjectException {
     # 	StringBuilder b = new StringBuilder();
@@ -1407,12 +1406,11 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   # 		assertEquals("name contains byte 0x" + h, e.getMessage());
   # 	}
   # }
-  #
-  # private void checkOneName(String name) throws CorruptObjectException {
-  # 	StringBuilder b = new StringBuilder();
-  # 	entry(b, "100644 " + name);
-  # 	checker.checkTree(encodeASCII(b.toString()));
-  # }
+
+  defp check_one_name(name) do
+    data = entry("100644 #{name}")
+    assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+  end
 
   @placeholder_object_id 0..19 |> Enum.to_list()
 
