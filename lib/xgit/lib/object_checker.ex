@@ -940,6 +940,7 @@ defmodule Xgit.Lib.ObjectChecker do
   end
 
   defp valid_git_suffix?([]), do: true
+  defp valid_git_suffix?(' '), do: true
   defp valid_git_suffix?('.'), do: true
   defp valid_git_suffix?('. '), do: true
   defp valid_git_suffix?(' .'), do: true

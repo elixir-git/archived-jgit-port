@@ -896,66 +896,48 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert_skiplist_accepts(mac_checker, Constants.obj_tree(), data)
     end
 
-    # @Test
-    # public void testInvalidTreeNameIsNotMacHFSGit()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .git\u200Cx");
-    # 	byte[] data = encode(b.toString());
-    # 	checker.setSafeForMacOS(true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsNotMacHFSGit2()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .kit\u200C");
-    # 	byte[] data = encode(b.toString());
-    # 	checker.setSafeForMacOS(true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsNotMacHFSGitOtherPlatform()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .git\u200C");
-    # 	byte[] data = encode(b.toString());
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsDotGitDot() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .git.");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid name '.git.'", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOTGIT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testValidTreeNameIsDotGitDotDot()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .git..");
-    # 	checker.checkTree(encodeASCII(b.toString()));
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsDotGitSpace()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .git ");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid name '.git '", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOTGIT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
+    test "valid: name is not Mac HFS .git 1" do
+      data = entry("100644 .git\u200Cx")
+
+      assert {:ok, []} =
+               ObjectChecker.check!(%ObjectChecker{macosx?: true}, Constants.obj_tree(), data)
+    end
+
+    test "valid: name is not Mac HFS .git 2" do
+      data = entry("100644 .kit\u200C")
+
+      assert {:ok, []} =
+               ObjectChecker.check!(%ObjectChecker{macosx?: true}, Constants.obj_tree(), data)
+    end
+
+    test "valid: name is not Mac HFS .git (other platform)" do
+      data = entry("100644 .git\u200C")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    @bad_dot_git_names [".git.", ".git "]
+
+    test "invalid: tree name is variant of .git" do
+      Enum.each(@bad_dot_git_names, fn bad_name ->
+        data = entry("100644 #{bad_name}")
+
+        assert_corrupt(%ObjectChecker{}, "invalid name '#{bad_name}'", Constants.obj_tree(), data)
+        assert_skiplist_accepts(%ObjectChecker{}, Constants.obj_tree(), data)
+
+        assert {:ok, []} =
+                 ObjectChecker.check!(
+                   %ObjectChecker{ignore_error_types: %{has_dotgit: true}},
+                   Constants.obj_tree(),
+                   data
+                 )
+      end)
+    end
+
+    test "valid: name is .git.." do
+      data = entry("100644 .git..")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
     # @Test
     # public void testInvalidTreeNameIsDotGitSomething()
     # 		throws CorruptObjectException {
