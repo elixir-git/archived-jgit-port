@@ -7,6 +7,8 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   alias Xgit.Lib.ObjectChecker.SecretKeyCheckerStrategy
   alias Xgit.Lib.ObjectId
 
+  @placeholder_object_id 0..19 |> Enum.to_list()
+
   test "invalid object type" do
     assert_corrupt("invalid type -1", Constants.obj_bad(), [])
   end
@@ -856,26 +858,25 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       end)
     end
 
-    # @Test
-    # public void testInvalidTreeNameIsMacHFSGitCorruptUTF8AtEnd()
-    # 		throws CorruptObjectException {
-    # 	byte[] data = concat(encode("100644 .git"),
-    # 			new byte[] { (byte) 0xef });
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "");
-    # 	data = concat(data, encode(b.toString()));
-    #
-    # 	// Fine on POSIX.
-    # 	checker.checkTree(data);
-    #
-    # 	// Rejected on Mac OS.
-    # 	checker.setSafeForMacOS(true);
-    # 	assertCorrupt(
-    # 			"invalid name contains byte sequence '0xef' which is not a valid UTF-8 character",
-    # 			OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # }
-    #
+    test "invalid: name is Mac HFS .git with corrupt UTF-8 at end 1" do
+      data = '100644 .git' ++ [0xEF] ++ '\0#{@placeholder_object_id}'
+
+      # This is fine on Posix.
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+
+      # Rejected on Mac OS.
+      mac_checker = %ObjectChecker{macosx?: true}
+
+      assert_corrupt(
+        mac_checker,
+        "invalid name contains byte sequence '0xef' which is not a valid UTF-8 character",
+        Constants.obj_tree(),
+        data
+      )
+
+      assert_skiplist_accepts(mac_checker, Constants.obj_tree(), data)
+    end
+
     # @Test
     # public void testInvalidTreeNameIsMacHFSGitCorruptUTF8AtEnd2()
     # 		throws CorruptObjectException {
@@ -1337,8 +1338,6 @@ defmodule Xgit.Lib.ObjectCheckerTest do
     data = entry("100644 #{name}")
     assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
   end
-
-  @placeholder_object_id 0..19 |> Enum.to_list()
 
   defp entry(mode_name), do: '#{:binary.bin_to_list(mode_name)}\0#{@placeholder_object_id}'
 

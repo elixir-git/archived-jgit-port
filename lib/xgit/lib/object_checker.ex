@@ -710,9 +710,9 @@ defmodule Xgit.Lib.ObjectChecker do
 
   defp match_mac_hfs_path?(_checker, [0xEF, _, _ | _], _match, _id, _ignorable?), do: false
 
-  defp match_mac_hfs_path?(checker, [c | data], _match, id, _ignorable?)
+  defp match_mac_hfs_path?(checker, [c | _] = list, _match, id, _ignorable?)
        when c == 0xE2 or c == 0xEF do
-    check_truncated_ignorable_utf8(checker, data, id)
+    check_truncated_ignorable_utf8(checker, list, id)
     false
   end
 
@@ -735,12 +735,12 @@ defmodule Xgit.Lib.ObjectChecker do
   defp mac_hfs_gitmodules?(_checker, _name, _id), do: false
 
   defp check_truncated_ignorable_utf8(checker, data, id) do
-    if Enum.drop(data, 2) == [] do
+    if Enum.drop(data, 3) == [] do
       report(
         checker,
         :bad_utf8,
         id,
-        "invalid name contains byte sequence ''#{to_hex_string(data)}'' which is not a valid UTF-8 character"
+        "invalid name contains byte sequence '#{to_hex_string(data)}' which is not a valid UTF-8 character"
       )
 
       false
@@ -751,8 +751,10 @@ defmodule Xgit.Lib.ObjectChecker do
 
   defp to_hex_string(data), do: "0x#{Enum.map_join(data, &byte_to_hex/1)}"
 
-  defp byte_to_hex(b) when b < 16, do: "0" <> Integer.to_string(b, 16)
-  defp byte_to_hex(b), do: Integer.to_string(b, 16)
+  defp byte_to_hex(b) when b < 16, do: "0" <> integer_to_lc_hex_string(b)
+  defp byte_to_hex(b), do: integer_to_lc_hex_string(b)
+
+  defp integer_to_lc_hex_string(b), do: b |> Integer.to_string(16) |> String.downcase()
 
   # private void checkNotWindowsDevice(byte[] raw, int ptr, int end,
   # 		@Nullable AnyObjectId id) throws CorruptObjectException {
