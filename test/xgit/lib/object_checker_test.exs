@@ -607,8 +607,8 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       end)
     end
 
-    # TODO HFS: match ".gitmodules" case-insensitively, after stripping out
-    # certain zero-length Unicode code points that HFS+ strips out.
+    # UNIMPLEMENTED in jgit: HFS: match ".gitmodules" case-insensitively, after
+    # stripping out certain zero-length Unicode code points that HFS+ strips out.
 
     test "valid: .GITMODULES" do
       data = entry("100644 .GITMODULES")
