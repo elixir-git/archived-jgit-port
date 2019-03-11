@@ -4,7 +4,7 @@ defmodule Xgit.Lib.ObjectChecker do
 
   Verifications made by this module only check that the fields of an object are
   formatted correctly. The ObjectId checksum of the object is not verified, and
-  connectivity links between objects are also not verified. Its assumed that
+  connectivity links between objects are also not verified. It's assumed that
   the caller can provide both of these validations on its own.
   """
 
