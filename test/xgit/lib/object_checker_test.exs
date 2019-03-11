@@ -535,7 +535,7 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    test "valid tree with .gitmodules" do
+    test "valid: .gitmodules" do
       data = entry("100644 .gitmodules")
 
       assert {:ok,
@@ -567,7 +567,7 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       "~9999999"
     ]
 
-    test "valid tree with NTFS .gitmodules" do
+    test "valid: NTFS .gitmodules" do
       # Windows case insensitivity and long file name handling
       # means that .gitmodules has many synonyms.
       #
@@ -593,7 +593,7 @@ defmodule Xgit.Lib.ObjectCheckerTest do
 
     @not_gitmodules [".gitmodu", ".gitmodules oh never mind"]
 
-    test "valid tree with NTFS names that aren't .gitmodules" do
+    test "valid: NTFS names that aren't .gitmodules" do
       Enum.each(@not_gitmodules, fn not_gitmodules_name ->
         data = entry("100644 #{not_gitmodules_name}")
 
@@ -610,7 +610,7 @@ defmodule Xgit.Lib.ObjectCheckerTest do
     # TODO HFS: match ".gitmodules" case-insensitively, after stripping out
     # certain zero-length Unicode code points that HFS+ strips out.
 
-    test "valid tree with .gitmodules uppercase" do
+    test "valid: .GITMODULES" do
       data = entry("100644 .GITMODULES")
 
       assert {:ok,
@@ -626,7 +626,7 @@ defmodule Xgit.Lib.ObjectCheckerTest do
                )
     end
 
-    test "valid tree with name that isn't .gitmodules" do
+    test "valid: name that isn't .gitmodules" do
       data = entry("100644 .gitmodulez")
 
       assert {:ok, []} =
@@ -653,196 +653,182 @@ defmodule Xgit.Lib.ObjectCheckerTest do
                )
     end
 
-    test "valid: posix tree" do
+    test "valid: posix names" do
       check_one_name("a<b>c:d|e")
       check_one_name("test ")
       check_one_name("test.")
       check_one_name("NUL")
     end
 
-    test "valid: tree sorting 1" do
+    test "valid: sorting 1" do
       data = entry("100644 fooaaa") ++ entry("100755 foobar")
       assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    test "valid: tree sorting 2" do
+    test "valid: sorting 2" do
       data = entry("100755 fooaaa") ++ entry("100644 foobar")
       assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    test "valid: tree sorting 3" do
+    test "valid: sorting 3" do
       data = entry("40000 a") ++ entry("100644 b")
       assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    test "valid: tree sorting 4" do
+    test "valid: sorting 4" do
       data = entry("100644 a") ++ entry("40000 b")
       assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    test "valid: tree sorting 5" do
+    test "valid: sorting 5" do
       data = entry("100644 a.c") ++ entry("40000 a") ++ entry("100644 a0c")
       assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    test "valid: tree sorting 6" do
+    test "valid: sorting 6" do
       data = entry("40000 a") ++ entry("100644 apple")
       assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    test "valid: tree sorting 7" do
+    test "valid: sorting 7" do
       data = entry("40000 an orang") ++ entry("40000 an orange")
       assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    test "valid: tree sorting 8" do
+    test "valid: sorting 8" do
       data = entry("100644 a") ++ entry("100644 a0c") ++ entry("100644 b")
       assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    # @Test
-    # public void testAcceptTreeModeWithZero() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "040000 a");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.setAllowLeadingZeroFileMode(true);
-    # 	checker.checkTree(data);
-    #
-    # 	checker.setAllowLeadingZeroFileMode(false);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    #
-    # 	checker.setIgnore(ZERO_PADDED_FILEMODE, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeModeStartsWithZero1() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "0 a");
-    # 	assertCorrupt("mode starts with '0'", OBJ_TREE, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeModeStartsWithZero2() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "0100644 a");
-    # 	assertCorrupt("mode starts with '0'", OBJ_TREE, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeModeStartsWithZero3() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "040000 a");
-    # 	assertCorrupt("mode starts with '0'", OBJ_TREE, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeModeNotOctal1() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "8 a");
-    # 	assertCorrupt("invalid mode character", OBJ_TREE, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeModeNotOctal2() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "Z a");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid mode character", OBJ_TREE, data);
-    # 	assertSkipListRejects("invalid mode character", OBJ_TREE, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeModeNotSupportedMode1() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "1 a");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid mode 1", OBJ_TREE, data);
-    # 	assertSkipListRejects("invalid mode 1", OBJ_TREE, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeModeNotSupportedMode2() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "170000 a");
-    # 	assertCorrupt("invalid mode " + 0170000, OBJ_TREE, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeModeMissingName() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("100644");
-    # 	assertCorrupt("truncated in mode", OBJ_TREE, b);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameContainsSlash()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 a/b");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("name contains '/'", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(FULL_PATHNAME, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsEmpty() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 ");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("zero length name", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(EMPTY_NAME, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsDot() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid name '.'", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsDotDot() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 ..");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid name '..'", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOTDOT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsGit() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .git");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid name '.git'", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOTGIT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsMixedCaseGit()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .GiT");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid name '.GiT'", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOTGIT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
+    test "valid: mode with zero (with flags set)" do
+      data = entry("040000 a")
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{zero_padded_filemode: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+
+      assert_skiplist_accepts(Constants.obj_tree(), data)
+    end
+
+    test "invalid: mode starts with zero 1" do
+      data = entry("0 a")
+      assert_corrupt("mode starts with '0'", Constants.obj_tree(), data)
+    end
+
+    test "invalid: mode starts with zero 2" do
+      data = entry("0100644 a")
+      assert_corrupt("mode starts with '0'", Constants.obj_tree(), data)
+    end
+
+    test "invalid: mode starts with zero 3" do
+      data = entry("040000 a")
+      assert_corrupt("mode starts with '0'", Constants.obj_tree(), data)
+    end
+
+    test "invalid: mode not octal 1" do
+      data = entry("8 a")
+      assert_corrupt("invalid mode character", Constants.obj_tree(), data)
+    end
+
+    test "invalid: mode not octal 2" do
+      data = entry("Z a")
+      assert_corrupt("invalid mode character", Constants.obj_tree(), data)
+      assert_skiplist_rejects("invalid mode character", Constants.obj_tree(), data)
+    end
+
+    test "invalid: mode not supported mode 1" do
+      data = entry("1 a")
+      assert_corrupt("invalid mode 1", Constants.obj_tree(), data)
+      assert_skiplist_rejects("invalid mode 1", Constants.obj_tree(), data)
+    end
+
+    test "invalid: mode not supported mode 2" do
+      data = entry("170000 a")
+      assert_corrupt("invalid mode 61440", Constants.obj_tree(), data)
+      assert_skiplist_rejects("invalid mode 61440", Constants.obj_tree(), data)
+    end
+
+    test "invalid: name contains slash" do
+      data = entry("100644 a/b")
+      assert_corrupt("name contains '/'", Constants.obj_tree(), data)
+      assert_skiplist_accepts(Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{full_pathname: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "invalid: name is empty" do
+      data = entry("100644 ")
+      assert_corrupt("zero length name", Constants.obj_tree(), data)
+      assert_skiplist_accepts(Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{empty_name: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "invalid: name is '.'" do
+      data = entry("100644 .")
+      assert_corrupt("invalid name '.'", Constants.obj_tree(), data)
+      assert_skiplist_accepts(Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{has_dot: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "invalid: name is '..'" do
+      data = entry("100644 ..")
+      assert_corrupt("invalid name '..'", Constants.obj_tree(), data)
+      assert_skiplist_accepts(Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{has_dotdot: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "invalid: name is '.git'" do
+      data = entry("100644 .git")
+      assert_corrupt("invalid name '.git'", Constants.obj_tree(), data)
+      assert_skiplist_accepts(Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{has_dotgit: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "invalid: name is '.git' (mixed case)" do
+      data = entry("100644 .GiT")
+      assert_corrupt("invalid name '.GiT'", Constants.obj_tree(), data)
+      assert_skiplist_accepts(Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{has_dotgit: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
     # @Test
     # public void testInvalidTreeNameIsMacHFSGit() throws CorruptObjectException {
     # 	StringBuilder b = new StringBuilder();
@@ -1412,18 +1398,16 @@ defmodule Xgit.Lib.ObjectCheckerTest do
     assert :ok = ObjectChecker.check!(checker, type, data)
   end
 
-  # private void assertSkipListRejects(String msg, int type, byte[] data) {
-  # 	ObjectId id = idFor(type, data);
-  # 	checker.setSkipList(set(id));
-  # 	try {
-  # 		checker.check(id, type, data);
-  # 		fail("Did not throw CorruptObjectException");
-  # 	} catch (CorruptObjectException e) {
-  # 		assertEquals(msg, e.getMessage());
-  # 	}
-  # 	checker.setSkipList(null);
-  # }
-  #
+  defp assert_skiplist_rejects(message, type, data) do
+    id = ObjectId.id_for(type, data)
+    skiplist = MapSet.new([id])
+    checker = %ObjectChecker{skiplist: skiplist}
+
+    assert_raise CorruptObjectError, "Object (unknown) is corrupt: #{message}", fn ->
+      ObjectChecker.check!(checker, type, data)
+    end
+  end
+
   # private static ObjectIdSet set(ObjectId... ids) {
   # 	return new ObjectIdSet() {
   # 		@Override

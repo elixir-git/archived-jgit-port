@@ -621,8 +621,8 @@ defmodule Xgit.Lib.ObjectChecker do
   defp check_path_segment_with_dot(checker, '.git', id),
     do: report(checker, :has_dotgit, id, "invalid name '.git'")
 
-  defp check_path_segment_with_dot(checker, [?. | _] = name, id) do
-    if normalized_git?(name),
+  defp check_path_segment_with_dot(checker, [?. | rem] = name, id) do
+    if normalized_git?(rem),
       do: report(checker, :has_dotgit, id, "invalid name '#{name}'")
   end
 
