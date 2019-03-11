@@ -377,6 +377,9 @@ defmodule Xgit.Lib.ObjectChecker do
 
     check_path_segment2(checker, this_name, id)
 
+    if Enum.count(this_name) == 5 and Enum.map(this_name, &to_lower/1) == 'git~1',
+      do: report(checker, :has_dotgit, id, "invalid name '#{this_name}'")
+
     # PORTING NOTE: normalized became maybe_normalized_paths
     # if (normalized != null) {
     # 	if (!normalized.add(normalize(raw, thisNameB, ptr))) {
@@ -630,13 +633,7 @@ defmodule Xgit.Lib.ObjectChecker do
       do: report(checker, :has_dotgit, id, "invalid name '#{name}'")
   end
 
-  defp check_path_segment_with_dot(_checker, _name, _id) do
-    # TODO
-    # 	} else if (isGitTilde1(raw, ptr, end)) {
-    # 		report(HAS_DOTGIT, id, String.format(
-    # 				JGitText.get().corruptObjectInvalidName,
-    # 				RawParseUtils.decode(raw, ptr, end)));
-  end
+  defp check_path_segment_with_dot(_checker, _name, _id), do: :ok
 
   # http://www.utf8-chartable.de/unicode-utf8-table.pl?start=8192
   defp match_mac_hfs_path?(checker, data, match, id, ignorable? \\ false)
@@ -920,14 +917,6 @@ defmodule Xgit.Lib.ObjectChecker do
 
   defp ntfs_numeric_suffix_zero_ok?([]), do: true
   defp ntfs_numeric_suffix_zero_ok?(_), do: false
-
-  # private static boolean isGitTilde1(byte[] buf, int p, int end) {
-  # 	if (end - p != 5)
-  # 		return false;
-  # 	return toLower(buf[p]) == 'g' && toLower(buf[p + 1]) == 'i'
-  # 			&& toLower(buf[p + 2]) == 't' && buf[p + 3] == '~'
-  # 			&& buf[p + 4] == '1';
-  # }
 
   defp normalized_git?(name) do
     if git_name_prefix?(name) do

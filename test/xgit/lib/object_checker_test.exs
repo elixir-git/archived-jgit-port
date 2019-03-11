@@ -958,54 +958,43 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    # @Test
-    # public void testInvalidTreeNameIsGITTilde1() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 GIT~1");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid name 'GIT~1'", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOTGIT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsGiTTilde1() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 GiT~1");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid name 'GiT~1'", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOTGIT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testValidTreeNameIsGitTilde11() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 GIT~11");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeTruncatedInName() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("100644 b");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("truncated in name", OBJ_TREE, data);
-    # 	assertSkipListRejects("truncated in name", OBJ_TREE, data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeTruncatedInObjectId() {
-    # 	StringBuilder b = new StringBuilder();
-    # 	b.append("100644 b\0\1\2");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("truncated in object id", OBJ_TREE, data);
-    # 	assertSkipListRejects("truncated in object id", OBJ_TREE, data);
-    # }
-    #
+    @bad_dot_git_tilde_names ["GIT~1", "GiT~1"]
+
+    test "invalid: tree name is variant of git~1" do
+      Enum.each(@bad_dot_git_tilde_names, fn bad_name ->
+        data = entry("100644 #{bad_name}")
+
+        assert_corrupt(%ObjectChecker{}, "invalid name '#{bad_name}'", Constants.obj_tree(), data)
+        assert_skiplist_accepts(%ObjectChecker{}, Constants.obj_tree(), data)
+
+        assert {:ok, []} =
+                 ObjectChecker.check!(
+                   %ObjectChecker{ignore_error_types: %{has_dotgit: true}},
+                   Constants.obj_tree(),
+                   data
+                 )
+      end)
+    end
+
+    test "valid: name is GIT~11" do
+      data = entry("100644 GIT~11")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "invalid: tree truncated in name" do
+      data = '100644 b'
+
+      assert_corrupt(%ObjectChecker{}, "truncated in name", Constants.obj_tree(), data)
+      assert_skiplist_rejects("truncated in name", Constants.obj_tree(), data)
+    end
+
+    test "invalid: tree truncated in object ID" do
+      data = '100644 b' ++ [0, 1, 2]
+
+      assert_corrupt(%ObjectChecker{}, "truncated in object id", Constants.obj_tree(), data)
+      assert_skiplist_rejects("truncated in object id", Constants.obj_tree(), data)
+    end
+
     # @Test
     # public void testInvalidTreeBadSorting1() throws CorruptObjectException {
     # 	StringBuilder b = new StringBuilder();
