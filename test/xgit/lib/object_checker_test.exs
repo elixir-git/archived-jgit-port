@@ -607,51 +607,52 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       end)
     end
 
-    # /*
-    #  * TODO HFS: match ".gitmodules" case-insensitively, after stripping out
-    #  * certain zero-length Unicode code points that HFS+ strips out
-    #  */
-    #
-    # @Test
-    # public void testValidTreeWithGitmodulesUppercase()
-    # 		throws CorruptObjectException {
-    # 	ObjectId treeId = ObjectId
-    # 			.fromString("0123012301230123012301230123012301230123");
-    # 	StringBuilder b = new StringBuilder();
-    # 	ObjectId blobId = entry(b, "100644 .GITMODULES");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.setSafeForWindows(true);
-    # 	checker.checkTree(treeId, data);
-    # 	assertEquals(1, checker.getGitsubmodules().size());
-    # 	assertEquals(treeId, checker.getGitsubmodules().get(0).getTreeId());
-    # 	assertEquals(blobId, checker.getGitsubmodules().get(0).getBlobId());
-    # }
-    #
-    # @Test
-    # public void testTreeWithInvalidGitmodules() throws CorruptObjectException {
-    # 	ObjectId treeId = ObjectId
-    # 			.fromString("0123012301230123012301230123012301230123");
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .gitmodulez");
-    #
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.checkTree(treeId, data);
-    # 	checker.setSafeForWindows(true);
-    # 	assertEquals(0, checker.getGitsubmodules().size());
-    # }
-    #
-    # @Test
-    # public void testNullSha1InTreeEntry() throws CorruptObjectException {
-    # 	byte[] data = concat(
-    # 			encodeASCII("100644 A"), new byte[] { '\0' },
-    # 			new byte[OBJECT_ID_LENGTH]);
-    # 	assertCorrupt("entry points to null SHA-1", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(NULL_SHA1, true);
-    # 	checker.checkTree(data);
-    # }
-    #
+    # TODO HFS: match ".gitmodules" case-insensitively, after stripping out
+    # certain zero-length Unicode code points that HFS+ strips out.
+
+    test "valid tree with .gitmodules uppercase" do
+      data = entry("100644 .GITMODULES")
+
+      assert {:ok,
+              [
+                {"0123012301230123012301230123012301230123",
+                 "000102030405060708090a0b0c0d0e0f10111213"}
+              ]} =
+               ObjectChecker.check!(
+                 %ObjectChecker{windows?: true},
+                 "0123012301230123012301230123012301230123",
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "valid tree with name that isn't .gitmodules" do
+      data = entry("100644 .gitmodulez")
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{windows?: true},
+                 "0123012301230123012301230123012301230123",
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "invalid: null SHA-1 in tree entry" do
+      data = '100644 A' ++ Enum.map(0..20, fn _ -> 0 end)
+
+      assert_corrupt("entry points to null SHA-1", Constants.obj_tree(), data)
+
+      assert_skiplist_accepts(Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{null_sha1: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
     # @Test
     # public void testValidPosixTree() throws CorruptObjectException {
     # 	checkOneName("a<b>c:d|e");
@@ -1422,6 +1423,14 @@ defmodule Xgit.Lib.ObjectCheckerTest do
     assert_raise CorruptObjectError, "Object (unknown) is corrupt: #{msg}", fn ->
       ObjectChecker.check!(%ObjectChecker{}, type, data)
     end
+  end
+
+  defp assert_skiplist_accepts(2 = type, data) do
+    # type 2 = tree
+    id = ObjectId.id_for(type, data)
+    skiplist = MapSet.new([id])
+    checker = %ObjectChecker{skiplist: skiplist}
+    assert {:ok, []} = ObjectChecker.check!(checker, type, data)
   end
 
   defp assert_skiplist_accepts(type, data) do

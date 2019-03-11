@@ -503,7 +503,7 @@ defmodule Xgit.Lib.ObjectChecker do
   defp ignore_error?(nil, _error_type), do: false
 
   defp ignore_error?(ignore_error_types, error_type),
-    do: !MapSet.member?(ignore_error_types, error_type)
+    do: Map.get(ignore_error_types, error_type, false)
 
   defp skip_object_id?(nil, _object_id), do: false
   defp skip_object_id?(skiplist, object_id), do: MapSet.member?(skiplist, object_id)
