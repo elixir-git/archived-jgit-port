@@ -829,67 +829,33 @@ defmodule Xgit.Lib.ObjectCheckerTest do
                )
     end
 
-    test "invalid: name is Mac HFS .git 1" do
-      data = entry("100644 .gi\u200Ct")
+    @mac_hfs_git_names [
+      ".gi\u200Ct",
+      "\u206B.git",
+      ".git\uFEFF"
+    ]
 
-      # This is fine on Posix.
-      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    test "invalid: name is Mac HFS .git" do
+      Enum.each(@mac_hfs_git_names, fn name ->
+        data = entry("100644 #{name}")
 
-      # Rejected on Mac OS.
-      mac_checker = %ObjectChecker{macosx?: true}
+        # This is fine on Posix.
+        assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
 
-      assert_corrupt(
-        mac_checker,
-        "invalid name '.gi\u200Ct' contains ignorable Unicode characters",
-        Constants.obj_tree(),
-        data
-      )
+        # Rejected on Mac OS.
+        mac_checker = %ObjectChecker{macosx?: true}
 
-      assert_skiplist_accepts(mac_checker, Constants.obj_tree(), data)
+        assert_corrupt(
+          mac_checker,
+          "invalid name '#{name}' contains ignorable Unicode characters",
+          Constants.obj_tree(),
+          data
+        )
+
+        assert_skiplist_accepts(mac_checker, Constants.obj_tree(), data)
+      end)
     end
 
-    # @Test
-    # public void testInvalidTreeNameIsMacHFSGit2()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 \u206B.git");
-    # 	byte[] data = encode(b.toString());
-    #
-    # 	// Fine on POSIX.
-    # 	checker.checkTree(data);
-    #
-    # 	// Rejected on Mac OS.
-    # 	checker.setSafeForMacOS(true);
-    # 	assertCorrupt(
-    # 			"invalid name '\u206B.git' contains ignorable Unicode characters",
-    # 			OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOTGIT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsMacHFSGit3()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .git\uFEFF");
-    # 	byte[] data = encode(b.toString());
-    #
-    # 	// Fine on POSIX.
-    # 	checker.checkTree(data);
-    #
-    # 	// Rejected on Mac OS.
-    # 	checker.setSafeForMacOS(true);
-    # 	assertCorrupt(
-    # 			"invalid name '.git\uFEFF' contains ignorable Unicode characters",
-    # 			OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOTGIT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    #
-    #
     # @Test
     # public void testInvalidTreeNameIsMacHFSGitCorruptUTF8AtEnd()
     # 		throws CorruptObjectException {

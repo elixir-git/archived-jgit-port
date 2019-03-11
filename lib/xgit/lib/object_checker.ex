@@ -592,8 +592,6 @@ defmodule Xgit.Lib.ObjectChecker do
   defp check_path_segment2(%__MODULE__{macosx?: macosx?} = checker, name, id) do
     check_path_segment_with_dot(checker, name, id)
 
-    inspect(name, label: "CPS2 mac case")
-
     if macosx? && mac_hfs_git?(checker, name, id) do
       utf8_name = RawParseUtils.decode(name)
 
@@ -707,8 +705,8 @@ defmodule Xgit.Lib.ObjectChecker do
 
   defp match_mac_hfs_path?(_checker, [0xE2, 0x81, _ | _], _match, _id, _ignorable?), do: false
 
-  defp match_mac_hfs_path?(checker, [0xEF, 0xBB, 0xBF | data], match, id, ignorable?),
-    do: match_mac_hfs_path?(checker, data, match, id, ignorable?)
+  defp match_mac_hfs_path?(checker, [0xEF, 0xBB, 0xBF | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
 
   defp match_mac_hfs_path?(_checker, [0xEF, _, _ | _], _match, _id, _ignorable?), do: false
 
