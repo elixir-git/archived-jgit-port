@@ -589,16 +589,22 @@ defmodule Xgit.Lib.ObjectChecker do
   defp check_path_segment2(checker, [], id),
     do: report(checker, :empty_name, id, "zero length name")
 
-  defp check_path_segment2(checker, name, id) do
+  defp check_path_segment2(%__MODULE__{macosx?: macosx?} = checker, name, id) do
     check_path_segment_with_dot(checker, name, id)
 
-    # TODO
-    # if (macosx && isMacHFSGit(raw, ptr, end, id)) {
-    # 	report(HAS_DOTGIT, id, String.format(
-    # 			JGitText.get().corruptObjectInvalidNameIgnorableUnicode,
-    # 			RawParseUtils.decode(raw, ptr, end)));
-    # }
-    #
+    inspect(name, label: "CPS2 mac case")
+
+    if macosx? && mac_hfs_git?(checker, name, id) do
+      utf8_name = RawParseUtils.decode(name)
+
+      report(
+        checker,
+        :has_dotgit,
+        id,
+        "invalid name '#{utf8_name}' contains ignorable Unicode characters"
+      )
+    end
+
     # if (windows) {
     # 	// Windows ignores space and dot at end of file name.
     # 	if (raw[end - 1] == ' ' || raw[end - 1] == '.') {
@@ -634,85 +640,94 @@ defmodule Xgit.Lib.ObjectChecker do
     # 				RawParseUtils.decode(raw, ptr, end)));
   end
 
-  # // Mac's HFS+ folds permutations of ".git" and Unicode ignorable characters
-  # // to ".git" therefore we should prevent such names
-  # private boolean isMacHFSPath(byte[] raw, int ptr, int end, byte[] path,
-  # 		@Nullable AnyObjectId id) throws CorruptObjectException {
-  # 	boolean ignorable = false;
-  # 	int g = 0;
-  # 	while (ptr < end) {
-  # 		switch (raw[ptr]) {
-  # 		case (byte) 0xe2: // http://www.utf8-chartable.de/unicode-utf8-table.pl?start=8192
-  # 			if (!checkTruncatedIgnorableUTF8(raw, ptr, end, id)) {
-  # 				return false;
-  # 			}
-  # 			switch (raw[ptr + 1]) {
-  # 			case (byte) 0x80:
-  # 				switch (raw[ptr + 2]) {
-  # 				case (byte) 0x8c:	// U+200C 0xe2808c ZERO WIDTH NON-JOINER
-  # 				case (byte) 0x8d:	// U+200D 0xe2808d ZERO WIDTH JOINER
-  # 				case (byte) 0x8e:	// U+200E 0xe2808e LEFT-TO-RIGHT MARK
-  # 				case (byte) 0x8f:	// U+200F 0xe2808f RIGHT-TO-LEFT MARK
-  # 				case (byte) 0xaa:	// U+202A 0xe280aa LEFT-TO-RIGHT EMBEDDING
-  # 				case (byte) 0xab:	// U+202B 0xe280ab RIGHT-TO-LEFT EMBEDDING
-  # 				case (byte) 0xac:	// U+202C 0xe280ac POP DIRECTIONAL FORMATTING
-  # 				case (byte) 0xad:	// U+202D 0xe280ad LEFT-TO-RIGHT OVERRIDE
-  # 				case (byte) 0xae:	// U+202E 0xe280ae RIGHT-TO-LEFT OVERRIDE
-  # 					ignorable = true;
-  # 					ptr += 3;
-  # 					continue;
-  # 				default:
-  # 					return false;
-  # 				}
-  # 			case (byte) 0x81:
-  # 				switch (raw[ptr + 2]) {
-  # 				case (byte) 0xaa:	// U+206A 0xe281aa INHIBIT SYMMETRIC SWAPPING
-  # 				case (byte) 0xab:	// U+206B 0xe281ab ACTIVATE SYMMETRIC SWAPPING
-  # 				case (byte) 0xac:	// U+206C 0xe281ac INHIBIT ARABIC FORM SHAPING
-  # 				case (byte) 0xad:	// U+206D 0xe281ad ACTIVATE ARABIC FORM SHAPING
-  # 				case (byte) 0xae:	// U+206E 0xe281ae NATIONAL DIGIT SHAPES
-  # 				case (byte) 0xaf:	// U+206F 0xe281af NOMINAL DIGIT SHAPES
-  # 					ignorable = true;
-  # 					ptr += 3;
-  # 					continue;
-  # 				default:
-  # 					return false;
-  # 				}
-  # 			default:
-  # 				return false;
-  # 			}
-  # 		case (byte) 0xef: // http://www.utf8-chartable.de/unicode-utf8-table.pl?start=65024
-  # 			if (!checkTruncatedIgnorableUTF8(raw, ptr, end, id)) {
-  # 				return false;
-  # 			}
-  # 			// U+FEFF 0xefbbbf ZERO WIDTH NO-BREAK SPACE
-  # 			if ((raw[ptr + 1] == (byte) 0xbb)
-  # 					&& (raw[ptr + 2] == (byte) 0xbf)) {
-  # 				ignorable = true;
-  # 				ptr += 3;
-  # 				continue;
-  # 			}
-  # 			return false;
-  # 		default:
-  # 			if (g == path.length) {
-  # 				return false;
-  # 			}
-  # 			if (toLower(raw[ptr++]) != path[g++]) {
-  # 				return false;
-  # 			}
-  # 		}
-  # 	}
-  # 	if (g == path.length && ignorable) {
-  # 		return true;
-  # 	}
-  # 	return false;
-  # }
-  #
-  # private boolean isMacHFSGit(byte[] raw, int ptr, int end,
-  # 		@Nullable AnyObjectId id) throws CorruptObjectException {
-  # 	byte[] git = new byte[] { '.', 'g', 'i', 't' };
-  # 	return isMacHFSPath(raw, ptr, end, git, id);
-  # }
+  # http://www.utf8-chartable.de/unicode-utf8-table.pl?start=8192
+  defp match_mac_hfs_path?(checker, data, match, id, ignorable? \\ false)
+
+  # U+200C 0xe2808c ZERO WIDTH NON-JOINER
+  defp match_mac_hfs_path?(checker, [0xE2, 0x80, 0x8C | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+200D 0xe2808d ZERO WIDTH JOINER
+  defp match_mac_hfs_path?(checker, [0xE2, 0x80, 0x8D | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+200E 0xe2808e LEFT-TO-RIGHT MARK
+  defp match_mac_hfs_path?(checker, [0xE2, 0x80, 0x8E | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+200F 0xe2808f RIGHT-TO-LEFT MARK
+  defp match_mac_hfs_path?(checker, [0xE2, 0x80, 0x8F | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+202A 0xe280aa LEFT-TO-RIGHT EMBEDDING
+  defp match_mac_hfs_path?(checker, [0xE2, 0x80, 0xAA | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+202B 0xe280ab RIGHT-TO-LEFT EMBEDDING
+  defp match_mac_hfs_path?(checker, [0xE2, 0x80, 0xAB | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+202C 0xe280ac POP DIRECTIONAL FORMATTING
+  defp match_mac_hfs_path?(checker, [0xE2, 0x80, 0xAC | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+202D 0xe280ad LEFT-TO-RIGHT OVERRIDE
+  defp match_mac_hfs_path?(checker, [0xE2, 0x80, 0xAD | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+202E 0xe280ae RIGHT-TO-LEFT OVERRIDE
+  defp match_mac_hfs_path?(checker, [0xE2, 0x80, 0xAE | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  defp match_mac_hfs_path?(_checker, [0xE2, 0x80, _ | _], _match, _id, _ignorable?), do: false
+
+  # U+206A 0xe281aa INHIBIT SYMMETRIC SWAPPING
+  defp match_mac_hfs_path?(checker, [0xE2, 0x81, 0xAA | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+206B 0xe281ab ACTIVATE SYMMETRIC SWAPPING
+  defp match_mac_hfs_path?(checker, [0xE2, 0x81, 0xAB | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+206C 0xe281ac INHIBIT ARABIC FORM SHAPING
+  defp match_mac_hfs_path?(checker, [0xE2, 0x81, 0xAC | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+206D 0xe281ad ACTIVATE ARABIC FORM SHAPING
+  defp match_mac_hfs_path?(checker, [0xE2, 0x81, 0xAD | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+206E 0xe281ae NATIONAL DIGIT SHAPES
+  defp match_mac_hfs_path?(checker, [0xE2, 0x81, 0xAE | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  # U+206F 0xe281af NOMINAL DIGIT SHAPES
+  defp match_mac_hfs_path?(checker, [0xE2, 0x81, 0xAF | data], match, id, _ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, true)
+
+  defp match_mac_hfs_path?(_checker, [0xE2, 0x81, _ | _], _match, _id, _ignorable?), do: false
+
+  defp match_mac_hfs_path?(checker, [0xEF, 0xBB, 0xBF | data], match, id, ignorable?),
+    do: match_mac_hfs_path?(checker, data, match, id, ignorable?)
+
+  defp match_mac_hfs_path?(_checker, [0xEF, _, _ | _], _match, _id, _ignorable?), do: false
+
+  defp match_mac_hfs_path?(checker, [c | data], _match, id, _ignorable?)
+       when c == 0xE2 or c == 0xEF do
+    check_truncated_ignorable_utf8(checker, data, id)
+    false
+  end
+
+  defp match_mac_hfs_path?(checker, [c | data], [m | match], id, ignorable?) do
+    if to_lower(c) == m,
+      do: match_mac_hfs_path?(checker, data, match, id, ignorable?),
+      else: false
+  end
+
+  defp match_mac_hfs_path?(_checker, [], [], _id, ignorable?), do: ignorable?
+  defp match_mac_hfs_path?(_checker, _data, _match, _id, _ignorable?), do: false
+
+  defp mac_hfs_git?(checker, name, id), do: match_mac_hfs_path?(checker, name, '.git', id)
 
   # defp mac_hfs_gitmodules?(%__MODULE__{macosx?: true}, name, id) do
   #   TODO
@@ -721,24 +736,26 @@ defmodule Xgit.Lib.ObjectChecker do
 
   defp mac_hfs_gitmodules?(_checker, _name, _id), do: false
 
-  # private boolean checkTruncatedIgnorableUTF8(byte[] raw, int ptr, int end,
-  # 		@Nullable AnyObjectId id) throws CorruptObjectException {
-  # 	if ((ptr + 2) >= end) {
-  # 		report(BAD_UTF8, id, MessageFormat.format(
-  # 				JGitText.get().corruptObjectInvalidNameInvalidUtf8,
-  # 				toHexString(raw, ptr, end)));
-  # 		return false;
-  # 	}
-  # 	return true;
-  # }
-  #
-  # private static String toHexString(byte[] raw, int ptr, int end) {
-  # 	StringBuilder b = new StringBuilder("0x"); //$NON-NLS-1$
-  # 	for (int i = ptr; i < end; i++)
-  # 		b.append(String.format("%02x", Byte.valueOf(raw[i]))); //$NON-NLS-1$
-  # 	return b.toString();
-  # }
-  #
+  defp check_truncated_ignorable_utf8(checker, data, id) do
+    if Enum.drop(data, 2) == [] do
+      report(
+        checker,
+        :bad_utf8,
+        id,
+        "invalid name contains byte sequence ''#{to_hex_string(data)}'' which is not a valid UTF-8 character"
+      )
+
+      false
+    else
+      true
+    end
+  end
+
+  defp to_hex_string(data), do: "0x#{Enum.map_join(data, &byte_to_hex/1)}"
+
+  defp byte_to_hex(b) when b < 16, do: "0" <> Integer.to_string(b, 16)
+  defp byte_to_hex(b), do: Integer.to_string(b, 16)
+
   # private void checkNotWindowsDevice(byte[] raw, int ptr, int end,
   # 		@Nullable AnyObjectId id) throws CorruptObjectException {
   # 	switch (toLower(raw[ptr])) {

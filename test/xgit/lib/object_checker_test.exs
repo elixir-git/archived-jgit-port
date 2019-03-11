@@ -829,25 +829,25 @@ defmodule Xgit.Lib.ObjectCheckerTest do
                )
     end
 
-    # @Test
-    # public void testInvalidTreeNameIsMacHFSGit() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .gi\u200Ct");
-    # 	byte[] data = encode(b.toString());
-    #
-    # 	// Fine on POSIX.
-    # 	checker.checkTree(data);
-    #
-    # 	// Rejected on Mac OS.
-    # 	checker.setSafeForMacOS(true);
-    # 	assertCorrupt(
-    # 			"invalid name '.gi\u200Ct' contains ignorable Unicode characters",
-    # 			OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOTGIT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
+    test "invalid: name is Mac HFS .git 1" do
+      data = entry("100644 .gi\u200Ct")
+
+      # This is fine on Posix.
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+
+      # Rejected on Mac OS.
+      mac_checker = %ObjectChecker{macosx?: true}
+
+      assert_corrupt(
+        mac_checker,
+        "invalid name '.gi\u200Ct' contains ignorable Unicode characters",
+        Constants.obj_tree(),
+        data
+      )
+
+      assert_skiplist_accepts(mac_checker, Constants.obj_tree(), data)
+    end
+
     # @Test
     # public void testInvalidTreeNameIsMacHFSGit2()
     # 		throws CorruptObjectException {
@@ -1374,27 +1374,29 @@ defmodule Xgit.Lib.ObjectCheckerTest do
 
   @placeholder_object_id 0..19 |> Enum.to_list()
 
-  defp entry(mode_name), do: '#{mode_name}\0#{@placeholder_object_id}'
+  defp entry(mode_name), do: '#{:binary.bin_to_list(mode_name)}\0#{@placeholder_object_id}'
 
-  defp assert_corrupt(msg, type, data)
+  defp assert_corrupt(checker \\ %ObjectChecker{}, msg, type, data)
        when is_binary(msg) and is_integer(type) and is_list(data) do
     assert_raise CorruptObjectError, "Object (unknown) is corrupt: #{msg}", fn ->
-      ObjectChecker.check!(%ObjectChecker{}, type, data)
+      ObjectChecker.check!(checker, type, data)
     end
   end
 
-  defp assert_skiplist_accepts(2 = type, data) do
+  defp assert_skiplist_accepts(checker \\ %ObjectChecker{}, type, data)
+
+  defp assert_skiplist_accepts(checker, 2 = type, data) do
     # type 2 = tree
     id = ObjectId.id_for(type, data)
     skiplist = MapSet.new([id])
-    checker = %ObjectChecker{skiplist: skiplist}
+    checker = %{checker | skiplist: skiplist}
     assert {:ok, []} = ObjectChecker.check!(checker, type, data)
   end
 
-  defp assert_skiplist_accepts(type, data) do
+  defp assert_skiplist_accepts(checker, type, data) do
     id = ObjectId.id_for(type, data)
     skiplist = MapSet.new([id])
-    checker = %ObjectChecker{skiplist: skiplist}
+    checker = %{checker | skiplist: skiplist}
     assert :ok = ObjectChecker.check!(checker, type, data)
   end
 
