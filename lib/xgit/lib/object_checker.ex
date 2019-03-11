@@ -14,8 +14,6 @@ defmodule Xgit.Lib.ObjectChecker do
   alias Xgit.Lib.ObjectId
   alias Xgit.Util.RawParseUtils
 
-  use EnumType
-
   defprotocol Strategy do
     @doc ~S"""
     Check a commit for errors.
@@ -38,61 +36,6 @@ defmodule Xgit.Lib.ObjectChecker do
     Raise `CorruptObjectError` if the blob is invalid.
     """
     def check_blob!(strategy, blob_data)
-  end
-
-  # Potential issues that can be identified by the checker.
-  # These names match git-core so that fsck section keys also match.
-  defenum ErrorType do
-    value(NULL_SHA1, 0)
-    value(DUPLICATE_ENTRIES, 1)
-    value(TREE_NOT_SORTED, 2)
-    value(ZERO_PADDED_FILEMODE, 3)
-    value(EMPTY_NAME, 4)
-    value(FULL_PATHNAME, 5)
-    value(HAS_DOT, 6)
-    value(HAS_DOTDOT, 7)
-    value(HAS_DOTGIT, 8)
-    value(BAD_OBJECT_SHA1, 9)
-    value(BAD_PARENT_SHA1, 10)
-    value(BAD_TREE_SHA1, 11)
-    value(MISSING_AUTHOR, 12)
-    value(MISSING_COMMITTER, 13)
-    value(MISSING_OBJECT, 14)
-    value(MISSING_TREE, 15)
-    value(MISSING_TYPE_ENTRY, 16)
-    value(MISSING_TAG_ENTRY, 17)
-    value(BAD_DATE, 18)
-    value(BAD_EMAIL, 19)
-    value(BAD_TIMEZONE, 20)
-    value(MISSING_EMAIL, 21)
-    value(MISSING_SPACE_BEFORE_DATE, 22)
-    value(GITMODULES_BLOB, 23)
-    value(GITMODULES_LARGE, 24)
-    value(GITMODULES_NAME, 25)
-    value(GITMODULES_PARSE, 26)
-    value(GITMODULES_PATH, 27)
-    value(GITMODULES_SYMLINK, 28)
-    value(GITMODULES_URL, 29)
-    value(UNKNOWN_TYPE, 30)
-
-    # The following items are unique to xgit.
-    value(WIN32_BAD_NAME, 31)
-    value(BAD_UTF8, 32)
-
-    # /** @return camelCaseVersion of the name. */
-    # public String getMessageId() {
-    # 	String n = name();
-    # 	StringBuilder r = new StringBuilder(n.length());
-    # 	for (int i = 0; i < n.length(); i++) {
-    # 		char c = n.charAt(i);
-    # 		if (c != '_') {
-    # 			r.append(StringUtils.toLowerCase(c));
-    # 		} else {
-    # 			r.append(n.charAt(++i));
-    # 		}
-    # 	}
-    # 	return r.toString();
-    # }
   end
 
   defstruct strategy: nil,
@@ -186,7 +129,7 @@ defmodule Xgit.Lib.ObjectChecker do
 
   def check!(%__MODULE__{} = checker, id, obj_type, data)
       when (is_binary(id) or id == nil) and is_list(data) do
-    report(checker, ErrorType.UNKNOWN_TYPE, id, "invalid type #{obj_type}")
+    report(checker, :unknown_type, id, "invalid type #{obj_type}")
   end
 
   defp check_id(data) do
@@ -233,32 +176,32 @@ defmodule Xgit.Lib.ObjectChecker do
   end
 
   defp error_type_and_message_for_cause(:missing_email),
-    do: {ErrorType.MISSING_EMAIL, "missing email"}
+    do: {:missing_email, "missing email"}
 
   defp error_type_and_message_for_cause(:bad_email),
-    do: {ErrorType.MISSING_EMAIL, "bad email"}
+    do: {:bad_email, "bad email"}
 
   defp error_type_and_message_for_cause(:missing_space_before_date),
-    do: {ErrorType.MISSING_SPACE_BEFORE_DATE, "bad date"}
+    do: {:missing_space_before_date, "bad date"}
 
   defp error_type_and_message_for_cause(:bad_date),
-    do: {ErrorType.BAD_DATE, "bad date"}
+    do: {:bad_date, "bad date"}
 
   defp error_type_and_message_for_cause(:bad_timezone),
-    do: {ErrorType.BAD_TIMEZONE, "bad time zone"}
+    do: {:bad_timezone, "bad time zone"}
 
   defp check_commit!(%__MODULE__{} = checker, id, data) do
     data =
       match_or_report!(checker, data,
         prefix: 'tree ',
-        error_type: ErrorType.MISSING_TREE,
+        error_type: :missing_tree,
         id: id,
         why: "no tree header"
       )
 
     data =
       check_id_or_report!(checker, data,
-        error_type: ErrorType.BAD_TREE_SHA1,
+        error_type: :bad_tree_sha1,
         id: id,
         why: "invalid tree"
       )
@@ -268,7 +211,7 @@ defmodule Xgit.Lib.ObjectChecker do
     data =
       match_or_report!(checker, data,
         prefix: 'author ',
-        error_type: ErrorType.MISSING_AUTHOR,
+        error_type: :missing_author,
         id: id,
         why: "no author"
       )
@@ -278,7 +221,7 @@ defmodule Xgit.Lib.ObjectChecker do
     data =
       match_or_report!(checker, data,
         prefix: 'committer ',
-        error_type: ErrorType.MISSING_COMMITTER,
+        error_type: :missing_committer,
         id: id,
         why: "no committer"
       )
@@ -292,7 +235,7 @@ defmodule Xgit.Lib.ObjectChecker do
       {true, after_match} ->
         data =
           check_id_or_report!(checker, after_match,
-            error_type: ErrorType.BAD_PARENT_SHA1,
+            error_type: :bad_parent_sha1,
             id: id,
             why: "invalid parent"
           )
@@ -308,14 +251,14 @@ defmodule Xgit.Lib.ObjectChecker do
     data =
       match_or_report!(checker, data,
         prefix: 'object ',
-        error_type: ErrorType.MISSING_TREE,
+        error_type: :missing_tree,
         id: id,
         why: "no object header"
       )
 
     data =
       check_id_or_report!(checker, data,
-        error_type: ErrorType.BAD_TREE_SHA1,
+        error_type: :bad_tree_sha1,
         id: id,
         why: "invalid object"
       )
@@ -323,7 +266,7 @@ defmodule Xgit.Lib.ObjectChecker do
     data =
       match_or_report!(checker, data,
         prefix: 'type ',
-        error_type: ErrorType.MISSING_TREE,
+        error_type: :missing_tree,
         id: id,
         why: "no type header"
       )
@@ -333,7 +276,7 @@ defmodule Xgit.Lib.ObjectChecker do
     data =
       match_or_report!(checker, data,
         prefix: 'tag ',
-        error_type: ErrorType.MISSING_TAG,
+        error_type: :missing_tag,
         id: id,
         why: "no tag header"
       )
@@ -461,7 +404,7 @@ defmodule Xgit.Lib.ObjectChecker do
       do: raise(CorruptObjectError, why: "truncated in object id")
 
     if Enum.all?(raw_object_id, &(&1 == 0)),
-      do: report(checker, ErrorType.NULL_SHA1, id, "entry points to null SHA-1")
+      do: report(checker, :null_sha1, id, "entry points to null SHA-1")
 
     gitsubmodules =
       if id != nil and gitmodules?(checker, this_name, id),
@@ -479,7 +422,7 @@ defmodule Xgit.Lib.ObjectChecker do
 
   defp check_file_mode!(checker, id, [c | data], mode) when c >= ?0 and c <= ?7 do
     if c == ?0 and mode == 0,
-      do: report(checker, ErrorType.ZERO_PADDED_FILEMODE, id, "mode starts with '0'")
+      do: report(checker, :zero_padded_filemode, id, "mode starts with '0'")
 
     check_file_mode!(checker, id, data, mode * 8 + (c - ?0))
   end
@@ -491,7 +434,7 @@ defmodule Xgit.Lib.ObjectChecker do
     {name, data} = Enum.split_while(data, &(&1 != 0))
 
     Enum.each(name, fn c ->
-      if c == ?/, do: report(checker, ErrorType.FULL_PATHNAME, id, "name contains '/'")
+      if c == ?/, do: report(checker, :full_pathname, id, "name contains '/'")
 
       if windows? and invalid_on_windows?(c), do: raise_invalid_on_windows(c)
     end)
@@ -644,7 +587,7 @@ defmodule Xgit.Lib.ObjectChecker do
   # }
 
   defp check_path_segment2(checker, [], id),
-    do: report(checker, ErrorType.EMPTY_NAME, id, "zero length name")
+    do: report(checker, :empty_name, id, "zero length name")
 
   defp check_path_segment2(checker, name, id) do
     check_path_segment_with_dot(checker, name, id)
@@ -670,17 +613,17 @@ defmodule Xgit.Lib.ObjectChecker do
   end
 
   defp check_path_segment_with_dot(checker, '.', id),
-    do: report(checker, ErrorType.HAS_DOT, id, "invalid name '.'")
+    do: report(checker, :has_dot, id, "invalid name '.'")
 
   defp check_path_segment_with_dot(checker, '..', id),
-    do: report(checker, ErrorType.HAS_DOTDOT, id, "invalid name '..'")
+    do: report(checker, :has_dotdot, id, "invalid name '..'")
 
   defp check_path_segment_with_dot(checker, '.git', id),
-    do: report(checker, ErrorType.HAS_DOTGIT, id, "invalid name '.git'")
+    do: report(checker, :has_dotgit, id, "invalid name '.git'")
 
   defp check_path_segment_with_dot(checker, [?. | _] = name, id) do
     if normalized_git?(name),
-      do: report(checker, ErrorType.HAS_DOTGIT, id, "invalid name '#{name}'")
+      do: report(checker, :has_dotgit, id, "invalid name '#{name}'")
   end
 
   defp check_path_segment_with_dot(_checker, _name, _id) do
