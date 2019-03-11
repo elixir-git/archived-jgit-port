@@ -944,6 +944,7 @@ defmodule Xgit.Lib.ObjectChecker do
   defp valid_git_suffix?('.'), do: true
   defp valid_git_suffix?('. '), do: true
   defp valid_git_suffix?(' .'), do: true
+  defp valid_git_suffix?(' . '), do: true
   defp valid_git_suffix?(_), do: false
 
   defp to_lower(b) when b >= ?A and b <= ?Z, do: b + 32

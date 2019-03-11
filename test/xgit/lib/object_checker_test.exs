@@ -915,7 +915,7 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    @bad_dot_git_names [".git.", ".git "]
+    @bad_dot_git_names [".git.", ".git ", ".git. ", ".git . "]
 
     test "invalid: tree name is variant of .git" do
       Enum.each(@bad_dot_git_names, fn bad_name ->
@@ -938,66 +938,26 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
     end
 
-    # @Test
-    # public void testInvalidTreeNameIsDotGitSomething()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .gitfoobar");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsDotGitSomethingSpaceSomething()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .gitfoo bar");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsDotGitSomethingDot()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .gitfoobar.");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsDotGitSomethingDotDot()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .gitfoobar..");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsDotGitDotSpace()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .git. ");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid name '.git. '", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOTGIT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeNameIsDotGitSpaceDot()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 .git . ");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("invalid name '.git . '", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(HAS_DOTGIT, true);
-    # 	checker.checkTree(data);
-    # }
-    #
+    test "valid: name is .gitsomething" do
+      data = entry("100644 .gitfoobar")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid: name is .git-space-something" do
+      data = entry("100644 .gitfoo bar")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid: name is .gitfoobar." do
+      data = entry("100644 .gitfoobar.")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
+    test "valid: name is .gitfoobar.." do
+      data = entry("100644 .gitfoobar..")
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    end
+
     # @Test
     # public void testInvalidTreeNameIsGITTilde1() throws CorruptObjectException {
     # 	StringBuilder b = new StringBuilder();
