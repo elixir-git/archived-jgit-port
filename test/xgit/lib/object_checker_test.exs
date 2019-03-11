@@ -877,27 +877,25 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert_skiplist_accepts(mac_checker, Constants.obj_tree(), data)
     end
 
-    # @Test
-    # public void testInvalidTreeNameIsMacHFSGitCorruptUTF8AtEnd2()
-    # 		throws CorruptObjectException {
-    # 	byte[] data = concat(encode("100644 .git"),
-    # 			new byte[] {
-    # 			(byte) 0xe2, (byte) 0xab });
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "");
-    # 	data = concat(data, encode(b.toString()));
-    #
-    # 	// Fine on POSIX.
-    # 	checker.checkTree(data);
-    #
-    # 	// Rejected on Mac OS.
-    # 	checker.setSafeForMacOS(true);
-    # 	assertCorrupt(
-    # 			"invalid name contains byte sequence '0xe2ab' which is not a valid UTF-8 character",
-    # 			OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # }
-    #
+    test "invalid: name is Mac HFS .git with corrupt UTF-8 at end 2" do
+      data = '100644 .git' ++ [0xE2, 0xAB] ++ '\0#{@placeholder_object_id}'
+
+      # This is fine on Posix.
+      assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+
+      # Rejected on Mac OS.
+      mac_checker = %ObjectChecker{macosx?: true}
+
+      assert_corrupt(
+        mac_checker,
+        "invalid name contains byte sequence '0xe2ab' which is not a valid UTF-8 character",
+        Constants.obj_tree(),
+        data
+      )
+
+      assert_skiplist_accepts(mac_checker, Constants.obj_tree(), data)
+    end
+
     # @Test
     # public void testInvalidTreeNameIsNotMacHFSGit()
     # 		throws CorruptObjectException {
