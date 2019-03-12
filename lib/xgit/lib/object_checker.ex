@@ -821,30 +821,6 @@ defmodule Xgit.Lib.ObjectChecker do
   defp gitmodules?(checker, name, id),
     do: mac_hfs_gitmodules?(checker, name, id) || ntfs_gitmodules?(checker, name)
 
-  # private boolean isGitmodules(byte[] buf, int start, int end, @Nullable AnyObjectId id)
-  # 		throws CorruptObjectException {
-  # 	// Simple cases first.
-  # 	if (end - start < 8) {
-  # 		return false;
-  # 	}
-  # 	return (end - start == dotGitmodules.length
-  # 			&& RawParseUtils.match(buf, start, dotGitmodules) != -1)
-  # 		|| (macosx && isMacHFSGitmodules(buf, start, end, id))
-  # 		|| (windows && isNTFSGitmodules(buf, start, end));
-  # }
-  #
-  # private boolean matchLowerCase(byte[] b, int ptr, byte[] src) {
-  # 	if (ptr + src.length > b.length) {
-  # 		return false;
-  # 	}
-  # 	for (int i = 0; i < src.length; i++, ptr++) {
-  # 		if (toLower(b[ptr]) != src[i]) {
-  # 			return false;
-  # 		}
-  # 	}
-  # 	return true;
-  # }
-
   defp ntfs_gitmodules?(%__MODULE__{windows?: true}, name) do
     length = Enum.count(name)
 
