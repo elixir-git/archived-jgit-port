@@ -949,11 +949,12 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	return '1' <= b && b <= '9';
   # }
 
-  # defp normalize(%__MODULE__{macosx?: true}, name) when is_list(name) do
-  #   name
-  #   |> Enum.map(&to_lower/1)
-  #   |> Normalizer.normalize(Normalizer.Form.NFC)     # WHAT IS THIS???
-  # end
+  defp normalize(%__MODULE__{macosx?: true}, name) when is_list(name) do
+    name
+    |> RawParseUtils.decode()
+    |> String.downcase()
+    |> :unicode.characters_to_nfc_binary()
+  end
 
   defp normalize(_checker, name) when is_list(name), do: Enum.map(name, &to_lower/1)
 end

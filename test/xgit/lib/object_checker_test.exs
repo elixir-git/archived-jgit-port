@@ -1190,20 +1190,32 @@ defmodule Xgit.Lib.ObjectCheckerTest do
                )
     end
 
-    # @Test
-    # public void testInvalidTreeDuplicateNames7()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 \u0065\u0301");
-    # 	entry(b, "100644 \u00e9");
-    # 	byte[] data = b.toString().getBytes(UTF_8);
-    # 	checker.setSafeForMacOS(true);
-    # 	assertCorrupt("duplicate entry names", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(DUPLICATE_ENTRIES, true);
-    # 	checker.checkTree(data);
-    # }
-    #
+    test "invalid: duplicate names 7 (MacOS denormalized names)" do
+      data = entry("100644 \u0065\u0301") ++ entry("100644 \u00e9")
+
+      assert_corrupt(
+        %ObjectChecker{macosx?: true},
+        "duplicate entry names",
+        Constants.obj_tree(),
+        data
+      )
+
+      id = ObjectId.id_for(Constants.obj_tree(), data)
+
+      assert_raise CorruptObjectError, "Object #{id} is corrupt: duplicate entry names", fn ->
+        ObjectChecker.check!(%ObjectChecker{macosx?: true}, id, Constants.obj_tree(), data)
+      end
+
+      assert_skiplist_accepts(%ObjectChecker{macosx?: true}, Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{macosx?: true, ignore_error_types: %{duplicate_entries: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
     # @Test
     # public void testInvalidTreeDuplicateNames8()
     # 		throws CorruptObjectException {
