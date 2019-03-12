@@ -395,7 +395,7 @@ defmodule Xgit.Lib.ObjectChecker do
     data = Enum.drop(data, Constants.object_id_length())
 
     {mode_str, data} = Enum.split_while(data, &(&1 != ?\s))
-    {mode, _} = Integer.parse(to_string(mode_str), 8)
+    mode = parse_octal(mode_str)
 
     data = Enum.drop(data, 1)
 
@@ -410,6 +410,13 @@ defmodule Xgit.Lib.ObjectChecker do
       compare == :lt -> false
       compare == :eq -> true
       compare == :gt -> duplicate_name?(this_name, data)
+    end
+  end
+
+  defp parse_octal(data) do
+    case Integer.parse(to_string(data), 8) do
+      {n, _} when is_integer(n) -> n
+      :error -> 0
     end
   end
 
