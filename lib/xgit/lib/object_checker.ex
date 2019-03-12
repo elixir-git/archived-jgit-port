@@ -358,13 +358,19 @@ defmodule Xgit.Lib.ObjectChecker do
     check_tree!(checker, id, data, maybe_normalized_paths, this_name, file_mode, gitsubmodules)
   end
 
-  defp report_if_incorrectly_sorted(checker, id, previous_name, previous_mode, this_name, this_mode) do
+  defp report_if_incorrectly_sorted(
+         checker,
+         id,
+         previous_name,
+         previous_mode,
+         this_name,
+         this_mode
+       ) do
     if previous_name != nil do
       if Paths.compare(previous_name, previous_mode, this_name, this_mode) == :gt do
         report(checker, :tree_not_sorted, id, "incorrectly sorted")
       end
     end
-
   end
 
   defp report_if_duplicate_names(checker, id, nil = _normalized_paths, this_name, data) do
@@ -389,8 +395,7 @@ defmodule Xgit.Lib.ObjectChecker do
     data = Enum.drop(data, Constants.object_id_length())
 
     {mode_str, data} = Enum.split_while(data, &(&1 != ?\s))
-    # TODO: actually convert from octal to number
-    mode = 0o100644
+    {mode, _} = Integer.parse(to_string(mode_str), 8)
 
     data = Enum.drop(data, 1)
 
