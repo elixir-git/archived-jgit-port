@@ -1027,100 +1027,169 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       end)
     end
 
-    # @Test
-    # public void testInvalidTreeDuplicateNames1_File()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 a");
-    # 	entry(b, "100644 a");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("duplicate entry names", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(DUPLICATE_ENTRIES, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeDuplicateNames1_Tree()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "40000 a");
-    # 	entry(b, "40000 a");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("duplicate entry names", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(DUPLICATE_ENTRIES, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeDuplicateNames2() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 a");
-    # 	entry(b, "100755 a");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("duplicate entry names", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(DUPLICATE_ENTRIES, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeDuplicateNames3() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 a");
-    # 	entry(b, "40000 a");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("duplicate entry names", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(DUPLICATE_ENTRIES, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeDuplicateNames4() throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 a");
-    # 	entry(b, "100644 a.c");
-    # 	entry(b, "100644 a.d");
-    # 	entry(b, "100644 a.e");
-    # 	entry(b, "40000 a");
-    # 	entry(b, "100644 zoo");
-    # 	byte[] data = encodeASCII(b.toString());
-    # 	assertCorrupt("duplicate entry names", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(DUPLICATE_ENTRIES, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeDuplicateNames5()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 A");
-    # 	entry(b, "100644 a");
-    # 	byte[] data = b.toString().getBytes(UTF_8);
-    # 	checker.setSafeForWindows(true);
-    # 	assertCorrupt("duplicate entry names", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(DUPLICATE_ENTRIES, true);
-    # 	checker.checkTree(data);
-    # }
-    #
-    # @Test
-    # public void testInvalidTreeDuplicateNames6()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 A");
-    # 	entry(b, "100644 a");
-    # 	byte[] data = b.toString().getBytes(UTF_8);
-    # 	checker.setSafeForMacOS(true);
-    # 	assertCorrupt("duplicate entry names", OBJ_TREE, data);
-    # 	assertSkipListAccepts(OBJ_TREE, data);
-    # 	checker.setIgnore(DUPLICATE_ENTRIES, true);
-    # 	checker.checkTree(data);
-    # }
-    #
+    test "invalid: duplicate file name" do
+      data = entry("100644 a") ++ entry("100644 a")
+
+      assert_corrupt(%ObjectChecker{}, "duplicate entry names", Constants.obj_tree(), data)
+
+      id = ObjectId.id_for(Constants.obj_tree(), data)
+
+      assert_raise CorruptObjectError, "Object #{id} is corrupt: duplicate entry names", fn ->
+        ObjectChecker.check!(%ObjectChecker{}, id, Constants.obj_tree(), data)
+      end
+
+      assert_skiplist_accepts(%ObjectChecker{}, Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{duplicate_entries: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "invalid: duplicate tree name" do
+      data = entry("40000 a") ++ entry("40000 a")
+
+      assert_corrupt(%ObjectChecker{}, "duplicate entry names", Constants.obj_tree(), data)
+
+      id = ObjectId.id_for(Constants.obj_tree(), data)
+
+      assert_raise CorruptObjectError, "Object #{id} is corrupt: duplicate entry names", fn ->
+        ObjectChecker.check!(%ObjectChecker{}, id, Constants.obj_tree(), data)
+      end
+
+      assert_skiplist_accepts(%ObjectChecker{}, Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{duplicate_entries: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "invalid: duplicate names 2" do
+      data = entry("100644 a") ++ entry("100755 a")
+
+      assert_corrupt(%ObjectChecker{}, "duplicate entry names", Constants.obj_tree(), data)
+
+      id = ObjectId.id_for(Constants.obj_tree(), data)
+
+      assert_raise CorruptObjectError, "Object #{id} is corrupt: duplicate entry names", fn ->
+        ObjectChecker.check!(%ObjectChecker{}, id, Constants.obj_tree(), data)
+      end
+
+      assert_skiplist_accepts(%ObjectChecker{}, Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{duplicate_entries: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "invalid: duplicate names 3" do
+      data = entry("100644 a") ++ entry("40000 a")
+
+      assert_corrupt(%ObjectChecker{}, "duplicate entry names", Constants.obj_tree(), data)
+
+      id = ObjectId.id_for(Constants.obj_tree(), data)
+
+      assert_raise CorruptObjectError, "Object #{id} is corrupt: duplicate entry names", fn ->
+        ObjectChecker.check!(%ObjectChecker{}, id, Constants.obj_tree(), data)
+      end
+
+      assert_skiplist_accepts(%ObjectChecker{}, Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{duplicate_entries: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "invalid: duplicate names 4" do
+      data =
+        entry("100644 a") ++
+          entry("100644 a.c") ++
+          entry("100644 a.d") ++
+          entry("100644 a.e") ++
+          entry("40000 a") ++
+          entry("100644 zoo")
+
+      assert_corrupt(%ObjectChecker{}, "duplicate entry names", Constants.obj_tree(), data)
+
+      id = ObjectId.id_for(Constants.obj_tree(), data)
+
+      assert_raise CorruptObjectError, "Object #{id} is corrupt: duplicate entry names", fn ->
+        ObjectChecker.check!(%ObjectChecker{}, id, Constants.obj_tree(), data)
+      end
+
+      assert_skiplist_accepts(%ObjectChecker{}, Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{duplicate_entries: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "invalid: duplicate names 5" do
+      data = entry("100644 A") ++ entry("100644 a")
+
+      assert_corrupt(
+        %ObjectChecker{windows?: true},
+        "duplicate entry names",
+        Constants.obj_tree(),
+        data
+      )
+
+      id = ObjectId.id_for(Constants.obj_tree(), data)
+
+      assert_raise CorruptObjectError, "Object #{id} is corrupt: duplicate entry names", fn ->
+        ObjectChecker.check!(%ObjectChecker{windows?: true}, id, Constants.obj_tree(), data)
+      end
+
+      assert_skiplist_accepts(%ObjectChecker{windows?: true}, Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{windows?: true, ignore_error_types: %{duplicate_entries: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
+    test "invalid: duplicate names 6" do
+      data = entry("100644 A") ++ entry("100644 a")
+
+      assert_corrupt(
+        %ObjectChecker{macosx?: true},
+        "duplicate entry names",
+        Constants.obj_tree(),
+        data
+      )
+
+      id = ObjectId.id_for(Constants.obj_tree(), data)
+
+      assert_raise CorruptObjectError, "Object #{id} is corrupt: duplicate entry names", fn ->
+        ObjectChecker.check!(%ObjectChecker{macosx?: true}, id, Constants.obj_tree(), data)
+      end
+
+      assert_skiplist_accepts(%ObjectChecker{macosx?: true}, Constants.obj_tree(), data)
+
+      assert {:ok, []} =
+               ObjectChecker.check!(
+                 %ObjectChecker{macosx?: true, ignore_error_types: %{duplicate_entries: true}},
+                 Constants.obj_tree(),
+                 data
+               )
+    end
+
     # @Test
     # public void testInvalidTreeDuplicateNames7()
     # 		throws CorruptObjectException {

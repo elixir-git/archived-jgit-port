@@ -292,45 +292,6 @@ defmodule Xgit.Lib.ObjectChecker do
     :ok
   end
 
-  # private static boolean duplicateName(final byte[] raw,
-  # 		final int thisNamePos, final int thisNameEnd) {
-  # 	final int sz = raw.length;
-  # 	int nextPtr = thisNameEnd + 1 + Constants.OBJECT_ID_LENGTH;
-  # 	for (;;) {
-  # 		int nextMode = 0;
-  # 		for (;;) {
-  # 			if (nextPtr >= sz)
-  # 				return false;
-  # 			final byte c = raw[nextPtr++];
-  # 			if (' ' == c)
-  # 				break;
-  # 			nextMode <<= 3;
-  # 			nextMode += c - '0';
-  # 		}
-  #
-  # 		final int nextNamePos = nextPtr;
-  # 		for (;;) {
-  # 			if (nextPtr == sz)
-  # 				return false;
-  # 			final byte c = raw[nextPtr++];
-  # 			if (c == 0)
-  # 				break;
-  # 		}
-  # 		if (nextNamePos + 1 == nextPtr)
-  # 			return false;
-  #
-  # 		int cmp = compareSameName(
-  # 				raw, thisNamePos, thisNameEnd,
-  # 				raw, nextNamePos, nextPtr - 1, nextMode);
-  # 		if (cmp < 0)
-  # 			return false;
-  # 		else if (cmp == 0)
-  # 			return true;
-  #
-  # 		nextPtr += Constants.OBJECT_ID_LENGTH;
-  # 	}
-  # }
-
   defp check_tree!(%__MODULE__{windows?: true} = checker, id, data),
     do: check_tree!(checker, id, data, MapSet.new(), [], 0, [])
 
@@ -383,6 +344,9 @@ defmodule Xgit.Lib.ObjectChecker do
     if Enum.count(this_name) == 5 and Enum.map(this_name, &to_lower/1) == 'git~1',
       do: report(checker, :has_dotgit, id, "invalid name '#{this_name}'")
 
+    maybe_normalized_paths =
+      report_if_duplicate_names(checker, id, maybe_normalized_paths, this_name, data)
+
     # PORTING NOTE: normalized became maybe_normalized_paths
     # if (normalized != null) {
     # 	if (!normalized.add(normalize(raw, thisNameB, ptr))) {
@@ -414,6 +378,47 @@ defmodule Xgit.Lib.ObjectChecker do
         else: gitsubmodules
 
     check_tree!(checker, id, data, maybe_normalized_paths, this_name, file_mode, gitsubmodules)
+  end
+
+  defp report_if_duplicate_names(checker, id, nil = _normalized_paths, this_name, data) do
+    if duplicate_name?(this_name, data),
+      do: report(checker, :duplicate_entries, id, "duplicate entry names")
+
+    nil
+  end
+
+  defp report_if_duplicate_names(checker, id, %MapSet{} = normalized_paths, this_name, _data) do
+    normalized_path = normalize(checker, this_name)
+
+    if MapSet.member?(normalized_paths, normalized_path) do
+      report(checker, :duplicate_entries, id, "duplicate entry names")
+      normalized_paths
+    else
+      MapSet.put(normalized_paths, normalized_path)
+    end
+  end
+
+  defp duplicate_name?(this_name, data) do
+    data = Enum.drop(data, Constants.object_id_length())
+
+    {mode_str, data} = Enum.split_while(data, &(&1 != ?\s))
+    # TODO: actually convert from octal to number
+    mode = 0o100644
+
+    data = Enum.drop(data, 1)
+
+    {next_name, data} = Enum.split_while(data, &(&1 != 0))
+
+    data = Enum.drop(data, 1)
+
+    compare = Paths.compare_same_name(this_name, next_name, mode)
+
+    cond do
+      Enum.empty?(mode_str) or Enum.empty?(next_name) -> false
+      compare == :lt -> false
+      compare == :eq -> true
+      compare == :gt -> duplicate_name?(this_name, data)
+    end
   end
 
   defp check_file_mode!(_checker, _id, [], _mode),
@@ -942,8 +947,11 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	return '1' <= b && b <= '9';
   # }
 
-  # private String normalize(byte[] raw, int ptr, int end) {
-  # 	String n = RawParseUtils.decode(raw, ptr, end).toLowerCase(Locale.US);
-  # 	return macosx ? Normalizer.normalize(n, Normalizer.Form.NFC) : n;
-  # }
+  # defp normalize(%__MODULE__{macosx?: true}, name) when is_list(name) do
+  #   name
+  #   |> Enum.map(&to_lower/1)
+  #   |> Normalizer.normalize(Normalizer.Form.NFC)     # WHAT IS THIS???
+  # end
+
+  defp normalize(_checker, name) when is_list(name), do: Enum.map(name, &to_lower/1)
 end
