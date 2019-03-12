@@ -330,14 +330,7 @@ defmodule Xgit.Lib.ObjectChecker do
     if file_mode_type == Constants.obj_bad(),
       do: raise(CorruptObjectError, why: "invalid mode #{file_mode}")
 
-    # need to port that..
     {this_name, data} = scan_path_segment(checker, data, id)
-
-    data =
-      case data do
-        [0 | data] -> data
-        _ -> raise(CorruptObjectError, why: "truncated in name")
-      end
 
     check_path_segment2(checker, this_name, id)
 
@@ -347,22 +340,7 @@ defmodule Xgit.Lib.ObjectChecker do
     maybe_normalized_paths =
       report_if_duplicate_names(checker, id, maybe_normalized_paths, this_name, data)
 
-    # PORTING NOTE: normalized became maybe_normalized_paths
-    # if (normalized != null) {
-    # 	if (!normalized.add(normalize(raw, thisNameB, ptr))) {
-    # 		report(DUPLICATE_ENTRIES, id,
-    # 				JGitText.get().corruptObjectDuplicateEntryNames);
-    # 	}
-    # } else if (duplicateName(raw, thisNameB, ptr)) {
-    # 	report(DUPLICATE_ENTRIES, id,
-    # 			JGitText.get().corruptObjectDuplicateEntryNames);
-    # }
-
-    if previous_name != nil do
-      if Paths.compare(previous_name, previous_mode, this_name, file_mode) == :gt do
-        report(checker, :tree_not_sorted, id, "incorrectly sorted")
-      end
-    end
+    report_if_incorrectly_sorted(checker, id, previous_name, previous_mode, this_name, file_mode)
 
     {raw_object_id, data} = Enum.split(data, Constants.object_id_length())
 
@@ -378,6 +356,15 @@ defmodule Xgit.Lib.ObjectChecker do
         else: gitsubmodules
 
     check_tree!(checker, id, data, maybe_normalized_paths, this_name, file_mode, gitsubmodules)
+  end
+
+  defp report_if_incorrectly_sorted(checker, id, previous_name, previous_mode, this_name, this_mode) do
+    if previous_name != nil do
+      if Paths.compare(previous_name, previous_mode, this_name, this_mode) == :gt do
+        report(checker, :tree_not_sorted, id, "incorrectly sorted")
+      end
+    end
+
   end
 
   defp report_if_duplicate_names(checker, id, nil = _normalized_paths, this_name, data) do
@@ -446,7 +433,10 @@ defmodule Xgit.Lib.ObjectChecker do
       if windows? and invalid_on_windows?(c), do: raise_invalid_on_windows(c)
     end)
 
-    {name, data}
+    case data do
+      [0 | data] -> {name, data}
+      _ -> raise(CorruptObjectError, why: "truncated in name")
+    end
   end
 
   defp raise_invalid_on_windows(c) when c > 31,
