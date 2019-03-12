@@ -1216,121 +1216,132 @@ defmodule Xgit.Lib.ObjectCheckerTest do
                )
     end
 
-    # @Test
-    # public void testInvalidTreeDuplicateNames8()
-    # 		throws CorruptObjectException {
-    # 	StringBuilder b = new StringBuilder();
-    # 	entry(b, "100644 A");
-    # 	checker.setSafeForMacOS(true);
-    # 	checker.checkTree(b.toString().getBytes(UTF_8));
-    # }
-    #
-    # @Test
-    # public void testRejectNulInPathSegment() {
-    # 	try {
-    # 		checker.checkPathSegment(encodeASCII("a\u0000b"), 0, 3);
-    # 		fail("incorrectly accepted NUL in middle of name");
-    # 	} catch (CorruptObjectException e) {
-    # 		assertEquals("name contains byte 0x00", e.getMessage());
-    # 	}
-    # }
-    #
-    # @Test
-    # public void testRejectSpaceAtEndOnWindows() {
-    # 	checker.setSafeForWindows(true);
-    # 	try {
-    # 		checkOneName("test ");
-    # 		fail("incorrectly accepted space at end");
-    # 	} catch (CorruptObjectException e) {
-    # 		assertEquals("invalid name ends with ' '", e.getMessage());
-    # 	}
-    # }
-    #
-    # @Test
-    # public void testBug477090() throws CorruptObjectException {
-    # 	checker.setSafeForMacOS(true);
-    # 	final byte[] bytes = {
-    # 			// U+221E 0xe2889e INFINITY ∞
-    # 			(byte) 0xe2, (byte) 0x88, (byte) 0x9e,
-    # 			// .html
-    # 			0x2e, 0x68, 0x74, 0x6d, 0x6c };
-    # 	checker.checkPathSegment(bytes, 0, bytes.length);
-    # }
-    #
-    # @Test
-    # public void testRejectDotAtEndOnWindows() {
-    # 	checker.setSafeForWindows(true);
-    # 	try {
-    # 		checkOneName("test.");
-    # 		fail("incorrectly accepted dot at end");
-    # 	} catch (CorruptObjectException e) {
-    # 		assertEquals("invalid name ends with '.'", e.getMessage());
-    # 	}
-    # }
-    #
-    # @Test
-    # public void testRejectDevicesOnWindows() {
-    # 	checker.setSafeForWindows(true);
-    #
-    # 	String[] bad = { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3",
-    # 			"COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2",
-    # 			"LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" };
-    # 	for (String b : bad) {
-    # 		try {
-    # 			checkOneName(b);
-    # 			fail("incorrectly accepted " + b);
-    # 		} catch (CorruptObjectException e) {
-    # 			assertEquals("invalid name '" + b + "'", e.getMessage());
-    # 		}
-    # 		try {
-    # 			checkOneName(b + ".txt");
-    # 			fail("incorrectly accepted " + b + ".txt");
-    # 		} catch (CorruptObjectException e) {
-    # 			assertEquals("invalid name '" + b + "'", e.getMessage());
-    # 		}
-    # 	}
-    # }
-    #
-    # @Test
-    # public void testRejectInvalidWindowsCharacters() {
-    # 	checker.setSafeForWindows(true);
-    # 	rejectName('<');
-    # 	rejectName('>');
-    # 	rejectName(':');
-    # 	rejectName('"');
-    # 	rejectName('/');
-    # 	rejectName('\\');
-    # 	rejectName('|');
-    # 	rejectName('?');
-    # 	rejectName('*');
-    #
-    # 	for (int i = 1; i <= 31; i++)
-    # 		rejectName((byte) i);
-    # }
+    test "valid: Mac name checking enabled" do
+      data = entry("100644 A")
+
+      assert {:ok, []} =
+               ObjectChecker.check!(%ObjectChecker{macosx?: true}, Constants.obj_tree(), data)
+    end
+
+    test "invalid: space at end on Windows" do
+      assert_raise CorruptObjectError,
+                   "Object (unknown) is corrupt: invalid name ends with ' '",
+                   fn ->
+                     check_one_name(%ObjectChecker{windows?: true}, "test ")
+                   end
+    end
+
+    test "invalid: dot at end on Windows" do
+      assert_raise CorruptObjectError,
+                   "Object (unknown) is corrupt: invalid name ends with '.'",
+                   fn ->
+                     check_one_name(%ObjectChecker{windows?: true}, "test.")
+                   end
+    end
+
+    @windows_device_names [
+      "CON",
+      "PRN",
+      "AUX",
+      "NUL",
+      "COM1",
+      "COM2",
+      "COM3",
+      "COM4",
+      "COM5",
+      "COM6",
+      "COM7",
+      "COM8",
+      "COM9",
+      "LPT1",
+      "LPT2",
+      "LPT3",
+      "LPT4",
+      "LPT5",
+      "LPT6",
+      "LPT7",
+      "LPT8",
+      "LPT9"
+    ]
+
+    test "invalid: device names on Windows" do
+      Enum.each(@windows_device_names, fn name ->
+        assert_raise CorruptObjectError,
+                     "Object (unknown) is corrupt: invalid name '#{name}'",
+                     fn ->
+                       check_one_name(%ObjectChecker{windows?: true}, name)
+                     end
+
+        assert_raise CorruptObjectError,
+                     "Object (unknown) is corrupt: invalid name '#{name}.txt'",
+                     fn ->
+                       check_one_name(%ObjectChecker{windows?: true}, "#{name}.txt")
+                     end
+      end)
+    end
+
+    test "invalid: characters not allowed on Windows" do
+      checker = %ObjectChecker{windows?: true}
+
+      reject_name(checker, "<")
+      reject_name(checker, ">")
+      reject_name(checker, ":")
+      reject_name(checker, "\"")
+      reject_name(checker, "/")
+      reject_name(checker, "\\")
+      reject_name(checker, "|")
+      reject_name(checker, "?")
+      reject_name(checker, "*")
+
+      Enum.each(1..31, &reject_name(checker, &1))
+    end
   end
 
-  # private void rejectName(char c) {
+  # @Test
+  # public void testBug477090() throws CorruptObjectException {
+  # 	checker.setSafeForMacOS(true);
+  # 	final byte[] bytes = {
+  # 			// U+221E 0xe2889e INFINITY ∞
+  # 			(byte) 0xe2, (byte) 0x88, (byte) 0x9e,
+  # 			// .html
+  # 			0x2e, 0x68, 0x74, 0x6d, 0x6c };
+  # 	checker.checkPathSegment(bytes, 0, bytes.length);
+  # }
+  #
+
+  # @Test
+  # public void testRejectNulInPathSegment() {
   # 	try {
-  # 		checkOneName("te" + c + "st");
-  # 		fail("incorrectly accepted with " + c);
+  # 		checker.checkPathSegment(encodeASCII("a\u0000b"), 0, 3);
+  # 		fail("incorrectly accepted NUL in middle of name");
   # 	} catch (CorruptObjectException e) {
-  # 		assertEquals("name contains '" + c + "'", e.getMessage());
+  # 		assertEquals("name contains byte 0x00", e.getMessage());
   # 	}
   # }
   #
-  # private void rejectName(byte c) {
-  # 	String h = Integer.toHexString(c);
-  # 	try {
-  # 		checkOneName("te" + ((char) c) + "st");
-  # 		fail("incorrectly accepted with 0x" + h);
-  # 	} catch (CorruptObjectException e) {
-  # 		assertEquals("name contains byte 0x" + h, e.getMessage());
-  # 	}
-  # }
 
-  defp check_one_name(name) do
+  defp reject_name(checker, c) when is_binary(c) do
+    assert_raise CorruptObjectError, "Object (unknown) is corrupt: name contains '#{c}'", fn ->
+      check_one_name(checker, "te#{c}st")
+    end
+  end
+
+  defp reject_name(checker, b) when is_integer(b) do
+    assert_raise CorruptObjectError,
+                 "Object (unknown) is corrupt: name contains byte 0x'#{byte_to_hex(b)}'",
+                 fn ->
+                   check_one_name(checker, "te#{<<b>>}st")
+                 end
+  end
+
+  defp byte_to_hex(b) when b < 16, do: "0" <> integer_to_lc_hex_string(b)
+  defp byte_to_hex(b), do: integer_to_lc_hex_string(b)
+
+  defp integer_to_lc_hex_string(b), do: b |> Integer.to_string(16) |> String.downcase()
+
+  defp check_one_name(checker \\ %ObjectChecker{}, name) do
     data = entry("100644 #{name}")
-    assert {:ok, []} = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_tree(), data)
+    assert {:ok, []} = ObjectChecker.check!(checker, Constants.obj_tree(), data)
   end
 
   defp entry(mode_name), do: '#{:binary.bin_to_list(mode_name)}\0#{@placeholder_object_id}'

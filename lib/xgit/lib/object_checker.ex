@@ -455,7 +455,7 @@ defmodule Xgit.Lib.ObjectChecker do
     do: raise(CorruptObjectError, why: "name contains '#{List.to_string([c])}'")
 
   defp raise_invalid_on_windows(c),
-    do: raise(CorruptObjectError, why: "name contains byte 0x'#{Integer.to_string(c, 16)}'")
+    do: raise(CorruptObjectError, why: "name contains byte 0x'#{byte_to_hex(c)}'")
 
   # private ObjectId idFor(int objType, byte[] raw) {
   #   PORTING NOTE: This is available as ObjectId.id_for/2.
@@ -598,7 +598,7 @@ defmodule Xgit.Lib.ObjectChecker do
   defp check_path_segment2(checker, [], id),
     do: report(checker, :empty_name, id, "zero length name")
 
-  defp check_path_segment2(%__MODULE__{macosx?: macosx?} = checker, name, id) do
+  defp check_path_segment2(%__MODULE__{macosx?: macosx?, windows?: windows?} = checker, name, id) do
     check_path_segment_with_dot(checker, name, id)
 
     if macosx? && mac_hfs_git?(checker, name, id) do
@@ -612,17 +612,27 @@ defmodule Xgit.Lib.ObjectChecker do
       )
     end
 
-    # if (windows) {
-    # 	// Windows ignores space and dot at end of file name.
-    # 	if (raw[end - 1] == ' ' || raw[end - 1] == '.') {
-    # 		report(WIN32_BAD_NAME, id, String.format(
-    # 				JGitText.get().corruptObjectInvalidNameEnd,
-    # 				Character.valueOf(((char) raw[end - 1]))));
-    # 	}
-    # 	if (end - ptr >= 3) {
-    # 		checkNotWindowsDevice(raw, ptr, end, id);
-    # 	}
-    # }
+    if windows? do
+      # Windows ignores space and dot at end of file name.
+      last_char = List.last(name)
+
+      if last_char == ?\s || last_char == ?. do
+        report(
+          checker,
+          :win32_bad_name,
+          id,
+          "invalid name ends with '#{<<last_char>>}'"
+        )
+      end
+
+      lc_name =
+        name
+        |> Enum.map(&to_lower/1)
+        |> Enum.take_while(&(&1 != ?.))
+
+      if windows_device_name?(lc_name),
+        do: report(checker, :win32_bad_name, id, "invalid name '#{name}'")
+    end
   end
 
   defp check_path_segment_with_dot(checker, '.', id),
@@ -759,71 +769,13 @@ defmodule Xgit.Lib.ObjectChecker do
 
   defp integer_to_lc_hex_string(b), do: b |> Integer.to_string(16) |> String.downcase()
 
-  # private void checkNotWindowsDevice(byte[] raw, int ptr, int end,
-  # 		@Nullable AnyObjectId id) throws CorruptObjectException {
-  # 	switch (toLower(raw[ptr])) {
-  # 	case 'a': // AUX
-  # 		if (end - ptr >= 3
-  # 				&& toLower(raw[ptr + 1]) == 'u'
-  # 				&& toLower(raw[ptr + 2]) == 'x'
-  # 				&& (end - ptr == 3 || raw[ptr + 3] == '.')) {
-  # 			report(WIN32_BAD_NAME, id,
-  # 					JGitText.get().corruptObjectInvalidNameAux);
-  # 		}
-  # 		break;
-  #
-  # 	case 'c': // CON, COM[1-9]
-  # 		if (end - ptr >= 3
-  # 				&& toLower(raw[ptr + 2]) == 'n'
-  # 				&& toLower(raw[ptr + 1]) == 'o'
-  # 				&& (end - ptr == 3 || raw[ptr + 3] == '.')) {
-  # 			report(WIN32_BAD_NAME, id,
-  # 					JGitText.get().corruptObjectInvalidNameCon);
-  # 		}
-  # 		if (end - ptr >= 4
-  # 				&& toLower(raw[ptr + 2]) == 'm'
-  # 				&& toLower(raw[ptr + 1]) == 'o'
-  # 				&& isPositiveDigit(raw[ptr + 3])
-  # 				&& (end - ptr == 4 || raw[ptr + 4] == '.')) {
-  # 			report(WIN32_BAD_NAME, id, String.format(
-  # 					JGitText.get().corruptObjectInvalidNameCom,
-  # 					Character.valueOf(((char) raw[ptr + 3]))));
-  # 		}
-  # 		break;
-  #
-  # 	case 'l': // LPT[1-9]
-  # 		if (end - ptr >= 4
-  # 				&& toLower(raw[ptr + 1]) == 'p'
-  # 				&& toLower(raw[ptr + 2]) == 't'
-  # 				&& isPositiveDigit(raw[ptr + 3])
-  # 				&& (end - ptr == 4 || raw[ptr + 4] == '.')) {
-  # 			report(WIN32_BAD_NAME, id, String.format(
-  # 					JGitText.get().corruptObjectInvalidNameLpt,
-  # 					Character.valueOf(((char) raw[ptr + 3]))));
-  # 		}
-  # 		break;
-  #
-  # 	case 'n': // NUL
-  # 		if (end - ptr >= 3
-  # 				&& toLower(raw[ptr + 1]) == 'u'
-  # 				&& toLower(raw[ptr + 2]) == 'l'
-  # 				&& (end - ptr == 3 || raw[ptr + 3] == '.')) {
-  # 			report(WIN32_BAD_NAME, id,
-  # 					JGitText.get().corruptObjectInvalidNameNul);
-  # 		}
-  # 		break;
-  #
-  # 	case 'p': // PRN
-  # 		if (end - ptr >= 3
-  # 				&& toLower(raw[ptr + 1]) == 'r'
-  # 				&& toLower(raw[ptr + 2]) == 'n'
-  # 				&& (end - ptr == 3 || raw[ptr + 3] == '.')) {
-  # 			report(WIN32_BAD_NAME, id,
-  # 					JGitText.get().corruptObjectInvalidNamePrn);
-  # 		}
-  # 		break;
-  # 	}
-  # }
+  defp windows_device_name?('aux'), do: true
+  defp windows_device_name?('con'), do: true
+  defp windows_device_name?('com' ++ [d]), do: positive_digit?(d)
+  defp windows_device_name?('lpt' ++ [d]), do: positive_digit?(d)
+  defp windows_device_name?('nul'), do: true
+  defp windows_device_name?('prn'), do: true
+  defp windows_device_name?(_), do: false
 
   defp invalid_on_windows?(?"), do: true
   defp invalid_on_windows?(?*), do: true
@@ -945,9 +897,8 @@ defmodule Xgit.Lib.ObjectChecker do
   defp to_lower(b) when b >= ?A and b <= ?Z, do: b + 32
   defp to_lower(b), do: b
 
-  # private static boolean isPositiveDigit(byte b) {
-  # 	return '1' <= b && b <= '9';
-  # }
+  defp positive_digit?(b) when b >= ?1 and b <= ?9, do: true
+  defp positive_digit?(_), do: false
 
   defp normalize(%__MODULE__{macosx?: true}, name) when is_list(name) do
     name
