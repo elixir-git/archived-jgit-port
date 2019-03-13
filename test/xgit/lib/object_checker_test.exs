@@ -1433,23 +1433,4 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       ObjectChecker.check!(checker, type, data)
     end
   end
-
-  # private static ObjectIdSet set(ObjectId... ids) {
-  # 	return new ObjectIdSet() {
-  # 		@Override
-  # 		public boolean contains(AnyObjectId objectId) {
-  # 			for (ObjectId id : ids) {
-  # 				if (id.equals(objectId)) {
-  # 					return true;
-  # 				}
-  # 			}
-  # 			return false;
-  # 		}
-  # 	};
-  # }
-  #
-  # @SuppressWarnings("resource")
-  # private static ObjectId idFor(int type, byte[] raw) {
-  # 	return new ObjectInserter.Formatter().idFor(type, raw);
-  # }
 end
