@@ -330,7 +330,7 @@ defmodule Xgit.Lib.ObjectChecker do
     if file_mode_type == Constants.obj_bad(),
       do: raise(CorruptObjectError, why: "invalid mode #{file_mode}")
 
-    {this_name, data} = scan_path_segment(checker, data, id)
+    {this_name, data} = scan_path_segment_with_nil(checker, data, id)
 
     check_path_segment2(checker, this_name, id)
 
@@ -445,8 +445,12 @@ defmodule Xgit.Lib.ObjectChecker do
       if windows? and invalid_on_windows?(c), do: raise_invalid_on_windows(c)
     end)
 
-    case data do
-      [0 | data] -> {name, data}
+    {name, data}
+  end
+
+  defp scan_path_segment_with_nil(checker, data, id) do
+    case scan_path_segment(checker, data, id) do
+      {name, [0 | data]} -> {name, data}
       _ -> raise(CorruptObjectError, why: "truncated in name")
     end
   end
@@ -517,17 +521,6 @@ defmodule Xgit.Lib.ObjectChecker do
   defp skip_object_id?(nil, _object_id), do: false
   defp skip_object_id?(skiplist, object_id), do: MapSet.member?(skiplist, object_id)
 
-  # private void report(@NonNull ErrorType err, @Nullable AnyObjectId id,
-  # 		String why) throws CorruptObjectException {
-  # 	if (errors.contains(err)
-  # 			&& (id == null || skipList == null || !skipList.contains(id))) {
-  # 		if (id != null) {
-  # 			throw new CorruptObjectException(err, id, why);
-  # 		}
-  # 		throw new CorruptObjectException(why);
-  # 	}
-  # }
-
   # /**
   #  * Check tree path entry for validity.
   #  * <p>
@@ -572,28 +565,18 @@ defmodule Xgit.Lib.ObjectChecker do
   # 	}
   # 	checkPathSegment(raw, start, end);
   # }
-  #
-  # /**
-  #  * Check tree path entry for validity.
-  #  *
-  #  * @param raw
-  #  *            buffer to scan.
-  #  * @param ptr
-  #  *            offset to first byte of the name.
-  #  * @param end
-  #  *            offset to one past last byte of name.
-  #  * @throws org.eclipse.jgit.errors.CorruptObjectException
-  #  *             name is invalid.
-  #  * @since 3.4
-  #  */
-  # public void checkPathSegment(byte[] raw, int ptr, int end)
-  # 		throws CorruptObjectException {
-  # 	int e = scanPathSegment(raw, ptr, end, null);
-  # 	if (e < end && raw[e] == 0)
-  # 		throw new CorruptObjectException(
-  # 				JGitText.get().corruptObjectNameContainsNullByte);
-  # 	checkPathSegment2(raw, ptr, end, null);
-  # }
+
+  @doc ~S"""
+  Check tree path entry for validity.
+  """
+  def check_path_segment(%__MODULE__{} = checker, data) when is_list(data) do
+    if Enum.any?(data, &(&1 == 0)), do: raise(CorruptObjectError, why: "name contains byte 0x00")
+
+    {path, _remainder} = scan_path_segment(checker, data, nil)
+
+    check_path_segment2(checker, path, nil)
+    :ok
+  end
 
   defp check_path_segment2(checker, [], id),
     do: report(checker, :empty_name, id, "zero length name")

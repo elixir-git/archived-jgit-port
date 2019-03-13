@@ -1297,28 +1297,24 @@ defmodule Xgit.Lib.ObjectCheckerTest do
     end
   end
 
-  # @Test
-  # public void testBug477090() throws CorruptObjectException {
-  # 	checker.setSafeForMacOS(true);
-  # 	final byte[] bytes = {
-  # 			// U+221E 0xe2889e INFINITY ∞
-  # 			(byte) 0xe2, (byte) 0x88, (byte) 0x9e,
-  # 			// .html
-  # 			0x2e, 0x68, 0x74, 0x6d, 0x6c };
-  # 	checker.checkPathSegment(bytes, 0, bytes.length);
-  # }
-  #
+  describe "check_path_segment/2" do
+    test "bug 477090" do
+      checker = %ObjectChecker{macosx?: true}
 
-  # @Test
-  # public void testRejectNulInPathSegment() {
-  # 	try {
-  # 		checker.checkPathSegment(encodeASCII("a\u0000b"), 0, 3);
-  # 		fail("incorrectly accepted NUL in middle of name");
-  # 	} catch (CorruptObjectException e) {
-  # 		assertEquals("name contains byte 0x00", e.getMessage());
-  # 	}
-  # }
-  #
+      # U+221E 0xe2889e INFINITY ∞ .html
+      bytes = [0xE2, 0x88, 0x9E, 0x2E, 0x68, 0x74, 0x6D, 0x6C]
+
+      assert :ok = ObjectChecker.check_path_segment(checker, bytes)
+    end
+
+    test "rejects nil in path segment" do
+      assert_raise CorruptObjectError,
+                   "Object (unknown) is corrupt: name contains byte 0x00",
+                   fn ->
+                     ObjectChecker.check_path_segment(%ObjectChecker{}, [97, 0, 98])
+                   end
+    end
+  end
 
   defp reject_name(checker, c) when is_binary(c) do
     assert_raise CorruptObjectError, "Object (unknown) is corrupt: name contains '#{c}'", fn ->
