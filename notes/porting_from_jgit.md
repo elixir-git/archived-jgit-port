@@ -6,7 +6,7 @@ While I've chosen to follow many of the design patterns present in jgit, in my o
 
 ## String Buffers -> Charlists
 
-The jgit APIs often speak in byte arrays with offset (pointers). In xgit, we instead pass around charlists. Since a charlist is a singly-linked list, it is conceptually easier (and more performant) to pass around an updated charlist reference and omit the offset parameter, so we do this.
+The jgit APIs often speak in byte arrays with offset (pointers). In xgit, we instead pass around charlists. Since a charlist is a singly-linked list, we pass around updated charlist references without offset parameters because it is conceptually easier (and more performant) to do so.
 
 ## Localization
 
@@ -18,7 +18,7 @@ In keeping with Elixir convention, jgit class names that end with `Exception` ar
 
 ## Listeners
 
-Instead of porting the `Listener` and `ListenerList` mechanism from jgit, we instead use [`pg2`](http://erlang.org/doc/man/pg2.html) to manage inter-process messaging and the related lifetime issues.
+Instead of porting the `Listener` and `ListenerList` mechanism from jgit, we use [`pg2`](http://erlang.org/doc/man/pg2.html) to manage inter-process messaging and the related lifetime issues.
 
 ## Windows OS Support
 
