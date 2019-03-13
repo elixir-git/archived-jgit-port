@@ -131,6 +131,21 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_commit(), data)
     end
 
+    test "ignore_error_types works (invalid: incomplete tree ID)" do
+      data = ~C"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f8189
+      author A. U. Thor <author@localhost> 1 +0000
+      committer A. U. Thor <author@localhost> 1 +0000
+      """
+
+      assert :ok =
+               ObjectChecker.check!(
+                 %ObjectChecker{ignore_error_types: %{bad_tree_sha1: true}},
+                 Constants.obj_commit(),
+                 data
+               )
+    end
+
     test "invalid: no tree 1" do
       data = ~C"""
       parent be9bfa841874ccc9f2ef7c48d0c76226f89b7189
