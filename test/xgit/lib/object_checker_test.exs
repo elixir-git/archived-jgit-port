@@ -833,7 +833,20 @@ defmodule Xgit.Lib.ObjectCheckerTest do
 
     @mac_hfs_git_names [
       ".gi\u200Ct",
+      ".gi\u200Dt",
+      ".gi\u200Et",
+      ".gi\u200Ft",
+      ".gi\u202At",
+      ".gi\u202Bt",
+      ".gi\u202Ct",
+      ".gi\u202Dt",
+      ".gi\u202Et",
+      ".gi\u206At",
       "\u206B.git",
+      "\u206C.git",
+      "\u206D.git",
+      "\u206E.git",
+      "\u206F.git",
       ".git\uFEFF"
     ]
 
