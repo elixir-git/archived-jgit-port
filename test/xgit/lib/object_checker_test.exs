@@ -54,6 +54,17 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert :ok = ObjectChecker.check!(%ObjectChecker{}, Constants.obj_commit(), data)
     end
 
+    test "strategy hook: commit not corrupt" do
+      data = ~C"""
+      tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
+      author A. U. Thor <author@localhost> 1 +0000
+      committer A. U. Thor <author@localhost> 1 +0000
+      """
+
+      checker = %ObjectChecker{strategy: %SecretKeyCheckerStrategy{}}
+      assert :ok = ObjectChecker.check!(checker, Constants.obj_commit(), data)
+    end
+
     test "invalid: corrupt author" do
       data = ~C"""
       tree be9bfa841874ccc9f2ef7c48d0c76226f89b7189
