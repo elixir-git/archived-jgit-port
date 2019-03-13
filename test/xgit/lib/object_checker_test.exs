@@ -565,6 +565,9 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       "gi7eba~9",
       "GI7EB~10",
       "GI7E~123",
+      "GI7~1234",
+      "GI~12534",
+      "G~912534",
       "~1000000",
       "~9999999"
     ]
