@@ -744,6 +744,11 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       assert_skiplist_accepts(Constants.obj_tree(), data)
     end
 
+    test "invalid: truncated in mode" do
+      data = '1006'
+      assert_corrupt("truncated in mode", Constants.obj_tree(), data)
+    end
+
     test "invalid: mode starts with zero 1" do
       data = entry("0 a")
       assert_corrupt("mode starts with '0'", Constants.obj_tree(), data)
