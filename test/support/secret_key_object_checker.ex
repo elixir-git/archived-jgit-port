@@ -10,7 +10,11 @@ defimpl Xgit.Lib.ObjectChecker.Strategy, for: Xgit.Lib.ObjectChecker.SecretKeyCh
   alias Xgit.Errors.CorruptObjectError
 
   @impl Xgit.Lib.ObjectChecker.Strategy
-  def check_commit!(_strategy, _commit_data), do: :default
+  def check_commit!(_strategy, commit_data) do
+    s = to_string(commit_data)
+
+    if String.contains?(s, "mumble"), do: :mumble, else: :default
+  end
 
   @impl Xgit.Lib.ObjectChecker.Strategy
   def check_blob!(_strategy, blob_data) do
