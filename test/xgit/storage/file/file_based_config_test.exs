@@ -1,24 +1,24 @@
 defmodule Xgit.Storage.File.FileBasedConfigTest do
   use ExUnit.Case, async: true
 
+  alias Xgit.Lib.Config
   alias Xgit.Storage.File.FileBasedConfig
+
   doctest Xgit.Storage.File.FileBasedConfig
 
-  # private static final String USER = "user";
-  #
-  # private static final String NAME = "name";
-  #
+  @user "user"
+  @name "name"
+
   # private static final String EMAIL = "email";
-  #
-  # private static final String ALICE = "Alice";
-  #
+
+  @alice "Alice"
+
   # private static final String BOB = "Bob";
   #
   # private static final String ALICE_EMAIL = "alice@home";
-  #
-  # private static final String CONTENT1 = "[" + USER + "]\n\t" + NAME + " = "
-  #     + ALICE + "\n";
-  #
+
+  @content1 '[#{@user}]\n\t#{@name} = #{@alice}\n'
+
   # private static final String CONTENT2 = "[" + USER + "]\n\t" + NAME + " = "
   #     + BOB + "\n";
   #
@@ -32,7 +32,7 @@ defmodule Xgit.Storage.File.FileBasedConfigTest do
   end
 
   test "system encoding", %{trash: trash} do
-    file = create_file!(trash, content1)
+    path = create_file!(trash, @content1)
 
     config = FileBasedConfig.config_for_path(path)
     Config.load(config)
@@ -219,15 +219,13 @@ defmodule Xgit.Storage.File.FileBasedConfigTest do
   # }
 
   defp create_file!(trash, content, subdir \\ nil) do
-    dir = if subdir == nil,
-      do: trash,
-      else: Path.join(trash, subdir)
+    dir =
+      if subdir == nil,
+        do: trash,
+        else: Path.join(trash, subdir)
 
     File.mkdir_p!(dir)
     path = Path.join(dir, "FileBasedConfigTest-#{:rand.uniform(1_000_000_000)}")
-
-    IO.inspect(path, label: "FBC test temp path")
-
     File.write!(path, content)
     path
   end

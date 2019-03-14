@@ -7,27 +7,20 @@ defmodule Xgit.Storage.File.FileBasedConfig do
   * `path`: Path to the config file.
   * `snapshot`: An `Xgit.Internal.Storage.File.FileSnapshot` for this path.
   """
-  @enforce_keys [:path, :snapshot]
-  defstruct [:path, :snapshot]
+  @enforce_keys [:path]
+  defstruct [:path]
 
-  alias Xgit.Internal.Storage.File.FileSnapshot
   alias Xgit.Lib.Config
 
   # private boolean utf8Bom;   ### TODO: Figure out where this lands.
-  # private volatile ObjectId hash;  ### TODO: Figure out where this lands.
 
   @doc ~S"""
   Create a configuration for a file path with no default fallback.
 
   Options are as for `Xgit.Lib.Config.new/1`.
   """
-  def config_for_path(path, options \\ []) when is_binary(path) do
-    storage = %__MODULE__{path: path, snapshot: FileSnapshot.save(path)}
-    # this.snapshot = FileSnapshot.DIRTY;
-    # this.hash = ObjectId.zeroId();
-
-    Config.new(Keyword.put(options, :storage, storage))
-  end
+  def config_for_path(path, options \\ []) when is_binary(path),
+    do: Config.new(Keyword.put(options, :storage, %__MODULE__{path: path}))
 
   # /** {@inheritDoc} */
   # @Override
@@ -36,17 +29,6 @@ defmodule Xgit.Storage.File.FileBasedConfig do
   #   return false;
   # }
 
-  # /** {@inheritDoc} */
-  # @Override
-  # public void clear() {
-  #   hash = hash(new byte[0]);
-  #   super.clear();
-  # }
-  #
-  # private static ObjectId hash(byte[] rawText) {
-  #   return ObjectId.fromRaw(Constants.newMessageDigest().digest(rawText));
-  # }
-  #
   # /** {@inheritDoc} */
   # @SuppressWarnings("nls")
   # @Override
@@ -93,70 +75,31 @@ defmodule Xgit.Storage.File.FileBasedConfig do
 end
 
 defimpl Xgit.Lib.Config.Storage, for: Xgit.Storage.File.FileBasedConfig do
+  alias Xgit.Lib.Config
+
   @doc ~S"""
   Load the configuration as a Git text style configuration file.
 
   If the file does not exist, this configuration is cleared, and thus
   behaves the same as though the file exists, but is empty.
   """
-  def load(%Xgit.Storage.File.FileBasedConfig{}, config) do
-    #   final int maxStaleRetries = 5;
-    #   int retries = 0;
-    #   while (true) {
-    #     final FileSnapshot oldSnapshot = snapshot;
-    #     final FileSnapshot newSnapshot = FileSnapshot.save(getFile());
-    #     try {
-    #       final byte[] in = IO.readFully(getFile());
-    #       final ObjectId newHash = hash(in);
-    #       if (hash.equals(newHash)) {
-    #         if (oldSnapshot.equals(newSnapshot)) {
-    #           oldSnapshot.setClean(newSnapshot);
-    #         } else {
-    #           snapshot = newSnapshot;
-    #         }
-    #       } else {
-    #         final String decoded;
-    #         if (isUtf8(in)) {
-    #           decoded = RawParseUtils.decode(UTF_8,
-    #               in, 3, in.length);
-    #           utf8Bom = true;
-    #         } else {
-    #           decoded = RawParseUtils.decode(in);
-    #         }
-    #         fromText(decoded);
-    #         snapshot = newSnapshot;
-    #         hash = newHash;
-    #       }
-    #       return;
-    #     } catch (FileNotFoundException noFile) {
-    #       if (configFile.exists()) {
-    #         throw noFile;
-    #       }
-    #       clear();
-    #       snapshot = newSnapshot;
-    #       return;
-    #     } catch (IOException e) {
-    #       if (FileUtils.isStaleFileHandle(e)
-    #           && retries < maxStaleRetries) {
-    #         if (LOG.isDebugEnabled()) {
-    #           LOG.debug(MessageFormat.format(
-    #               JGitText.get().configHandleIsStale,
-    #               Integer.valueOf(retries)), e);
-    #         }
-    #         retries++;
-    #         continue;
-    #       }
-    #       throw new IOException(MessageFormat
-    #           .format(JGitText.get().cannotReadFile, getFile()), e);
-    #     } catch (ConfigInvalidException e) {
-    #       throw new ConfigInvalidException(MessageFormat
-    #           .format(JGitText.get().cannotReadFile, getFile()), e);
-    #     }
-    #   }
-    :unimplemented
+  def load(%Xgit.Storage.File.FileBasedConfig{path: path}, config) do
+    # PORTING NOTE: jgit's implementation contains a lot of logic to handle
+    # cases where the file has moved, becomes stale, retrying in the event
+    # of failure, etc. For now, I am not porting those cases. Consider revisiting
+    # this later.
+
+    if File.exists?(path) do
+      contents = File.read!(path)
+      Config.from_text(config, contents)
+    else
+      Config.clear(config)
+    end
+
+    :ok
   end
 
-  def save(%Xgit.Storage.File.FileBasedConfig{}, config) do
+  def save(%Xgit.Storage.File.FileBasedConfig{}, _config) do
     :unimplemented
   end
 
