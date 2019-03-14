@@ -15,17 +15,6 @@ defmodule Xgit.Lib.ConfigTest do
   # private static final String REFS_UPSTREAM = "+refs/heads/*:refs/remotes/upstream/*";
   #
   # private static final String REFS_BACKUP = "+refs/heads/*:refs/remotes/backup/*";
-  #
-  # @Rule
-  # public ExpectedException expectedEx = ExpectedException.none();
-  #
-  # @Rule
-  # public TemporaryFolder tmp = new TemporaryFolder();
-  #
-  # @After
-  # public void tearDown() {
-  # 	SystemReader.setInstance(null);
-  # }
 
   test "new/1 with illegal base_config" do
     assert_raise ArgumentError, fn ->
@@ -1508,5 +1497,18 @@ defmodule Xgit.Lib.ConfigTest do
       Config.save(c)
       assert_received {:save, ^c}
     end
+  end
+
+  test "put+get string list + clear" do
+    c =
+      Config.new()
+      |> Config.set_string_list("my", "somename", ["value1", "value2"])
+
+    assert Config.get_string_list(c, "my", "somename") == ["value1", "value2"]
+
+    Config.clear(c)
+
+    assert Config.get_string_list(c, "my", "somename") == []
+    assert Config.to_text(c) == ""
   end
 end

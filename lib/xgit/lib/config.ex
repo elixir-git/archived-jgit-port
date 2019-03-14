@@ -1401,24 +1401,12 @@ defmodule Xgit.Lib.Config do
   # 				.format(JGitText.get().cannotReadFile, line.value), e);
   # 	}
   # }
-  #
-  # private ConfigSnapshot newState() {
-  # 	return new ConfigSnapshot(Collections.<ConfigLine> emptyList(),
-  # 			getBaseState());
-  # }
-  #
-  # private ConfigSnapshot newState(List<ConfigLine> entries) {
-  # 	return new ConfigSnapshot(Collections.unmodifiableList(entries),
-  # 			getBaseState());
-  # }
-  #
-  # /**
-  #  * Clear the configuration file
-  #  */
-  # protected void clear() {
-  # 	state.set(newState());
-  # }
-  #
+
+  @doc ~S"""
+  Clear the configuration file.
+  """
+  def clear(c), do: c |> process_ref() |> GenServer.call(:clear)
+
   # /**
   #  * Check if bytes should be treated as UTF-8 or not.
   #  *
@@ -1742,6 +1730,10 @@ defmodule Xgit.Lib.Config do
     new_config_lines = set_string_list_impl(s, section, subsection, name, values)
     {:reply, :ok, %{s | config_lines: new_config_lines}, @idle_timeout}
   end
+
+  @impl true
+  def handle_call(:clear, _from, %__MODULE__.State{} = s),
+    do: {:reply, :ok, %{s | config_lines: []}, @idle_timeout}
 
   @impl true
   def handle_info(:timeout, %__MODULE__.State{ref: ref} = s) do
