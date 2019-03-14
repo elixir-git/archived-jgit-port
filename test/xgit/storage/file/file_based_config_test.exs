@@ -24,33 +24,26 @@ defmodule Xgit.Storage.File.FileBasedConfigTest do
   #
   # private static final String CONTENT3 = "[" + USER + "]\n\t" + NAME + " = "
   #     + ALICE + "\n" + "[" + USER + "]\n\t" + EMAIL + " = " + ALICE_EMAIL;
-  #
-  # private File trash;
-  #
-  # @Before
-  # public void setUp() throws Exception {
-  #   trash = File.createTempFile("tmp_", "");
-  #   trash.delete();
-  #   assertTrue("mkdir " + trash, trash.mkdir());
-  # }
-  #
-  # @After
-  # public void tearDown() throws Exception {
-  #   FileUtils.delete(trash, FileUtils.RECURSIVE | FileUtils.SKIP_MISSING);
-  # }
-  #
-  # @Test
-  # public void testSystemEncoding() throws IOException, ConfigInvalidException {
-  #   final File file = createFile(CONTENT1.getBytes(UTF_8));
-  #   final FileBasedConfig config = new FileBasedConfig(file, FS.DETECTED);
-  #   config.load();
-  #   assertEquals(ALICE, config.getString(USER, null, NAME));
-  #
-  #   config.setString(USER, null, NAME, BOB);
-  #   config.save();
-  #   assertArrayEquals(CONTENT2.getBytes(UTF_8), IO.readFully(file));
-  # }
-  #
+
+  setup do
+    Temp.track!()
+    temp_file_path = Temp.mkdir!(prefix: "tmp_")
+    {:ok, trash: temp_file_path}
+  end
+
+  test "system encoding", %{trash: trash} do
+    file = create_file!(trash, content1)
+
+    config = FileBasedConfig.config_for_path(path)
+    Config.load(config)
+
+    assert Config.get_string(config, @user, @name) == @alice
+
+    # config.setString(USER, null, NAME, BOB);
+    # config.save();
+    # assertArrayEquals(CONTENT2.getBytes(UTF_8), IO.readFully(file));
+  end
+
   # @Test
   # public void testUTF8withoutBOM() throws IOException, ConfigInvalidException {
   #   final File file = createFile(CONTENT1.getBytes(UTF_8));
@@ -224,19 +217,18 @@ defmodule Xgit.Storage.File.FileBasedConfigTest do
   #   assertEquals(ALICE, config.getString(USER, null, NAME));
   #   assertEquals(ALICE_EMAIL, config.getString(USER, null, EMAIL));
   # }
-  #
-  # private File createFile(byte[] content) throws IOException {
-  #   return createFile(content, null);
-  # }
-  #
-  # private File createFile(byte[] content, String subdir) throws IOException {
-  #   File dir = subdir != null ? new File(trash, subdir) : trash;
-  #   dir.mkdirs();
-  #
-  #   File f = File.createTempFile(getClass().getName(), null, dir);
-  #   try (FileOutputStream os = new FileOutputStream(f, true)) {
-  #     os.write(content);
-  #   }
-  #   return f;
-  # }
+
+  defp create_file!(trash, content, subdir \\ nil) do
+    dir = if subdir == nil,
+      do: trash,
+      else: Path.join(trash, subdir)
+
+    File.mkdir_p!(dir)
+    path = Path.join(dir, "FileBasedConfigTest-#{:rand.uniform(1_000_000_000)}")
+
+    IO.inspect(path, label: "FBC test temp path")
+
+    File.write!(path, content)
+    path
+  end
 end
