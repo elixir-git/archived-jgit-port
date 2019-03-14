@@ -99,50 +99,16 @@ defimpl Xgit.Lib.Config.Storage, for: Xgit.Storage.File.FileBasedConfig do
     :ok
   end
 
-  def save(%Xgit.Storage.File.FileBasedConfig{}, _config) do
-    :unimplemented
-  end
+  @doc ~S"""
+  Save the configuration as a Git text style configuration file.
+  """
+  def save(%Xgit.Storage.File.FileBasedConfig{path: path}, config) do
+    # PORTING NOTE: jgit's implementation contains logic to ensure that there
+    # aren't multiple simultaneous writers to the file and that the UTF-8 BOM
+    # is written only if a BOM was present in the original file. For now, I am
+    # not porting those cases. Consider revisiting this later.
 
-  # /**
-  #  * {@inheritDoc}
-  #  * <p>
-  #  * Save the configuration as a Git text style configuration file.
-  #  * <p>
-  #  * <b>Warning:</b> Although this method uses the traditional Git file
-  #  * locking approach to protect against concurrent writes of the
-  #  * configuration file, it does not ensure that the file has not been
-  #  * modified since the last read, which means updates performed by other
-  #  * objects accessing the same backing file may be lost.
-  #  */
-  # @Override
-  # public void save() throws IOException {
-  #   final byte[] out;
-  #   final String text = toText();
-  #   if (utf8Bom) {
-  #     final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-  #     bos.write(0xEF);
-  #     bos.write(0xBB);
-  #     bos.write(0xBF);
-  #     bos.write(text.getBytes(UTF_8));
-  #     out = bos.toByteArray();
-  #   } else {
-  #     out = Constants.encode(text);
-  #   }
-  #
-  #   final LockFile lf = new LockFile(getFile());
-  #   if (!lf.lock())
-  #     throw new LockFailedException(getFile());
-  #   try {
-  #     lf.setNeedSnapshot(true);
-  #     lf.write(out);
-  #     if (!lf.commit())
-  #       throw new IOException(MessageFormat.format(JGitText.get().cannotCommitWriteTo, getFile()));
-  #   } finally {
-  #     lf.unlock();
-  #   }
-  #   snapshot = lf.getCommitSnapshot();
-  #   hash = hash(out);
-  #   // notify the listeners
-  #   fireConfigChangedEvent();
-  # }
+    File.write!(path, Config.to_text(config))
+    :ok
+  end
 end

@@ -12,16 +12,13 @@ defmodule Xgit.Storage.File.FileBasedConfigTest do
   # private static final String EMAIL = "email";
 
   @alice "Alice"
+  @bob "Bob"
 
-  # private static final String BOB = "Bob";
-  #
   # private static final String ALICE_EMAIL = "alice@home";
 
   @content1 '[#{@user}]\n\t#{@name} = #{@alice}\n'
+  @content2 '[#{@user}]\n\t#{@name} = #{@bob}\n'
 
-  # private static final String CONTENT2 = "[" + USER + "]\n\t" + NAME + " = "
-  #     + BOB + "\n";
-  #
   # private static final String CONTENT3 = "[" + USER + "]\n\t" + NAME + " = "
   #     + ALICE + "\n" + "[" + USER + "]\n\t" + EMAIL + " = " + ALICE_EMAIL;
 
@@ -35,13 +32,14 @@ defmodule Xgit.Storage.File.FileBasedConfigTest do
     path = create_file!(trash, @content1)
 
     config = FileBasedConfig.config_for_path(path)
-    Config.load(config)
+    assert :ok = Config.load(config)
 
     assert Config.get_string(config, @user, @name) == @alice
 
-    # config.setString(USER, null, NAME, BOB);
-    # config.save();
-    # assertArrayEquals(CONTENT2.getBytes(UTF_8), IO.readFully(file));
+    Config.set_string(config, @user, @name, @bob)
+    assert :ok = Config.save(config)
+
+    assert File.read!(path) == to_string(@content2)
   end
 
   # @Test
