@@ -471,6 +471,16 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.to_text(c) == " \n\t[user]\n\tname = Bob\n"
   end
 
+  test "preserves UTF-8 bom" do
+    c = parse("\uFEFF \n\t[user]\n\tname = Alice\n")
+
+    assert Config.get_string(c, "user", "name") == "Alice"
+
+    Config.set_string(c, "user", "name", "Bob")
+
+    assert Config.to_text(c) == "\uFEFF \n\t[user]\n\tname = Bob\n"
+  end
+
   describe "unset_section/3" do
     test "branch section" do
       c =
