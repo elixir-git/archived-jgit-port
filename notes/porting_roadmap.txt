@@ -45,7 +45,3 @@ MockSystemReader TRACE
   SystemReader
 
 SystemReader
-  FileBasedConfig
-
-FileBasedConfig
-  StoredConfig -> xgit.lib.Config.Storage
