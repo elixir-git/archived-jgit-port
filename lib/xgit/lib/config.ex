@@ -1049,6 +1049,9 @@ defmodule Xgit.Lib.Config do
   defp config_lines_from([], config_lines_acc, _section, _subsection, _included_from, _prefix),
     do: config_lines_acc
 
+  defp config_lines_from([?\n | remainder], [], nil, nil, included_from, prefix),
+    do: config_lines_from(remainder, [], nil, nil, included_from, prefix ++ [?\n])
+
   defp config_lines_from(
          [?\n | remainder],
          config_lines_acc,
