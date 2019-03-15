@@ -70,6 +70,21 @@ defmodule Xgit.Storage.File.FileBasedConfigTest do
     assert File.read!(path) == to_string(' \n\t' ++ @content2)
   end
 
+  test "file doesn't exist", %{trash: trash} do
+    path = create_file!(trash, @content1)
+    File.rm!(path)
+
+    config = FileBasedConfig.config_for_path(path)
+    assert :ok = Config.load(config)
+
+    assert Config.get_string(config, @user, @name) == nil
+
+    Config.set_string(config, @user, @name, @bob)
+    assert :ok = Config.save(config)
+
+    assert File.read!(path) == to_string(@content2)
+  end
+
   # @Test
   # public void testIncludeAbsolute()
   #     throws IOException, ConfigInvalidException {
