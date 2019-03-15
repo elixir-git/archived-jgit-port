@@ -1049,9 +1049,9 @@ defmodule Xgit.Lib.Config do
   defp config_lines_from([], config_lines_acc, _section, _subsection, _included_from, _prefix),
     do: config_lines_acc
 
-  # 65279 = Unicode byte-order-mark (only accepted at beginning of file)
-  defp config_lines_from([65279 | remainder], [], nil, nil, included_from, []),
-    do: config_lines_from(remainder, [], nil, nil, included_from, [65279])
+  # 65_279 = Unicode byte-order-mark (only accepted at beginning of file)
+  defp config_lines_from([65_279 | remainder], [], nil, nil, included_from, []),
+    do: config_lines_from(remainder, [], nil, nil, included_from, [65_279])
 
   defp config_lines_from([?\n | remainder], [], nil, nil, included_from, prefix),
     do: config_lines_from(remainder, [], nil, nil, included_from, prefix ++ [?\n])
