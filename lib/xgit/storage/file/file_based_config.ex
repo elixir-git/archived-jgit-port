@@ -12,8 +12,6 @@ defmodule Xgit.Storage.File.FileBasedConfig do
 
   alias Xgit.Lib.Config
 
-  # private boolean utf8Bom;   ### TODO: Figure out where this lands.
-
   @doc ~S"""
   Create a configuration for a file path with no default fallback.
 

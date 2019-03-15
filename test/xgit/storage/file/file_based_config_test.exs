@@ -42,29 +42,19 @@ defmodule Xgit.Storage.File.FileBasedConfigTest do
     assert File.read!(path) == to_string(@content2)
   end
 
-  # test "UTF-8 encoding preserves BOM" -- defer for now
-  # public void testUTF8withBOM() throws IOException, ConfigInvalidException {
-  #   final ByteArrayOutputStream bos1 = new ByteArrayOutputStream();
-  #   bos1.write(0xEF);
-  #   bos1.write(0xBB);
-  #   bos1.write(0xBF);
-  #   bos1.write(CONTENT1.getBytes(UTF_8));
-  #
-  #   final File file = createFile(bos1.toByteArray());
-  #   final FileBasedConfig config = new FileBasedConfig(file, FS.DETECTED);
-  #   config.load();
-  #   assertEquals(ALICE, config.getString(USER, null, NAME));
-  #
-  #   config.setString(USER, null, NAME, BOB);
-  #   config.save();
-  #
-  #   final ByteArrayOutputStream bos2 = new ByteArrayOutputStream();
-  #   bos2.write(0xEF);
-  #   bos2.write(0xBB);
-  #   bos2.write(0xBF);
-  #   bos2.write(CONTENT2.getBytes(UTF_8));
-  #   assertArrayEquals(bos2.toByteArray(), IO.readFully(file));
-  # }
+  test "UTF-8 encoding preserves BOM", %{trash: trash} do
+    path = create_file!(trash, [239, 187, 191 | @content1])
+
+    config = FileBasedConfig.config_for_path(path)
+    assert :ok = Config.load(config)
+
+    assert Config.get_string(config, @user, @name) == @alice
+
+    Config.set_string(config, @user, @name, @bob)
+    assert :ok = Config.save(config)
+
+    assert File.read!(path) == "\uFEFF" <> to_string(@content2)
+  end
 
   test "preserves leading whitespace", %{trash: trash} do
     path = create_file!(trash, ' \n\t' ++ @content1)
