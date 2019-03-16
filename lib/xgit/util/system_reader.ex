@@ -13,13 +13,13 @@ defprotocol Xgit.Util.SystemReader do
   hostname is set to the default value `"localhost"`.
   """
   @spec hostname(reader :: term) :: String.t()
-  def hostname(reader)
+  def hostname(reader \\ nil)
 
   @doc ~S"""
   Get value of the named system (environment) variable.
   """
   @spec get_env(reader :: term, variable :: String.t()) :: String.t()
-  def get_env(reader, variable)
+  def get_env(reader \\ nil, variable)
 
   # /**
   #  * Open the git configuration found in the user home
@@ -51,7 +51,7 @@ defprotocol Xgit.Util.SystemReader do
   Get the current system time in milliseconds.
   """
   @spec current_time(reader :: term) :: number
-  def current_time(reader)
+  def current_time(reader \\ nil)
 
   # /**
   #  * Get clock instance preferred by this system.
