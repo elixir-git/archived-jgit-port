@@ -1,6 +1,7 @@
 defmodule Xgit.Util.SystemReaderTest do
   use ExUnit.Case, async: true
 
+  alias Xgit.Lib.Config
   alias Xgit.Util.SystemReader
 
   test "hostname/1" do
@@ -16,6 +17,10 @@ defmodule Xgit.Util.SystemReaderTest do
       assert is_binary(user_env)
       refute user_env == ""
     end
+  end
+
+  test "user_config/1" do
+    _user_config = %Config{} = SystemReader.user_config()
   end
 
   test "current_time/1" do
