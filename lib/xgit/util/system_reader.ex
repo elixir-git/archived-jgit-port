@@ -21,14 +21,6 @@ defprotocol Xgit.Util.SystemReader do
   @spec get_env(reader :: term, variable :: String.t()) :: String.t()
   def get_env(reader, variable)
 
-  # @doc ~S"""
-  # Get value of the named system property.
-  #
-  # TO DO: What is the difference between env variable and system property.
-  # Is this a Java-ism that we're carrying over?
-  # """
-  # @spec system_property(key :: String.t()) :: String.t()
-
   # /**
   #  * Open the git configuration found in the user home
   #  *
