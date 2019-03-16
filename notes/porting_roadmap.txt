@@ -42,6 +42,18 @@ ContentSource
   WorkingTreeIterator TRACE
 
 MockSystemReader TRACE
+  MockConfig
+  ProposedTimestamp
   SystemReader
 
-SystemReader
+SystemReader INCOMPLETE
+  MonotonicClock
+
+MonotonicClock INTERFACE
+  ProposedTimestamp
+
+ProposedTimestamp PROTOCOL (partially defer?)
+  java.time.Duration
+  java.time.Instant
+
+MockConfig
