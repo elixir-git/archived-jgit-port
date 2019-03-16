@@ -20,6 +20,8 @@ defmodule Xgit.Lib.Config do
   @enforce_keys [:ref]
   defstruct [:ref, :storage]
 
+  @type t :: %__MODULE__{}
+
   alias Xgit.Errors.ConfigInvalidError
   alias Xgit.Lib.ConfigLine
 
