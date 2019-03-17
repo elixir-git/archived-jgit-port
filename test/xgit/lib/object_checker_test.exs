@@ -4,8 +4,8 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   alias Xgit.Errors.CorruptObjectError
   alias Xgit.Lib.Constants
   alias Xgit.Lib.ObjectChecker
-  alias Xgit.Lib.ObjectChecker.SecretKeyCheckerStrategy
   alias Xgit.Lib.ObjectId
+  alias Xgit.Test.SecretKeyCheckerStrategy
 
   @placeholder_object_id 0..19 |> Enum.to_list()
 

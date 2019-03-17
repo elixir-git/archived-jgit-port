@@ -1,4 +1,4 @@
-defmodule Xgit.Util.MockProposedTime do
+defmodule Xgit.Test.MockProposedTime do
   @moduledoc false
   # Used for testing only.
   # Implements a timestamp from a fixed initial timestamp.
@@ -7,6 +7,6 @@ defmodule Xgit.Util.MockProposedTime do
   defstruct [:time]
 end
 
-defimpl Xgit.Util.Time.ProposedTimestamp.Impl, for: Xgit.Util.MockProposedTime do
+defimpl Xgit.Util.Time.ProposedTimestamp.Impl, for: Xgit.Test.MockProposedTime do
   def read(%{time: time}), do: time
 end
