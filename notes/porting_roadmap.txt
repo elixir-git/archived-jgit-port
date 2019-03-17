@@ -50,6 +50,3 @@ SystemReader INCOMPLETE
   MonotonicClock
 
 MonotonicClock INTERFACE
-  ProposedTimestamp
-
-ProposedTimestamp PROTOCOL (partially defer?)
