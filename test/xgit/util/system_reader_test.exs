@@ -3,6 +3,7 @@ defmodule Xgit.Util.SystemReaderTest do
 
   alias Xgit.Lib.Config
   alias Xgit.Util.SystemReader
+  alias Xgit.Util.Time.MonotonicSystemClock
 
   test "hostname/1" do
     hostname = SystemReader.hostname()
@@ -26,5 +27,9 @@ defmodule Xgit.Util.SystemReaderTest do
   test "current_time/1" do
     time = SystemReader.current_time()
     assert is_integer(time)
+  end
+
+  test "clock/1" do
+    assert %MonotonicSystemClock{} = SystemReader.clock()
   end
 end

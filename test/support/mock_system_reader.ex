@@ -53,6 +53,8 @@ defimpl Xgit.Util.SystemReader, for: Xgit.Test.MockSystemReader do
     |> Agent.get(& &1)
     |> Kernel.div(1000)
   end
+
+  def clock(reader), do: reader
 end
 
 defimpl Xgit.Util.Time.MonotonicClock, for: Xgit.Test.MockSystemReader do

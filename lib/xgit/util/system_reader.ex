@@ -43,15 +43,13 @@ defprotocol Xgit.Util.SystemReader do
   @spec current_time(reader :: term) :: number
   def current_time(reader \\ nil)
 
-  # /**
-  #  * Get clock instance preferred by this system.
-  #  *
-  #  * @return clock instance preferred by this system.
-  #  * @since 4.6
-  #  */
-  # public MonotonicClock getClock() {
-  # 	return new MonotonicSystemClock();
-  # }
+  @doc ~S"""
+  Get clock instance preferred by this system.
+
+  The return value should be a struct that implements `MonotonicClock`.
+  """
+  @spec clock(reader :: term) :: term
+  def clock(reader \\ nil)
 
   # /**
   #  * Get the local time zone
@@ -169,6 +167,7 @@ end
 
 defimpl Xgit.Util.SystemReader, for: Any do
   alias Xgit.Storage.File.FileBasedConfig
+  alias Xgit.Util.Time.MonotonicSystemClock
 
   def hostname(_) do
     {:ok, hostname} = :inet.gethostname()
@@ -190,4 +189,6 @@ defimpl Xgit.Util.SystemReader, for: Any do
   # decision doesn't make sense.
 
   def current_time(_), do: System.os_time(:millisecond)
+
+  def clock(_), do: %MonotonicSystemClock{}
 end
