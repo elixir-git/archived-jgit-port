@@ -40,8 +40,3 @@ ContentSource
   ObjectReader TRACE
   TreeWalk DEFER?
   WorkingTreeIterator TRACE
-
-MockSystemReader TRACE
-  SystemReader
-
-SystemReader INCOMPLETE

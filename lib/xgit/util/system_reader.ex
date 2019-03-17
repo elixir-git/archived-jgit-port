@@ -43,34 +43,37 @@ defprotocol Xgit.Util.SystemReader do
   @spec current_time(reader :: term) :: number
   def current_time(reader \\ nil)
 
-  # /**
-  #  * Get clock instance preferred by this system.
-  #  *
-  #  * @return clock instance preferred by this system.
-  #  * @since 4.6
-  #  */
-  # public MonotonicClock getClock() {
-  # 	return new MonotonicSystemClock();
-  # }
+  @doc ~S"""
+  Get clock instance preferred by this system.
 
-  # /**
-  #  * Get the local time zone
-  #  *
-  #  * @param when
-  #  *            a system timestamp
-  #  * @return the local time zone
-  #  */
-  # public abstract int getTimezone(long when);
+  The return value should be a struct that implements `MonotonicClock`.
+  """
+  @spec clock(reader :: term) :: term
+  def clock(reader \\ nil)
 
-  # /**
-  #  * Get system time zone, possibly mocked for testing
-  #  *
-  #  * @return system time zone, possibly mocked for testing
-  #  * @since 1.2
-  #  */
-  # public TimeZone getTimeZone() {
-  # 	return TimeZone.getDefault();
-  # }
+  @doc ~S"""
+  Get the local time zone at a specific system-provided time.
+
+  Time zone is expressed as a number of minutes +/- GMT offset.
+
+  PORTING NOTE: Elixir does not have the depth of time-zone knowledge that is
+  available in Java. For now, the abstraction is present, but the default
+  system reader will always return 0 (GMT).
+  """
+  @spec timezone_at_time(reader :: term, time :: integer) :: integer
+  def timezone_at_time(reader \\ nil, time)
+
+  @doc ~S"""
+  Get system time zone, possibly mocked for testing.
+
+  Time zone is expressed as a number of minutes +/- GMT offset.
+
+  PORTING NOTE: Elixir does not have the depth of time-zone knowledge that is
+  available in Java. For now, the abstraction is present, but the default
+  system reader will always return 0 (GMT).
+  """
+  @spec timezone(reader :: term) :: integer
+  def timezone(reader \\ nil)
 
   # /**
   #  * Get the locale to use
@@ -169,6 +172,7 @@ end
 
 defimpl Xgit.Util.SystemReader, for: Any do
   alias Xgit.Storage.File.FileBasedConfig
+  alias Xgit.Util.Time.MonotonicSystemClock
 
   def hostname(_) do
     {:ok, hostname} = :inet.gethostname()
@@ -190,4 +194,12 @@ defimpl Xgit.Util.SystemReader, for: Any do
   # decision doesn't make sense.
 
   def current_time(_), do: System.os_time(:millisecond)
+
+  def clock(_), do: %MonotonicSystemClock{}
+
+  def timezone_at_time(_, _time), do: 0
+  def timezone(_), do: 0
+  # PORTING NOTE: Elixir does not have the depth of time-zone knowledge that is
+  # available in Java. For now, the abstraction is present, but the default
+  # system reader will always return 0 (GMT).
 end
