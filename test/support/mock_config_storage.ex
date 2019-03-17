@@ -1,4 +1,4 @@
-defmodule Xgit.Util.MockConfigStorage do
+defmodule Xgit.Test.MockConfigStorage do
   @moduledoc false
   # Used for testing only.
 
@@ -8,7 +8,7 @@ defmodule Xgit.Util.MockConfigStorage do
   # of the protocol. The actual content doesn't matter.
 end
 
-defimpl Xgit.Lib.Config.Storage, for: Xgit.Util.MockConfigStorage do
+defimpl Xgit.Lib.Config.Storage, for: Xgit.Test.MockConfigStorage do
   # This "storage" implementation is used so that MockSystemReader can construct
   # Config structs that will accept the `load/1` call, but we don't actually want
   # to pollute the test state with whatever happens to be in the user or system

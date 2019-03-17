@@ -1,9 +1,9 @@
-defmodule Xgit.Util.MockSystemReader do
+defmodule Xgit.Test.MockSystemReader do
   @moduledoc false
   # Used for testing only.
 
   alias Xgit.Lib.Config
-  alias Xgit.Util.MockConfigStorage
+  alias Xgit.Test.MockConfigStorage
 
   defstruct hostname: "fake.host.example.com",
             env: %{},
@@ -31,8 +31,8 @@ defmodule Xgit.Util.MockSystemReader do
   end
 end
 
-defimpl Xgit.Util.SystemReader, for: Xgit.Util.MockSystemReader do
-  alias Xgit.Util.MockSystemReader
+defimpl Xgit.Util.SystemReader, for: Xgit.Test.MockSystemReader do
+  alias Xgit.Test.MockSystemReader
 
   def hostname(%{hostname: hostname}), do: hostname
   def get_env(%{env: env}, variable), do: Map.get(env, variable)

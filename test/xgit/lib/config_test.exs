@@ -3,7 +3,7 @@ defmodule Xgit.Lib.ConfigTest do
 
   alias Xgit.Errors.ConfigInvalidError
   alias Xgit.Lib.Config
-  alias Xgit.Lib.Config.SpyStorage
+  alias Xgit.Test.SpyStorage
 
   doctest Xgit.Lib.Config
 

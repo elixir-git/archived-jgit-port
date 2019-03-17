@@ -1,12 +1,12 @@
 # Defined here so it is in MIX_ENV=test compile path.
 # Otherwise, we miss the window of opportunity for protocol consolidation.
 
-defmodule Xgit.Lib.ObjectChecker.SecretKeyCheckerStrategy do
+defmodule Xgit.Test.SecretKeyCheckerStrategy do
   @moduledoc false
   defstruct [:ignore_me]
 end
 
-defimpl Xgit.Lib.ObjectChecker.Strategy, for: Xgit.Lib.ObjectChecker.SecretKeyCheckerStrategy do
+defimpl Xgit.Lib.ObjectChecker.Strategy, for: Xgit.Test.SecretKeyCheckerStrategy do
   alias Xgit.Errors.CorruptObjectError
 
   @impl Xgit.Lib.ObjectChecker.Strategy
