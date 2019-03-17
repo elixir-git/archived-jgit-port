@@ -9,19 +9,26 @@ defmodule Xgit.Util.MockSystemReader do
             env: %{},
             user_config: nil,
             system_config: nil,
-            time: 1_250_379_778_668
-
-  # time == Sat Aug 15 20:12:58 GMT-03:30 2009
+            time_agent: nil
 
   def new do
+    {:ok, time_agent} = Agent.start_link(1_250_379_778_668_000)
+    # ^ time is Sat Aug 15 20:12:58 GMT-03:30 2009
+
     %__MODULE__{
       user_config: Config.new(storage: %MockConfigStorage{}),
-      system_config: Config.new(storage: %MockConfigStorage{})
+      system_config: Config.new(storage: %MockConfigStorage{}),
+      time_agent: time_agent
     }
   end
 
   # Adjust the current time by _n_ seconds.
-  def tick(%{time: time} = mock, seconds), do: %{mock | time: time + seconds * 1000}
+  def tick(%{time_agent: time_agent}, seconds) do
+    Agent.get_and_update(time_agent, fn existing_time ->
+      new_time = existing_time + seconds * 1_000_000
+      {new_time, new_time}
+    end)
+  end
 end
 
 defimpl Xgit.Util.SystemReader, for: Xgit.Util.MockSystemReader do
@@ -41,5 +48,9 @@ defimpl Xgit.Util.SystemReader, for: Xgit.Util.MockSystemReader do
     system_config
   end
 
-  def current_time(%{time: time}), do: time
+  def current_time(%{time_agent: time_agent}) do
+    time_agent
+    |> Agent.get(& &1)
+    |> Kernel.div(1000)
+  end
 end
