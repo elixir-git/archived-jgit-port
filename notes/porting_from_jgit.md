@@ -24,6 +24,13 @@ Instead of porting the `Listener` and `ListenerList` mechanism from jgit, we use
 
 In this initial (experimental) version of xgit, I've decided not to explicitly support Windows. This lets me avoid the time that would be spent porting some of jgit's abstractions. Instead, we'll rely as much as possible on the Erlang VM. Some of the abstractions explicitly avoided:
 
-* FS (file system)
+* `FS` (file system)
 
 I recognize that retrofitting these abstractions into the system later will be at best, difficult, but I can't justify the cost in porting them for my purposes here.
+
+## Units of time
+
+Elixir doesn't have an exact analogue for Java's [`java.time.Duration`](https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html) or [`java.time.Instant`](https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html). Rather than inventing new abstractions, we'll follow Elixir/Erlang conventions and port as follows:
+
+* `java.time.Duration` is ported as a tuple of `{count, time_unit}` where `time_unit` is as defined by the [`System.time_unit` type](https://hexdocs.pm/elixir/System.html#t:time_unit/0).
+* `java.time.Instant` is ported as an integer result of [`System.os_time(:microsecond)`](https://hexdocs.pm/elixir/System.html#os_time/1). We do not support nanosecond-level accuracy. (I could not find any call for nanosecond accuracy in jgit.)
