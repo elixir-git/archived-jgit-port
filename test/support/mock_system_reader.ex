@@ -55,6 +55,10 @@ defimpl Xgit.Util.SystemReader, for: Xgit.Test.MockSystemReader do
   end
 
   def clock(reader), do: reader
+
+  def timezone_at_time(_, _time), do: -210
+  def timezone(_), do: -210
+  # Offset in the mock is GMT-03:30.
 end
 
 defimpl Xgit.Util.Time.MonotonicClock, for: Xgit.Test.MockSystemReader do

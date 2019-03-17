@@ -32,4 +32,18 @@ defmodule Xgit.Util.SystemReaderTest do
   test "clock/1" do
     assert %MonotonicSystemClock{} = SystemReader.clock()
   end
+
+  test "timezone_at_time/2" do
+    assert SystemReader.timezone_at_time(1_250_379_778_668) == 0
+    # PORTING NOTE: Elixir does not have the depth of time-zone knowledge that is
+    # available in Java. For now, the abstraction is present, but the default
+    # system reader will always return 0 (GMT).
+  end
+
+  test "timezone/1" do
+    assert SystemReader.timezone() == 0
+    # PORTING NOTE: Elixir does not have the depth of time-zone knowledge that is
+    # available in Java. For now, the abstraction is present, but the default
+    # system reader will always return 0 (GMT).
+  end
 end
