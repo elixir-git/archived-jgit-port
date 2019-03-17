@@ -42,11 +42,6 @@ ContentSource
   WorkingTreeIterator TRACE
 
 MockSystemReader TRACE
-  MockConfig
-  ProposedTimestamp
   SystemReader
 
 SystemReader INCOMPLETE
-  MonotonicClock
-
-MonotonicClock INTERFACE
