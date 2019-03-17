@@ -54,3 +54,17 @@ defimpl Xgit.Util.SystemReader, for: Xgit.Test.MockSystemReader do
     |> Kernel.div(1000)
   end
 end
+
+defimpl Xgit.Util.Time.MonotonicClock, for: Xgit.Test.MockSystemReader do
+  # We impmlement the MonotonicClock protocol directly on MockSystemReader
+  # because it needs to access "current time" state from MockSystemReader's
+  # time agent.
+
+  alias Xgit.Test.MockSystemReader
+  alias Xgit.Util.SystemReader
+
+  def propose(%MockSystemReader{} = system_reader) do
+    t = SystemReader.current_time(system_reader)
+    %Xgit.Test.MockProposedTime{time: t}
+  end
+end
