@@ -21,7 +21,7 @@ RepositoryTestCase
 
 LocalDiskRepositoryTestCase
   DirCache TRACE
-  DirCacheEntry TRACE
+  DirCacheEntry
   FileBasedConfig TRACE
   FileRepository TRACE
   Repository (see below)
@@ -39,4 +39,41 @@ ContentSource
   ObjectLoader TRACE
   ObjectReader TRACE
   TreeWalk DEFER?
-  WorkingTreeIterator TRACE
+  WorkingTreeIterator
+
+WorkingTreeIterator
+  AbstractTreeIterator TRACE
+  AttributesNode TRACE
+  AutoLFInputStream TRACE
+  DirCacheEntry TRACE
+  DirCacheIterator TRACE
+  Entry TRACE
+  IgnoreNode TRACE
+  MetadataDiff TRACE
+  ObjectLoader TRACE
+  ObjectReader TRACE
+  OperationType TRACE
+  Repository TRACE
+  TreeWalk TRACE
+  WorkingTreeOptions TRACE
+
+Repository
+  AttributesNodeProvider TRACE
+  BaseRepositoryBuilder
+  DirCache TRACE
+  ObjectDatabase TRACE
+  ObjectInserter TRACE
+  ObjectLoader TRACE
+  ObjectReader TRACE
+  RebaseTodoFile TRACE
+  RebaseTodoLine TRACE
+  RefDatabase TRACE
+  ReflogEntry TRACE
+  ReflogReader TRACE
+  RefRename TRACE
+  RefUpdate TRACE
+  RepositoryState ENUM
+  RevCommit TRACE
+  RevWalk TRACE
+
+BaseRepositoryBuilder
