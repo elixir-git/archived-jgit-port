@@ -143,6 +143,20 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
                FileRepositoryBuilder.find_git_dir(%FileRepositoryBuilder{}, trash)
     end
 
+    test "happy path 3 (is non-traditional git directory)", %{trash: trash} do
+      object_dir = Path.join(trash, "objects")
+      File.mkdir_p!(object_dir)
+
+      refs_dir = Path.join(trash, "refs")
+      File.mkdir_p!(refs_dir)
+
+      head_file = Path.join(trash, "HEAD")
+      File.write!(head_file, "ref: refs/mumble")
+
+      assert %FileRepositoryBuilder{git_dir: trash} =
+               FileRepositoryBuilder.find_git_dir(%FileRepositoryBuilder{}, trash)
+    end
+
     test "scan up", %{trash: trash} do
       git_dir = Path.join(trash, ".git")
       File.mkdir_p!(git_dir)
