@@ -84,4 +84,109 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
              }
     end
   end
+
+  describe "find_git_dir/2" do
+    setup do
+      Temp.track!()
+      temp_file_path = Temp.mkdir!(prefix: "tmp_")
+      {:ok, trash: temp_file_path}
+    end
+
+    test "git_dir already populated" do
+      b = %FileRepositoryBuilder{git_dir: "already here"}
+      assert FileRepositoryBuilder.find_git_dir(b, "blah") == b
+    end
+
+    test "git_dir fallback to cwd", %{trash: trash} do
+      File.cd!(trash)
+
+      assert %FileRepositoryBuilder{git_dir: nil} =
+               FileRepositoryBuilder.find_git_dir(%FileRepositoryBuilder{})
+    end
+
+    test "git_dir miss (no .git dir)", %{trash: trash} do
+      assert %FileRepositoryBuilder{git_dir: nil} =
+               FileRepositoryBuilder.find_git_dir(%FileRepositoryBuilder{}, trash)
+    end
+
+    test "happy path 1", %{trash: trash} do
+      git_dir = Path.join(trash, ".git")
+      File.mkdir_p!(git_dir)
+
+      object_dir = Path.join(git_dir, "objects")
+      File.mkdir_p!(object_dir)
+
+      refs_dir = Path.join(git_dir, "refs")
+      File.mkdir_p!(refs_dir)
+
+      head_file = Path.join(git_dir, "HEAD")
+      File.write!(head_file, "ref: refs/mumble")
+
+      assert %FileRepositoryBuilder{git_dir: trash} =
+               FileRepositoryBuilder.find_git_dir(%FileRepositoryBuilder{}, trash)
+    end
+
+    test "happy path 2", %{trash: trash} do
+      git_dir = Path.join(trash, ".git")
+      File.mkdir_p!(git_dir)
+
+      object_dir = Path.join(git_dir, "objects")
+      File.mkdir_p!(object_dir)
+
+      refs_dir = Path.join(git_dir, "refs")
+      File.mkdir_p!(refs_dir)
+
+      head_file = Path.join(git_dir, "HEAD")
+      File.write!(head_file, "ref: refs/mumble")
+
+      assert %FileRepositoryBuilder{git_dir: git_dir} =
+               FileRepositoryBuilder.find_git_dir(%FileRepositoryBuilder{}, trash)
+    end
+
+    test "scan up", %{trash: trash} do
+      git_dir = Path.join(trash, ".git")
+      File.mkdir_p!(git_dir)
+
+      object_dir = Path.join(git_dir, "objects")
+      File.mkdir_p!(object_dir)
+
+      refs_dir = Path.join(git_dir, "refs")
+      File.mkdir_p!(refs_dir)
+
+      head_file = Path.join(git_dir, "HEAD")
+      File.write!(head_file, "ref: refs/mumble")
+
+      extra_dirs = Path.join(trash, "a/b/c")
+      File.mkdir_p!(extra_dirs)
+
+      assert %FileRepositoryBuilder{git_dir: git_dir} =
+               FileRepositoryBuilder.find_git_dir(%FileRepositoryBuilder{}, extra_dirs)
+    end
+
+    test "avoids ceiling", %{trash: trash} do
+      git_dir = Path.join(trash, ".git")
+      File.mkdir_p!(git_dir)
+
+      object_dir = Path.join(git_dir, "objects")
+      File.mkdir_p!(object_dir)
+
+      refs_dir = Path.join(git_dir, "refs")
+      File.mkdir_p!(refs_dir)
+
+      head_file = Path.join(git_dir, "HEAD")
+      File.write!(head_file, "ref: refs/mumble")
+
+      ceiling = Path.join(trash, "a")
+      File.mkdir_p!(ceiling)
+
+      extra_dirs = Path.join(ceiling, "b/c/d")
+      File.mkdir_p!(extra_dirs)
+
+      assert %FileRepositoryBuilder{git_dir: nil} =
+               FileRepositoryBuilder.find_git_dir(
+                 %FileRepositoryBuilder{ceiling_directories: [ceiling]},
+                 extra_dirs
+               )
+    end
+  end
 end
