@@ -1,5 +1,6 @@
-defmodule Xgit.Lib.BaseRepositoryBuilder do
+defmodule Xgit.Storage.File.FileRepositoryBuilder do
   @moduledoc ~S"""
+  A module for finding and/or creating file-based repositories.
   A behaviour module for implementing specialized repository construction.
 
   An implementation of this behaviour may add custom repository detection methods.
@@ -17,6 +18,10 @@ defmodule Xgit.Lib.BaseRepositoryBuilder do
   PORTING NOTE: Unlike the jgit implementation, this version has no setters or getters
   for the configuration options. Set up the struct directly and then call the
   functions on this module to set up the repository.
+
+  PORTING NOTE: Unlike the jgit implementation, we do not have a polymorphic mechanism
+  for repository buidlers. Implementations that use other storage mechanisms should
+  be built independently.
   """
 
   defstruct git_dir: nil,
@@ -346,19 +351,4 @@ defmodule Xgit.Lib.BaseRepositoryBuilder do
   #   return null;
   # }
   #
-
-  @doc ~S"""
-  blah blah blah
-  """
-  @callback handle_blah(foo :: term) :: term
-
-  @doc false
-  defmacro __using__(opts) do
-    quote location: :keep, bind_quoted: [opts: opts] do
-      @behaviour Xgit.Lib.BaseRepositoryBuilder
-
-      def foo(bar), do: :blah
-      defoverridable foo: 1
-    end
-  end
 end

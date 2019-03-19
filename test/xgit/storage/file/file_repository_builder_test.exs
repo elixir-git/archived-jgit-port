@@ -1,15 +1,15 @@
-defmodule Xgit.Lib.BaseRepositoryBuilderTest do
+defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
   use ExUnit.Case, async: true
 
-  alias Xgit.Lib.BaseRepositoryBuilder
+  alias Xgit.Storage.File.FileRepositoryBuilder
   alias Xgit.Test.MockSystemReader
 
   describe "read_environment/2" do
     test "basic case" do
       msr = %MockSystemReader{}
-      b = %BaseRepositoryBuilder{} |> BaseRepositoryBuilder.read_environment(msr)
+      b = %FileRepositoryBuilder{} |> FileRepositoryBuilder.read_environment(msr)
 
-      assert b == %BaseRepositoryBuilder{
+      assert b == %FileRepositoryBuilder{
                git_dir: nil,
                object_dir: nil,
                alternate_object_directories: nil,
@@ -33,9 +33,9 @@ defmodule Xgit.Lib.BaseRepositoryBuilderTest do
         }
       }
 
-      b = %BaseRepositoryBuilder{} |> BaseRepositoryBuilder.read_environment(msr)
+      b = %FileRepositoryBuilder{} |> FileRepositoryBuilder.read_environment(msr)
 
-      assert b == %BaseRepositoryBuilder{
+      assert b == %FileRepositoryBuilder{
                git_dir: ".xgit",
                object_dir: ".objects",
                alternate_object_directories: ["alternate", "object", "dirs"],
@@ -60,7 +60,7 @@ defmodule Xgit.Lib.BaseRepositoryBuilderTest do
       }
 
       b =
-        %BaseRepositoryBuilder{
+        %FileRepositoryBuilder{
           git_dir: "xgit",
           object_dir: "objects",
           alternate_object_directories: ["object", "alternates"],
@@ -70,9 +70,9 @@ defmodule Xgit.Lib.BaseRepositoryBuilderTest do
           index_file: "index_of_git",
           ceiling_directories: ["ceilings", "dirs"]
         }
-        |> BaseRepositoryBuilder.read_environment(msr)
+        |> FileRepositoryBuilder.read_environment(msr)
 
-      assert b == %BaseRepositoryBuilder{
+      assert b == %FileRepositoryBuilder{
                git_dir: "xgit",
                object_dir: "objects",
                alternate_object_directories: ["object", "alternates"],
