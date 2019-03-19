@@ -101,9 +101,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
       assert %FileRepositoryBuilder{git_dir: dir} =
                FileRepositoryBuilder.find_git_dir(%FileRepositoryBuilder{})
 
-      assert is_binary(dir)
-
-      # Presumably this test is being run itself from a git repo checkout, right?
+      assert is_binary(dir) || is_nil(dir)
     end
 
     test "git_dir miss (no .git dir)", %{trash: trash} do
