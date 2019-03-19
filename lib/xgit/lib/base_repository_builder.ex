@@ -29,6 +29,7 @@ defmodule Xgit.Lib.BaseRepositoryBuilder do
             ceiling_directories: nil
 
   alias Xgit.Lib.Constants
+  alias Xgit.Lib.RepositoryCache.FileKey
   alias Xgit.Util.SystemReader
 
   @doc ~S"""
@@ -102,106 +103,52 @@ defmodule Xgit.Lib.BaseRepositoryBuilder do
 
   defp maybe_update_ceiling_directories(builder, _), do: builder
 
-  # /**
-  #  * Configure {@code GIT_DIR} by searching up the file system.
-  #  * <p>
-  #  * Starts from the current working directory of the JVM and scans up through
-  #  * the directory tree until a Git repository is found. Success can be
-  #  * determined by checking for {@code getGitDir() != null}.
-  #  * <p>
-  #  * The search can be limited to specific spaces of the local filesystem by
-  #  * {@link #addCeilingDirectory(File)}, or inheriting the list through a
-  #  * prior call to {@link #readEnvironment()}.
-  #  *
-  #  * @return {@code this} (for chaining calls).
-  #  */
-  # public B findGitDir() {
-  #   if (getGitDir() == null)
-  #     findGitDir(new File("").getAbsoluteFile()); //$NON-NLS-1$
-  #   return self();
-  # }
-  #
-  # /**
-  #  * Configure {@code GIT_DIR} by searching up the file system.
-  #  * <p>
-  #  * Starts from the supplied directory path and scans up through the parent
-  #  * directory tree until a Git repository is found. Success can be determined
-  #  * by checking for {@code getGitDir() != null}.
-  #  * <p>
-  #  * The search can be limited to specific spaces of the local filesystem by
-  #  * {@link #addCeilingDirectory(File)}, or inheriting the list through a
-  #  * prior call to {@link #readEnvironment()}.
-  #  *
-  #  * @param current
-  #  *            directory to begin searching in.
-  #  * @return {@code this} (for chaining calls).
-  #  */
-  # public B findGitDir(File current) {
-  #   if (getGitDir() == null) {
-  #     FS tryFS = safeFS();
-  #     while (current != null) {
-  #       File dir = new File(current, DOT_GIT);
-  #       if (FileKey.isGitRepository(dir, tryFS)) {
-  #         setGitDir(dir);
-  #         break;
-  #       } else if (dir.isFile()) {
-  #         try {
-  #           setGitDir(getSymRef(current, dir, tryFS));
-  #           break;
-  #         } catch (IOException ignored) {
-  #           // Continue searching if gitdir ref isn't found
-  #         }
-  #       } else if (FileKey.isGitRepository(current, tryFS)) {
-  #         setGitDir(current);
-  #         break;
-  #       }
-  #
-  #       current = current.getParentFile();
-  #       if (current != null && ceilingDirectories != null
-  #           && ceilingDirectories.contains(current))
-  #         break;
-  #     }
-  #   }
-  #   return self();
-  # }
-  #
-  # private static boolean isSymRef(byte[] ref) {
-  #   if (ref.length < 9)
-  #     return false;
-  #   return /**/ref[0] == 'g' //
-  #       && ref[1] == 'i' //
-  #       && ref[2] == 't' //
-  #       && ref[3] == 'd' //
-  #       && ref[4] == 'i' //
-  #       && ref[5] == 'r' //
-  #       && ref[6] == ':' //
-  #       && ref[7] == ' ';
-  # }
-  #
-  # private static File getSymRef(File workTree, File dotGit, FS fs)
-  #     throws IOException {
-  #   byte[] content = IO.readFully(dotGit);
-  #   if (!isSymRef(content))
-  #     throw new IOException(MessageFormat.format(
-  #         JGitText.get().invalidGitdirRef, dotGit.getAbsolutePath()));
-  #
-  #   int pathStart = 8;
-  #   int lineEnd = RawParseUtils.nextLF(content, pathStart);
-  #   while (content[lineEnd - 1] == '\n' ||
-  #          (content[lineEnd - 1] == '\r' && SystemReader.getInstance().isWindows()))
-  #     lineEnd--;
-  #   if (lineEnd == pathStart)
-  #     throw new IOException(MessageFormat.format(
-  #         JGitText.get().invalidGitdirRef, dotGit.getAbsolutePath()));
-  #
-  #   String gitdirPath = RawParseUtils.decode(content, pathStart, lineEnd);
-  #   File gitdirFile = fs.resolve(workTree, gitdirPath);
-  #   if (gitdirFile.isAbsolute())
-  #     return gitdirFile;
-  #   else
-  #     return new File(workTree, gitdirPath).getCanonicalFile();
-  # }
-  #
+  @doc ~S"""
+  Finds the git directory by searching up the file system.
+
+  Starts from the supplied directory path (or current working directory if `nil`)
+  and scans up through the parent directory tree until a git repository is found.
+
+  The search can be limited to specific spaces of the local filesystem by adding
+  entries to `ceiling_directories`, or inheriting the list through a prior call
+  to `read_environment/2`.
+
+  Returns an updated builder struct with `:git_dir` populated if successful.
+  """
+  def find_git_dir(%__MODULE__{git_dir: dir} = builder, _current) when is_binary(dir),
+    do: builder
+
+  def find_git_dir(%__MODULE__{git_dir: nil} = builder, nil),
+    do: find_git_dir(builder, File.cwd!())
+
+  def find_git_dir(
+        %__MODULE__{git_dir: nil, ceiling_directories: ceiling_directories} = builder,
+        current
+      ) do
+    maybe_git_dir = Path.join(current, Constants.dot_git())
+    parent = Path.dirname(current)
+
+    cond do
+      FileKey.contains_git_repository?(maybe_git_dir) ->
+        %{builder | git_dir: maybe_git_dir}
+
+      # PORTING NOTE: We are not yet supporting sym ref syntax.
+
+      FileKey.contains_git_repository?(current) ->
+        %{builder | git_dir: current}
+
+      # current == parent is what happens when you call Path.dirname/1 on a file system root.
+      current == parent ->
+        builder
+
+      ceiling_directories != nil && Enum.member?(ceiling_directories, current) ->
+        builder
+
+      true ->
+        find_git_dir(builder, parent)
+    end
+  end
+
   # /** Configuration file of target repository, lazily loaded if required. */
   # private Config config;
   #
