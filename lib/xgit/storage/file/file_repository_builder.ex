@@ -117,6 +117,8 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
 
   Returns an updated builder struct with `:git_dir` populated if successful.
   """
+  def find_git_dir(builder, current \\ nil)
+
   def find_git_dir(%__MODULE__{git_dir: dir} = builder, _current) when is_binary(dir),
     do: builder
 
