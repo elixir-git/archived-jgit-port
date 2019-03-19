@@ -1,9 +1,6 @@
 defmodule Xgit.Storage.File.FileRepositoryBuilder do
   @moduledoc ~S"""
   A module for finding and/or creating file-based repositories.
-  A behaviour module for implementing specialized repository construction.
-
-  An implementation of this behaviour may add custom repository detection methods.
 
   Struct members:
   * `git_dir`: The `.git` directory storing the repository metadata.
