@@ -209,7 +209,9 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
       Temp.track!()
       trash = Temp.mkdir!(prefix: "tmp_")
 
-      {:ok, trash: temp_file_path}
+      raise "TO DO NEXT: SampleDataRepositoryTestCase > RepositoryTestCase > (implemented) LocalDiskRepositoryTestCase"
+
+      {:ok, trash: trash}
     end
 
     # @Test

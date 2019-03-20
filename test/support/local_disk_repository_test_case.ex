@@ -24,6 +24,7 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   #  */
 
   alias Xgit.Lib.Config
+  alias Xgit.Lib.ConfigConstants
   alias Xgit.Lib.PersonIdent
   alias Xgit.Storage.File.FileBasedConfig
   alias Xgit.Util.SystemReader
