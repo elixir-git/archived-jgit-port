@@ -1531,4 +1531,20 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.get_string_list(c, "my", "somename") == []
     assert Config.to_text(c) == ""
   end
+
+  test "put+get boolean + clear" do
+    c =
+      Config.new()
+      |> Config.set_boolean("my", "somename", true)
+
+    assert Config.get_boolean(c, "my", "somename", false) == true
+
+    Config.clear(c)
+    assert Config.get_boolean(c, "my", "somename", true) == true
+
+    Config.set_boolean(c, "my", "somename", false)
+    assert Config.get_boolean(c, "my", "somename", true) == false
+
+    assert Config.to_text(c) == "[my]\n\tsomename = false\n"
+  end
 end
