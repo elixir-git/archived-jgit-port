@@ -153,32 +153,21 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
     end
   end
 
-  # /** Configuration file of target repository, lazily loaded if required. */
-  # private Config config;
-  #
-  # /**
-  #  * Guess and populate all parameters not already defined.
-  #  * <p>
-  #  * If an option was not set, the setup method will try to default the option
-  #  * based on other options. If insufficient information is available, an
-  #  * exception is thrown to the caller.
-  #  *
-  #  * @return {@code this}
-  #  * @throws java.lang.IllegalArgumentException
-  #  *             insufficient parameters were set, or some parameters are
-  #  *             incompatible with one another.
-  #  * @throws java.io.IOException
-  #  *             the repository could not be accessed to configure the rest of
-  #  *             the builder's parameters.
-  #  */
-  # public B setup() throws IllegalArgumentException, IOException {
-  #   requireGitDirOrWorkTree();
-  #   setupGitDir();
-  #   setupWorkTree();
-  #   setupInternals();
-  #   return self();
-  # }
-  #
+  @doc ~S"""
+  Guess and populate all parameters not already defined.
+
+  If an option was not set, the setup method will try to default the option
+  based on other options. If insufficient information is available, an
+  exception is thrown to the caller.
+  """
+  def setup!(%__MODULE__{} = builder) do
+    builder
+    |> require_git_dir_or_work_tree!()
+    |> setup_git_dir()
+    |> setup_work_tree()
+    |> setup_internals()
+  end
+
   # /**
   #  * Create a repository matching the configuration in this builder.
   #  * <p>
@@ -197,81 +186,79 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   #  */
   # @SuppressWarnings({ "unchecked", "resource" })
   # public R build() throws IOException {
+  #   PORTING NOTE: This should move to FileRepository module to break dependency cycle.
   #   R repo = (R) new FileRepository(setup());
   #   if (isMustExist() && !repo.getObjectDatabase().exists())
   #     throw new RepositoryNotFoundException(getGitDir());
   #   return repo;
   # }
-  #
-  # /**
-  #  * Require either {@code gitDir} or {@code workTree} to be set.
-  #  */
-  # protected void requireGitDirOrWorkTree() {
-  #   if (getGitDir() == null && getWorkTree() == null)
-  #     throw new IllegalArgumentException(
-  #         JGitText.get().eitherGitDirOrWorkTreeRequired);
-  # }
-  #
-  # /**
-  #  * Perform standard gitDir initialization.
-  #  *
-  #  * @throws java.io.IOException
-  #  *             the repository could not be accessed
-  #  */
-  # protected void setupGitDir() throws IOException {
-  #   // No gitDir? Try to assume its under the workTree or a ref to another
-  #   // location
-  #   if (getGitDir() == null && getWorkTree() != null) {
-  #     File dotGit = new File(getWorkTree(), DOT_GIT);
-  #     if (!dotGit.isFile())
-  #       setGitDir(dotGit);
-  #     else
-  #       setGitDir(getSymRef(getWorkTree(), dotGit, safeFS()));
-  #   }
-  # }
-  #
-  # /**
-  #  * Perform standard work-tree initialization.
-  #  * <p>
-  #  * This is a method typically invoked inside of {@link #setup()}, near the
-  #  * end after the repository has been identified and its configuration is
-  #  * available for inspection.
-  #  *
-  #  * @throws java.io.IOException
-  #  *             the repository configuration could not be read.
-  #  */
-  # protected void setupWorkTree() throws IOException {
-  #   if (getFS() == null)
-  #     setFS(FS.DETECTED);
-  #
-  #   // If we aren't bare, we should have a work tree.
-  #   //
-  #   if (!isBare() && getWorkTree() == null)
-  #     setWorkTree(guessWorkTreeOrFail());
-  #
-  #   if (!isBare()) {
-  #     // If after guessing we're still not bare, we must have
-  #     // a metadata directory to hold the repository. Assume
-  #     // its at the work tree.
-  #     //
-  #     if (getGitDir() == null)
-  #       setGitDir(getWorkTree().getParentFile());
-  #     if (getIndexFile() == null)
-  #       setIndexFile(new File(getGitDir(), "index")); //$NON-NLS-1$
-  #   }
-  # }
-  #
-  # /**
-  #  * Configure the internal implementation details of the repository.
-  #  *
-  #  * @throws java.io.IOException
-  #  *             the repository could not be accessed
-  #  */
-  # protected void setupInternals() throws IOException {
-  #   if (getObjectDirectory() == null && getGitDir() != null)
-  #     setObjectDirectory(safeFS().resolve(getGitDir(), "objects")); //$NON-NLS-1$
-  # }
-  #
+
+  # Require either `git_dir` or `work_tree` to be set.
+  defp require_git_dir_or_work_tree!(%__MODULE__{git_dir: nil, work_tree: nil}) do
+    raise ArgumentError, "One of get_dir or work_tree must be provided."
+  end
+
+  defp require_git_dir_or_work_tree!(builder), do: builder
+
+  # Perform standard git_dir initialization.
+  defp setup_git_dir(%__MODULE__{git_dir: nil, work_tree: work_tree} = builder)
+       when is_binary(work_tree) do
+    dot_git = Path.join(work_tree, Constants.dot_git())
+
+    if File.regular?(dot_git),
+      do: raise(RuntimeError, "sym ref .git file not yet supported"),
+      else: %{builder | git_dir: dot_git}
+  end
+
+  defp setup_git_dir(%__MODULE__{} = buider), do: builder
+
+  # Perform standard work-tree initialization.
+  defp setup_work_tree(%__MODULE__{bare?: true} = builder), do: builder
+
+  defp setup_work_tree(%__MODULE__{bare?: false} = builder) do
+    case guess_work_tree!(builder) do
+      %__MODULE__{bare?: false} ->
+        setup_work_tree_from_metadata_dir(builder)
+
+      builder ->
+        builder
+    end
+  end
+
+  defp setup_work_tree_from_metadata_dir(builder) do
+    # If after guessing we're still not bare, we must have
+    # a metadata directory to hold the repository. Assume
+    # it's at the work tree.
+
+    builder
+    |> missing_git_dir_from_work_tree_parent()
+    |> missing_index_file_from_git_dir()
+  end
+
+  defp missing_git_dir_from_work_tree_parent(
+         %__MODULE__{git_dir: nil, work_tree: work_tree} = builder
+       )
+       when is_binary(work_tree) do
+    %{builder | git_dir: Path.dirname(work_tree)}
+  end
+
+  defp missing_git_dir_from_work_tree_parent(%__MODULE__{} = builder), do: builder
+
+  defp missing_index_file_from_git_dir(%__MODULE__{index_file: nil, git_dir: git_dir} = builder)
+       when is_binary(git_dir) do
+    %{builder | index_file: Path.join(git_dir, "index")}
+  end
+
+  defp missing_index_file_from_git_dir(%__MODULE__{} = builder), do: builder
+
+  defp setup_internals(%__MODULE__{object_dir: nil, git_dir: git_dir}) when is_binary(git_dir) do
+    %{builder | object_dir: Path.join(git_dir, "objects")}
+    # PORTING NOTE: We lost the fs.resolve from
+    #   setObjectDirectory(safeFS().resolve(getGitDir(), "objects"));
+  end
+
+  defp setup_internals(builder), do: builder
+
   # /**
   #  * Get the cached repository configuration, loading if not yet available.
   #  *
@@ -316,38 +303,41 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   #   }
   # }
   #
-  # private File guessWorkTreeOrFail() throws IOException {
-  #   final Config cfg = getConfig();
-  #
-  #   // If set, core.worktree wins.
-  #   //
-  #   String path = cfg.getString(CONFIG_CORE_SECTION, null,
-  #       CONFIG_KEY_WORKTREE);
-  #   if (path != null)
-  #     return safeFS().resolve(getGitDir(), path).getCanonicalFile();
-  #
-  #   // If core.bare is set, honor its value. Assume workTree is
-  #   // the parent directory of the repository.
-  #   //
-  #   if (cfg.getString(CONFIG_CORE_SECTION, null, CONFIG_KEY_BARE) != null) {
-  #     if (cfg.getBoolean(CONFIG_CORE_SECTION, CONFIG_KEY_BARE, true)) {
-  #       setBare();
-  #       return null;
-  #     }
-  #     return getGitDir().getParentFile();
-  #   }
-  #
-  #   if (getGitDir().getName().equals(DOT_GIT)) {
-  #     // No value for the "bare" flag, but gitDir is named ".git",
-  #     // use the parent of the directory
-  #     //
-  #     return getGitDir().getParentFile();
-  #   }
-  #
-  #   // We have to assume we are bare.
-  #   //
-  #   setBare();
-  #   return null;
-  # }
-  #
+
+  defp guess_work_tree!(%__MODULE__{work_tree: nil} = builder) do
+    raise "NOT YET IMPLEMENTED"
+    #   final Config cfg = getConfig();
+    #
+    #   // If set, core.worktree wins.
+    #   //
+    #   String path = cfg.getString(CONFIG_CORE_SECTION, null,
+    #       CONFIG_KEY_WORKTREE);
+    #   if (path != null)
+    #     return safeFS().resolve(getGitDir(), path).getCanonicalFile();
+    #
+    #   // If core.bare is set, honor its value. Assume workTree is
+    #   // the parent directory of the repository.
+    #   //
+    #   if (cfg.getString(CONFIG_CORE_SECTION, null, CONFIG_KEY_BARE) != null) {
+    #     if (cfg.getBoolean(CONFIG_CORE_SECTION, CONFIG_KEY_BARE, true)) {
+    #       setBare();
+    #       return null;
+    #     }
+    #     return getGitDir().getParentFile();
+    #   }
+    #
+    #   if (getGitDir().getName().equals(DOT_GIT)) {
+    #     // No value for the "bare" flag, but gitDir is named ".git",
+    #     // use the parent of the directory
+    #     //
+    #     return getGitDir().getParentFile();
+    #   }
+    #
+    #   // We have to assume we are bare.
+    #   //
+    #   setBare();
+    #   return null;
+  end
+
+  defp guess_work_tree!(builder), do: builder
 end
