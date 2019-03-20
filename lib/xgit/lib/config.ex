@@ -638,30 +638,26 @@ defmodule Xgit.Lib.Config do
   #
   # 	setString(section, subsection, name, s);
   # }
-  #
-  # /**
-  #  * Add or modify a configuration value. The parameters will result in a
-  #  * configuration entry like this.
-  #  *
-  #  * <pre>
-  #  * [section &quot;subsection&quot;]
-  #  *         name = value
-  #  * </pre>
-  #  *
-  #  * @param section
-  #  *            section name, e.g "branch"
-  #  * @param subsection
-  #  *            optional subsection value, e.g. a branch name
-  #  * @param name
-  #  *            parameter name, e.g. "filemode"
-  #  * @param value
-  #  *            parameter value
-  #  */
-  # public void setBoolean(final String section, final String subsection,
-  # 		final String name, final boolean value) {
-  # 	setString(section, subsection, name, value ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
-  # }
-  #
+
+  @doc ~s"""
+  Add or modify a configuration value. The parameters will result in a
+  configuration entry like this:
+
+  ```
+  [section "subsection"]
+    name = value
+  ```
+  """
+  def set_boolean(c, section, subsection \\ nil, name, value)
+      when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
+             is_binary(name) and is_boolean(value) do
+    c
+    |> process_ref()
+    |> GenServer.call({:set_string_list, section, subsection, name, [to_string(value)]})
+
+    c
+  end
+
   # /**
   #  * Add or modify a configuration value. The parameters will result in a
   #  * configuration entry like this.
