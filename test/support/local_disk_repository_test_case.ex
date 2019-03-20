@@ -23,7 +23,10 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   #  * descriptors or address space for the test process.
   #  */
 
+  alias Xgit.Lib.Config
+  alias Xgit.Lib.PersonIdent
   alias Xgit.Storage.File.FileBasedConfig
+  alias Xgit.Util.SystemReader
   alias Xgit.Test.MockSystemReader
 
   # private static final boolean useMMAP = "true".equals(System
@@ -42,6 +45,8 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
 
   Returns a map containing:
   * `mock_system_reader`: A `MockSystemReader` with environment variables set.
+  * `author`: A `PersonIdent` for a fake author.
+  * `committer`: A `PersonIdent` for a fake committer.
   * `tmp`: A temporary directory, which will be deleted after the test is done.
   """
   def setup_test do
@@ -55,72 +60,51 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
     # in the middle of writing or deleting files, which would disrupt this.
 
     Config.set_boolean(
+      user_git_config,
+      ConfigConstants.config_gc_section(),
+      ConfigConstants.config_key_autodetach(),
+      false
+    )
 
+    Config.save(user_git_config)
 
     mock_system_reader = %MockSystemReader{
-      user_config: user_git_config
+      user_config: user_git_config,
+      env: %{"GIT_CEILING_DIRECTORIES" => tmp}
     }
+
+    time = SystemReader.current_time(mock_system_reader)
+    timezone = SystemReader.timezone_at_time(mock_system_reader, time)
+
+    author = %PersonIdent{
+      name: "J. Author",
+      email: "jauthor@example.com",
+      when: time,
+      tz_offset: timezone
+    }
+
+    committer = %PersonIdent{
+      name: "J. Committer",
+      email: "jcommitter@example.com",
+      when: time,
+      tz_offset: timezone
+    }
+
+    # final WindowCacheConfig c = new WindowCacheConfig();
+    # c.setPackedGitLimit(128 * WindowCacheConfig.KB);
+    # c.setPackedGitWindowSize(8 * WindowCacheConfig.KB);
+    # c.setPackedGitMMAP(useMMAP);
+    # c.setDeltaBaseCacheLimit(8 * WindowCacheConfig.KB);
+    # c.install();
 
     %{
       mock_system_reader: mock_system_reader,
+      author: author,
+      committer: committer,
       tmp: tmp
     }
   end
 
-
-  # public void setUp() throws Exception {
-  #   // We have to set autoDetach to false for tests, because tests expect to be able
-  #   // to clean up by recursively removing the repository, and background GC might be
-  #   // in the middle of writing or deleting files, which would disrupt this.
-  #   mockSystemReader.userGitConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION,
-  #       null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
-  #   mockSystemReader.userGitConfig.save();
-  #   ceilTestDirectories(getCeilings());
-  #   SystemReader.setInstance(mockSystemReader);
-  #
-  #   author = new PersonIdent("J. Author", "jauthor@example.com");
-  #   committer = new PersonIdent("J. Committer", "jcommitter@example.com");
-  #
-  #   final WindowCacheConfig c = new WindowCacheConfig();
-  #   c.setPackedGitLimit(128 * WindowCacheConfig.KB);
-  #   c.setPackedGitWindowSize(8 * WindowCacheConfig.KB);
-  #   c.setPackedGitMMAP(useMMAP);
-  #   c.setDeltaBaseCacheLimit(8 * WindowCacheConfig.KB);
-  #   c.install();
-  # }
-  #
-  # /**
-  #  * Get temporary directory.
-  #  *
-  #  * @return the temporary directory
-  #  */
-  # protected File getTemporaryDirectory() {
-  #   return tmp.getAbsoluteFile();
-  # }
-  #
-  # /**
-  #  * Get list of ceiling directories
-  #  *
-  #  * @return list of ceiling directories
-  #  */
-  # protected List<File> getCeilings() {
-  #   return Collections.singletonList(getTemporaryDirectory());
-  # }
-  #
-  # private void ceilTestDirectories(List<File> ceilings) {
-  #   mockSystemReader.setProperty(Constants.GIT_CEILING_DIRECTORIES_KEY, makePath(ceilings));
-  # }
-  #
-  # private static String makePath(List<?> objects) {
-  #   final StringBuilder stringBuilder = new StringBuilder();
-  #   for (Object object : objects) {
-  #     if (stringBuilder.length() > 0)
-  #       stringBuilder.append(File.pathSeparatorChar);
-  #     stringBuilder.append(object.toString());
-  #   }
-  #   return stringBuilder.toString();
-  # }
-  #
   # /**
   #  * Tear down the test
   #  *
@@ -132,19 +116,6 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   #   for (Repository r : toClose)
   #     r.close();
   #   toClose.clear();
-  #
-  #   // Since memory mapping is controlled by the GC we need to
-  #   // tell it this is a good time to clean up and unlock
-  #   // memory mapped files.
-  #   //
-  #   if (useMMAP)
-  #     System.gc();
-  #   if (tmp != null)
-  #     recursiveDelete(tmp, false, true);
-  #   if (tmp != null && !tmp.exists())
-  #     CleanupThread.removed(tmp);
-  #
-  #   SystemReader.setInstance(null);
   # }
   #
   # /**
@@ -157,50 +128,6 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   #
   #   author = new PersonIdent(author, now, tz);
   #   committer = new PersonIdent(committer, now, tz);
-  # }
-  #
-  # /**
-  #  * Recursively delete a directory, failing the test if the delete fails.
-  #  *
-  #  * @param dir
-  #  *            the recursively directory to delete, if present.
-  #  */
-  # protected void recursiveDelete(File dir) {
-  #   recursiveDelete(dir, false, true);
-  # }
-  #
-  # private static boolean recursiveDelete(final File dir,
-  #     boolean silent, boolean failOnError) {
-  #   assert !(silent && failOnError);
-  #   if (!dir.exists())
-  #     return silent;
-  #   final File[] ls = dir.listFiles();
-  #   if (ls != null)
-  #     for (int k = 0; k < ls.length; k++) {
-  #       final File e = ls[k];
-  #       if (e.isDirectory())
-  #         silent = recursiveDelete(e, silent, failOnError);
-  #       else if (!e.delete()) {
-  #         if (!silent)
-  #           reportDeleteFailure(failOnError, e);
-  #         silent = !failOnError;
-  #       }
-  #     }
-  #   if (!dir.delete()) {
-  #     if (!silent)
-  #       reportDeleteFailure(failOnError, dir);
-  #     silent = !failOnError;
-  #   }
-  #   return silent;
-  # }
-  #
-  # private static void reportDeleteFailure(boolean failOnError, File e) {
-  #   String severity = failOnError ? "ERROR" : "WARNING";
-  #   String msg = severity + ": Failed to delete " + e;
-  #   if (failOnError)
-  #     fail(msg);
-  #   else
-  #     System.err.println(msg);
   # }
   #
   # /** Constant <code>MOD_TIME=1</code> */
@@ -368,31 +295,6 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   # }
   #
   # /**
-  #  * Adds a repository to the list of repositories which is closed at the end
-  #  * of the tests
-  #  *
-  #  * @param r
-  #  *            the repository to be closed
-  #  */
-  # public void addRepoToClose(Repository r) {
-  #   toClose.add(r);
-  # }
-  #
-  # /**
-  #  * Creates a unique directory for a test
-  #  *
-  #  * @param name
-  #  *            a subdirectory
-  #  * @return a unique directory for a test
-  #  * @throws IOException
-  #  */
-  # protected File createTempDirectory(String name) throws IOException {
-  #   File directory = new File(createTempFile(), name);
-  #   FileUtils.mkdirs(directory);
-  #   return directory.getCanonicalFile();
-  # }
-  #
-  # /**
   #  * Creates a new unique directory for a test repository
   #  *
   #  * @param bare
@@ -406,27 +308,6 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   #   if (!bare)
   #     gitdirName += "/";
   #   return new File(gitdirName + Constants.DOT_GIT);
-  # }
-  #
-  # /**
-  #  * Allocates a new unique file path that does not exist.
-  #  * <p>
-  #  * Unlike the standard {@code File.createTempFile} the returned path does
-  #  * not exist, but may be created by another thread in a race with the
-  #  * caller. Good luck.
-  #  * <p>
-  #  * This method is inherently unsafe due to a race condition between creating
-  #  * the name and the first use that reserves it.
-  #  *
-  #  * @return a unique path that does not exist.
-  #  * @throws IOException
-  #  */
-  # protected File createTempFile() throws IOException {
-  #   File p = File.createTempFile("tmp_", "", tmp);
-  #   if (!p.delete()) {
-  #     throw new IOException("Cannot obtain unique path " + tmp);
-  #   }
-  #   return p;
   # }
   #
   # /**
@@ -473,63 +354,6 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   #   env.put("GIT_" + type + "_DATE", date);
   # }
   #
-  # /**
-  #  * Create a string to a UTF-8 temporary file and return the path.
-  #  *
-  #  * @param body
-  #  *            complete content to write to the file. If the file should end
-  #  *            with a trailing LF, the string should end with an LF.
-  #  * @return path of the temporary file created within the trash area.
-  #  * @throws IOException
-  #  *             the file could not be written.
-  #  */
-  # protected File write(String body) throws IOException {
-  #   final File f = File.createTempFile("temp", "txt", tmp);
-  #   try {
-  #     write(f, body);
-  #     return f;
-  #   } catch (Error e) {
-  #     f.delete();
-  #     throw e;
-  #   } catch (RuntimeException e) {
-  #     f.delete();
-  #     throw e;
-  #   } catch (IOException e) {
-  #     f.delete();
-  #     throw e;
-  #   }
-  # }
-  #
-  # /**
-  #  * Write a string as a UTF-8 file.
-  #  *
-  #  * @param f
-  #  *            file to write the string to. Caller is responsible for making
-  #  *            sure it is in the trash directory or will otherwise be cleaned
-  #  *            up at the end of the test. If the parent directory does not
-  #  *            exist, the missing parent directories are automatically
-  #  *            created.
-  #  * @param body
-  #  *            content to write to the file.
-  #  * @throws IOException
-  #  *             the file could not be written.
-  #  */
-  # protected void write(File f, String body) throws IOException {
-  #   JGitTestUtil.write(f, body);
-  # }
-  #
-  # /**
-  #  * Read a file's content
-  #  *
-  #  * @param f
-  #  *            the file
-  #  * @return the content of the file
-  #  * @throws IOException
-  #  */
-  # protected String read(File f) throws IOException {
-  #   return JGitTestUtil.read(f);
-  # }
-  #
   # private static String[] toEnvArray(Map<String, String> env) {
   #   final String[] envp = new String[env.size()];
   #   int i = 0;
@@ -540,43 +364,5 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   #
   # private static HashMap<String, String> cloneEnv() {
   #   return new HashMap<>(System.getenv());
-  # }
-  #
-  # private static final class CleanupThread extends Thread {
-  #   private static final CleanupThread me;
-  #   static {
-  #     me = new CleanupThread();
-  #     Runtime.getRuntime().addShutdownHook(me);
-  #   }
-  #
-  #   static void deleteOnShutdown(File tmp) {
-  #     synchronized (me) {
-  #       me.toDelete.add(tmp);
-  #     }
-  #   }
-  #
-  #   static void removed(File tmp) {
-  #     synchronized (me) {
-  #       me.toDelete.remove(tmp);
-  #     }
-  #   }
-  #
-  #   private final List<File> toDelete = new ArrayList<>();
-  #
-  #   @Override
-  #   public void run() {
-  #     // On windows accidentally open files or memory
-  #     // mapped regions may prevent files from being deleted.
-  #     // Suggesting a GC increases the likelihood that our
-  #     // test repositories actually get removed after the
-  #     // tests, even in the case of failure.
-  #     System.gc();
-  #     synchronized (this) {
-  #       boolean silent = false;
-  #       boolean failOnError = false;
-  #       for (File tmp : toDelete)
-  #         recursiveDelete(tmp, silent, failOnError);
-  #     }
-  #   }
   # }
 end

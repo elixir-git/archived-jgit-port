@@ -918,6 +918,5 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
     #   path.setLastModified(set);
     #   assertTrue("time changed", old != path.lastModified());
     # }
-
   end
 end

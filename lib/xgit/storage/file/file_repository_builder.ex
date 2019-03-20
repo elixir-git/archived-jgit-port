@@ -210,7 +210,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
       else: %{builder | git_dir: dot_git}
   end
 
-  defp setup_git_dir(%__MODULE__{} = buider), do: builder
+  defp setup_git_dir(%__MODULE__{} = builder), do: builder
 
   # Perform standard work-tree initialization.
   defp setup_work_tree(%__MODULE__{bare?: true} = builder), do: builder
@@ -251,7 +251,8 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
 
   defp missing_index_file_from_git_dir(%__MODULE__{} = builder), do: builder
 
-  defp setup_internals(%__MODULE__{object_dir: nil, git_dir: git_dir}) when is_binary(git_dir) do
+  defp setup_internals(%__MODULE__{object_dir: nil, git_dir: git_dir} = builder)
+       when is_binary(git_dir) do
     %{builder | object_dir: Path.join(git_dir, "objects")}
     # PORTING NOTE: We lost the fs.resolve from
     #   setObjectDirectory(safeFS().resolve(getGitDir(), "objects"));
@@ -304,7 +305,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   # }
   #
 
-  defp guess_work_tree!(%__MODULE__{work_tree: nil} = builder) do
+  defp guess_work_tree!(%__MODULE__{work_tree: nil} = _builder) do
     raise "NOT YET IMPLEMENTED"
     #   final Config cfg = getConfig();
     #
