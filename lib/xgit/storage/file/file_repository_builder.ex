@@ -30,8 +30,11 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
             index_file: nil,
             ceiling_directories: nil
 
+  alias Xgit.Lib.Config
+  alias Xgit.Lib.ConfigConstants
   alias Xgit.Lib.Constants
   alias Xgit.Lib.RepositoryCache.FileKey
+  alias Xgit.Storage.File.FileBasedConfig
   alias Xgit.Util.SystemReader
 
   @doc ~S"""
@@ -195,7 +198,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
 
   # Require either `git_dir` or `work_tree` to be set.
   defp require_git_dir_or_work_tree!(%__MODULE__{git_dir: nil, work_tree: nil}) do
-    raise ArgumentError, "One of get_dir or work_tree must be provided."
+    raise ArgumentError, "One of git_dir or work_tree must be provided."
   end
 
   defp require_git_dir_or_work_tree!(builder), do: builder
@@ -216,13 +219,11 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   defp setup_work_tree(%__MODULE__{bare?: true} = builder), do: builder
 
   defp setup_work_tree(%__MODULE__{bare?: false} = builder) do
-    case guess_work_tree!(builder) do
-      %__MODULE__{bare?: false} ->
-        setup_work_tree_from_metadata_dir(builder)
+    %__MODULE__{bare?: bare?} = builder = guess_work_tree!(builder)
 
-      builder ->
-        builder
-    end
+    if bare?,
+      do: builder,
+      else: setup_work_tree_from_metadata_dir(builder)
   end
 
   defp setup_work_tree_from_metadata_dir(builder) do
@@ -260,85 +261,84 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
 
   defp setup_internals(builder), do: builder
 
-  # /**
-  #  * Get the cached repository configuration, loading if not yet available.
-  #  *
-  #  * @return the configuration of the repository.
-  #  * @throws java.io.IOException
-  #  *             the configuration is not available, or is badly formed.
-  #  */
-  # protected Config getConfig() throws IOException {
-  #   if (config == null)
-  #     config = loadConfig();
-  #   return config;
-  # }
+  # Parse and load the repository-specific configuration.
   #
-  # /**
-  #  * Parse and load the repository specific configuration.
-  #  * <p>
-  #  * The default implementation reads {@code gitDir/config}, or returns an
-  #  * empty configuration if gitDir was not set.
-  #  *
-  #  * @return the repository's configuration.
-  #  * @throws java.io.IOException
-  #  *             the configuration is not available.
-  #  */
-  # protected Config loadConfig() throws IOException {
-  #   if (getGitDir() != null) {
-  #     // We only want the repository's configuration file, and not
-  #     // the user file, as these parameters must be unique to this
-  #     // repository and not inherited from other files.
-  #     //
-  #     File path = safeFS().resolve(getGitDir(), Constants.CONFIG);
-  #     FileBasedConfig cfg = new FileBasedConfig(path, safeFS());
-  #     try {
-  #       cfg.load();
-  #     } catch (ConfigInvalidException err) {
-  #       throw new IllegalArgumentException(MessageFormat.format(
-  #           JGitText.get().repositoryConfigFileInvalid, path
-  #               .getAbsolutePath(), err.getMessage()));
-  #     }
-  #     return cfg;
-  #   } else {
-  #     return new Config();
-  #   }
-  # }
-  #
+  # Reads `#{git_dir}/config` or returns an empty configuration
+  # if `git_dir` was not set.
+  defp load_config(%__MODULE__{git_dir: nil}), do: Config.new()
 
-  defp guess_work_tree!(%__MODULE__{work_tree: nil} = _builder) do
-    raise "NOT YET IMPLEMENTED"
-    #   final Config cfg = getConfig();
-    #
-    #   // If set, core.worktree wins.
-    #   //
-    #   String path = cfg.getString(CONFIG_CORE_SECTION, null,
-    #       CONFIG_KEY_WORKTREE);
-    #   if (path != null)
-    #     return safeFS().resolve(getGitDir(), path).getCanonicalFile();
-    #
-    #   // If core.bare is set, honor its value. Assume workTree is
-    #   // the parent directory of the repository.
-    #   //
-    #   if (cfg.getString(CONFIG_CORE_SECTION, null, CONFIG_KEY_BARE) != null) {
-    #     if (cfg.getBoolean(CONFIG_CORE_SECTION, CONFIG_KEY_BARE, true)) {
-    #       setBare();
-    #       return null;
-    #     }
-    #     return getGitDir().getParentFile();
-    #   }
-    #
-    #   if (getGitDir().getName().equals(DOT_GIT)) {
-    #     // No value for the "bare" flag, but gitDir is named ".git",
-    #     // use the parent of the directory
-    #     //
-    #     return getGitDir().getParentFile();
-    #   }
-    #
-    #   // We have to assume we are bare.
-    #   //
-    #   setBare();
-    #   return null;
+  defp load_config(%__MODULE__{git_dir: git_dir}) do
+    # We only want the repository's configuration file, and not
+    # the user file, as these parameters must be unique to this
+    # repository and not inherited from other files.
+    config_path = Path.join(git_dir, Constants.config())
+    config = FileBasedConfig.config_for_path(config_path)
+
+    try do
+      Config.load(config)
+      config
+    rescue
+      e ->
+        message = Exception.message(e)
+        raise ArgumentError, "Repository config file #{config_path} invalid #{message}"
+    end
+  end
+
+  defp guess_work_tree!(%__MODULE__{git_dir: git_dir, work_tree: nil} = builder) do
+    config = load_config(builder)
+
+    path =
+      Config.get_string(
+        config,
+        ConfigConstants.config_core_section(),
+        ConfigConstants.config_key_worktree()
+      )
+
+    IO.inspect(builder, label: "GWT @ 299")
+
+    cond do
+      # If set, core.worktree wins.
+      is_binary(path) ->
+        IO.inspect(path, label: "GWT @ 304")
+        %{builder | work_tree: Path.expand(path, git_dir)}
+
+      # If core.bare is set, honor its value. Assume work_tree is
+      # the parent directory of the repository.
+      is_binary(
+        Config.get_string(
+          config,
+          ConfigConstants.config_core_section(),
+          ConfigConstants.config_key_bare()
+        )
+      ) ->
+        IO.puts("GWT @ 316 explicit config")
+        work_tree_from_explicit_bare_config(builder, config)
+
+      # No value for the "bare" flag, but git_dir is named ".git":
+      # use the parent of the directory.
+      Path.basename(git_dir) == Constants.dot_git() ->
+        %{builder | work_tree: Path.dirname(git_dir)}
+
+      # None of the above apply: We have to assume we are bare.
+      true ->
+        IO.puts("GWT @ 327 fallback to bare")
+        set_bare(builder)
+    end
   end
 
   defp guess_work_tree!(builder), do: builder
+
+  defp work_tree_from_explicit_bare_config(%__MODULE__{git_dir: git_dir} = builder, config) do
+    if Config.get_boolean(
+         config,
+         ConfigConstants.config_core_section(),
+         ConfigConstants.config_key_bare(),
+         true
+       ),
+       do: set_bare(builder),
+       else: %{builder | work_tree: Path.dirname(git_dir)}
+  end
+
+  defp set_bare(%__MODULE__{} = builder),
+    do: %{builder | index_file: nil, work_tree: nil, bare?: true}
 end
