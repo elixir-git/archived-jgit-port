@@ -232,18 +232,22 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
     # it's at the work tree.
 
     builder
-    |> missing_git_dir_from_work_tree_parent()
+    # |> missing_git_dir_from_work_tree_parent()  # see comment below
     |> missing_index_file_from_git_dir()
   end
 
-  defp missing_git_dir_from_work_tree_parent(
-         %__MODULE__{git_dir: nil, work_tree: work_tree} = builder
-       )
-       when is_binary(work_tree) do
-    %{builder | git_dir: Path.dirname(work_tree)}
-  end
-
-  defp missing_git_dir_from_work_tree_parent(%__MODULE__{} = builder), do: builder
+  # PORTING NOTE: Figure out if this case is ever reachable.
+  # From what I can tell, the equivalent code in jgit is unreachable
+  # since we previously have called setup_git_dir (setupGitDir in jgit).
+  # I can't construct a case where git_dir is nil by this stage.
+  # defp missing_git_dir_from_work_tree_parent(
+  #        %__MODULE__{git_dir: nil, work_tree: work_tree} = builder
+  #      )
+  #      when is_binary(work_tree) do
+  #   %{builder | git_dir: Path.dirname(work_tree)}
+  # end
+  #
+  # defp missing_git_dir_from_work_tree_parent(%__MODULE__{} = builder), do: builder
 
   defp missing_index_file_from_git_dir(%__MODULE__{index_file: nil, git_dir: git_dir} = builder)
        when is_binary(git_dir) do
@@ -265,9 +269,14 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   #
   # Reads `#{git_dir}/config` or returns an empty configuration
   # if `git_dir` was not set.
-  defp load_config(%__MODULE__{git_dir: nil}), do: Config.new()
 
-  defp load_config(%__MODULE__{git_dir: git_dir}) do
+  # PORTING NOTE: Figure out if this case is ever reachable.
+  # From what I can tell, the equivalent code in jgit is unreachable
+  # since we previously have called setup_git_dir (setupGitDir in jgit).
+  # I can't construct a case where git_dir is nil by this stage.
+  # defp load_config(%__MODULE__{git_dir: nil}), do: Config.new()
+
+  defp load_config(%__MODULE__{git_dir: git_dir}) when is_binary(git_dir) do
     # We only want the repository's configuration file, and not
     # the user file, as these parameters must be unique to this
     # repository and not inherited from other files.
@@ -308,7 +317,6 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
           ConfigConstants.config_key_bare()
         )
       ) ->
-        IO.puts("GWT @ 316 explicit config")
         work_tree_from_explicit_bare_config(builder, config)
 
       # No value for the "bare" flag, but git_dir is named ".git":

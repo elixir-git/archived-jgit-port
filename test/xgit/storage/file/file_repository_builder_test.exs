@@ -328,26 +328,43 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
                |> FileRepositoryBuilder.setup!()
     end
 
-    test "happy path: explicitly configure as bare repo", %{trash: trash} do
+    test "happy path: explicitly configure index file", %{trash: trash} do
       work_tree = Path.join(trash, "work_tree")
       git_dir = Path.join(work_tree, ".git")
-      config_file = Path.join(git_dir, "config")
+      index_file = Path.join(git_dir, "unusual-index")
       objects_dir = Path.join(git_dir, "objects")
-
-      File.mkdir_p!(git_dir)
-      File.write!(config_file, "[core]\n\tbare = true")
 
       assert %FileRepositoryBuilder{
                alternate_object_directories: nil,
-               bare?: true,
+               bare?: false,
                ceiling_directories: nil,
                git_dir: ^git_dir,
-               index_file: nil,
+               index_file: ^index_file,
                must_exist?: false,
                object_dir: ^objects_dir,
-               work_tree: nil
+               work_tree: ^work_tree
              } =
-               %FileRepositoryBuilder{git_dir: git_dir, bare?: true}
+               %FileRepositoryBuilder{git_dir: git_dir, index_file: index_file}
+               |> FileRepositoryBuilder.setup!()
+    end
+
+    test "happy path: explicitly configure objects dir", %{trash: trash} do
+      work_tree = Path.join(trash, "work_tree")
+      git_dir = Path.join(work_tree, ".git")
+      index_file = Path.join(git_dir, "index")
+      objects_dir = Path.join(git_dir, "unusual-objects")
+
+      assert %FileRepositoryBuilder{
+               alternate_object_directories: nil,
+               bare?: false,
+               ceiling_directories: nil,
+               git_dir: ^git_dir,
+               index_file: ^index_file,
+               must_exist?: false,
+               object_dir: ^objects_dir,
+               work_tree: ^work_tree
+             } =
+               %FileRepositoryBuilder{git_dir: git_dir, object_dir: objects_dir}
                |> FileRepositoryBuilder.setup!()
     end
   end
