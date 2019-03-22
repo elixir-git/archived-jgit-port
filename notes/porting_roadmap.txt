@@ -75,5 +75,3 @@ Repository
   RepositoryState ENUM
   RevCommit TRACE
   RevWalk TRACE
-
-BaseRepositoryBuilder
