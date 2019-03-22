@@ -28,19 +28,6 @@ LocalDiskRepositoryTestCase
   RepositoryCache TRACE
   WindowCacheConfig TRACE
 
-ObjectInserter
-  ContentSource
-  TreeFormatter DEFER?
-  CommitBuilder DEFER?
-  TagBuilder DEFER?
-  PackParser DEFER?
-
-ContentSource
-  ObjectLoader TRACE
-  ObjectReader TRACE
-  TreeWalk DEFER?
-  WorkingTreeIterator
-
 WorkingTreeIterator
   AbstractTreeIterator TRACE
   AttributesNode TRACE
@@ -50,8 +37,8 @@ WorkingTreeIterator
   Entry TRACE
   IgnoreNode TRACE
   MetadataDiff TRACE
-  ObjectLoader TRACE
-  ObjectReader TRACE
+  ObjectLoader
+  ObjectReader
   OperationType TRACE
   Repository TRACE
   TreeWalk TRACE
@@ -59,12 +46,11 @@ WorkingTreeIterator
 
 Repository
   AttributesNodeProvider TRACE
-  BaseRepositoryBuilder
   DirCache TRACE
-  ObjectDatabase TRACE
-  ObjectInserter TRACE
-  ObjectLoader TRACE
-  ObjectReader TRACE
+  ObjectDatabase
+  ObjectInserter
+  ObjectLoader
+  ObjectReader
   RebaseTodoFile TRACE
   RebaseTodoLine TRACE
   RefDatabase TRACE
@@ -75,3 +61,38 @@ Repository
   RepositoryState ENUM
   RevCommit TRACE
   RevWalk TRACE
+
+ObjectDatabase PROTOCOL + MODULE
+  ObjectInserter
+  ObjectLoader
+  ObjectReader
+
+ObjectInserter
+  ContentSource
+  TreeFormatter DEFER?
+  CommitBuilder DEFER?
+  TagBuilder DEFER?
+  PackParser DEFER?
+
+ContentSource PROTOCOL
+  (needs one of ObjectReader or WorkingTreeIterator for implementation)
+  ObjectReader
+  WorkingTreeIterator DEFER?
+
+ObjectReader PROTOCOL + MODULE
+  AbbreviatedObjectId
+  BitmapIndex
+  ObjectLoader
+  ObjectInserter (circular reference via ContentSource)
+
+BitmapIndex PROTOCOL (plus descendants)
+  BitmapObject
+
+BitmapObject STRUCT
+
+ObjectLoader PROTOCOL + MODULE
+  ObjectStream
+
+ObjectStream PROTOCOL
+
+AbbreviatedObjectId MODULE
