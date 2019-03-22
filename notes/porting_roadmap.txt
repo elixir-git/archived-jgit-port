@@ -80,7 +80,6 @@ ContentSource PROTOCOL
   WorkingTreeIterator DEFER?
 
 ObjectReader PROTOCOL + MODULE
-  AbbreviatedObjectId
   BitmapIndex
   ObjectLoader
   ObjectInserter (circular reference via ContentSource)
@@ -94,5 +93,3 @@ ObjectLoader PROTOCOL + MODULE
   ObjectStream
 
 ObjectStream PROTOCOL
-
-AbbreviatedObjectId MODULE
