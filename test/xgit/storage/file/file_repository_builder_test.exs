@@ -328,6 +328,55 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
                |> FileRepositoryBuilder.setup!()
     end
 
+    test "happy path: explicitly configure as bare", %{trash: trash} do
+      work_tree = Path.join(trash, "work_tree")
+      git_dir = Path.join(work_tree, ".git")
+      config_file = Path.join(git_dir, "config")
+      objects_dir = Path.join(git_dir, "objects")
+
+      File.mkdir_p!(git_dir)
+      File.write!(config_file, "[core]\n\tbare = true")
+
+      assert %FileRepositoryBuilder{
+               alternate_object_directories: nil,
+               bare?: true,
+               ceiling_directories: nil,
+               git_dir: ^git_dir,
+               index_file: nil,
+               must_exist?: false,
+               object_dir: ^objects_dir,
+               work_tree: nil
+             } =
+               %FileRepositoryBuilder{git_dir: git_dir}
+               |> FileRepositoryBuilder.setup!()
+    end
+
+    test "happy path: explicitly configure work tree", %{trash: trash} do
+      work_tree = Path.join(trash, "work_tree")
+      git_dir = Path.join(work_tree, ".git")
+      config_file = Path.join(git_dir, "config")
+      index_file = Path.join(git_dir, "index")
+      objects_dir = Path.join(git_dir, "objects")
+
+      File.mkdir_p!(git_dir)
+      File.write!(config_file, "[core]\n\tworktree = ../some_other_worktree")
+
+      configured_work_tree = Path.join(work_tree, "some_other_worktree")
+
+      assert %FileRepositoryBuilder{
+               alternate_object_directories: nil,
+               bare?: false,
+               ceiling_directories: nil,
+               git_dir: ^git_dir,
+               index_file: ^index_file,
+               must_exist?: false,
+               object_dir: ^objects_dir,
+               work_tree: ^configured_work_tree
+             } =
+               %FileRepositoryBuilder{git_dir: git_dir}
+               |> FileRepositoryBuilder.setup!()
+    end
+
     test "happy path: explicitly configure index file", %{trash: trash} do
       work_tree = Path.join(trash, "work_tree")
       git_dir = Path.join(work_tree, ".git")
@@ -366,6 +415,20 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
              } =
                %FileRepositoryBuilder{git_dir: git_dir, object_dir: objects_dir}
                |> FileRepositoryBuilder.setup!()
+    end
+
+    test "error: malformed config file", %{trash: trash} do
+      work_tree = Path.join(trash, "work_tree")
+      git_dir = Path.join(work_tree, ".git")
+      config_file = Path.join(git_dir, "config")
+
+      File.mkdir_p!(git_dir)
+      File.write!(config_file, "malformed config file")
+
+      assert_raise ArgumentError, fn ->
+        %FileRepositoryBuilder{git_dir: git_dir}
+        |> FileRepositoryBuilder.setup!()
+      end
     end
   end
 end
