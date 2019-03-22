@@ -17,7 +17,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   functions on this module to set up the repository.
 
   PORTING NOTE: Unlike the jgit implementation, we do not have a polymorphic mechanism
-  for repository buidlers. Implementations that use other storage mechanisms should
+  for repository builders. Implementations that use other storage mechanisms should
   be built independently.
   """
 
