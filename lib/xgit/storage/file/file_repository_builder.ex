@@ -294,12 +294,9 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
         ConfigConstants.config_key_worktree()
       )
 
-    IO.inspect(builder, label: "GWT @ 299")
-
     cond do
       # If set, core.worktree wins.
       is_binary(path) ->
-        IO.inspect(path, label: "GWT @ 304")
         %{builder | work_tree: Path.expand(path, git_dir)}
 
       # If core.bare is set, honor its value. Assume work_tree is
@@ -321,7 +318,6 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
 
       # None of the above apply: We have to assume we are bare.
       true ->
-        IO.puts("GWT @ 327 fallback to bare")
         set_bare(builder)
     end
   end

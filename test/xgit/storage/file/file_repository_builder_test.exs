@@ -267,5 +267,88 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
                %FileRepositoryBuilder{git_dir: git_dir}
                |> FileRepositoryBuilder.setup!()
     end
+
+    test "happy path: populate as bare repo", %{trash: trash} do
+      git_dir = Path.join(trash, ".git")
+      objects_dir = Path.join(git_dir, "objects")
+
+      assert %FileRepositoryBuilder{
+               alternate_object_directories: nil,
+               bare?: true,
+               ceiling_directories: nil,
+               git_dir: ^git_dir,
+               index_file: nil,
+               must_exist?: false,
+               object_dir: ^objects_dir,
+               work_tree: nil
+             } =
+               %FileRepositoryBuilder{git_dir: git_dir, bare?: true}
+               |> FileRepositoryBuilder.setup!()
+    end
+
+    test "happy path: imply bare repo", %{trash: trash} do
+      git_dir = Path.join(trash, "notgit")
+      objects_dir = Path.join(git_dir, "objects")
+
+      assert %FileRepositoryBuilder{
+               alternate_object_directories: nil,
+               bare?: true,
+               ceiling_directories: nil,
+               git_dir: ^git_dir,
+               index_file: nil,
+               must_exist?: false,
+               object_dir: ^objects_dir,
+               work_tree: nil
+             } =
+               %FileRepositoryBuilder{git_dir: git_dir}
+               |> FileRepositoryBuilder.setup!()
+    end
+
+    test "happy path: explicitly configure as not bare", %{trash: trash} do
+      work_tree = Path.join(trash, "work_tree")
+      git_dir = Path.join(work_tree, ".git")
+      config_file = Path.join(git_dir, "config")
+      index_file = Path.join(git_dir, "index")
+      objects_dir = Path.join(git_dir, "objects")
+
+      File.mkdir_p!(git_dir)
+      File.write!(config_file, "[core]\n\tbare = false")
+
+      assert %FileRepositoryBuilder{
+               alternate_object_directories: nil,
+               bare?: false,
+               ceiling_directories: nil,
+               git_dir: ^git_dir,
+               index_file: ^index_file,
+               must_exist?: false,
+               object_dir: ^objects_dir,
+               work_tree: ^work_tree
+             } =
+               %FileRepositoryBuilder{git_dir: git_dir}
+               |> FileRepositoryBuilder.setup!()
+    end
+
+    test "happy path: explicitly configure as bare repo", %{trash: trash} do
+      work_tree = Path.join(trash, "work_tree")
+      git_dir = Path.join(work_tree, ".git")
+      config_file = Path.join(git_dir, "config")
+      objects_dir = Path.join(git_dir, "objects")
+
+      File.mkdir_p!(git_dir)
+      File.write!(config_file, "[core]\n\tbare = true")
+
+      assert %FileRepositoryBuilder{
+               alternate_object_directories: nil,
+               bare?: true,
+               ceiling_directories: nil,
+               git_dir: ^git_dir,
+               index_file: nil,
+               must_exist?: false,
+               object_dir: ^objects_dir,
+               work_tree: nil
+             } =
+               %FileRepositoryBuilder{git_dir: git_dir, bare?: true}
+               |> FileRepositoryBuilder.setup!()
+    end
   end
 end
