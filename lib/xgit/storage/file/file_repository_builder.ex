@@ -289,6 +289,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
     rescue
       e ->
         message = Exception.message(e)
+        # credo:disable-for-next-line Credo.Check.Warning.RaiseInsideRescue
         raise ArgumentError, "Repository config file #{config_path} invalid #{message}"
     end
   end
