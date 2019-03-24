@@ -83,6 +83,4 @@ ObjectReader PROTOCOL + MODULE
 BitmapIndex PROTOCOL (plus descendants)
   BitmapObject
 
-BitmapObject STRUCT
-
 ObjectStream -> Enumerable
