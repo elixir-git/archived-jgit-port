@@ -37,7 +37,6 @@ WorkingTreeIterator
   Entry TRACE
   IgnoreNode TRACE
   MetadataDiff TRACE
-  ObjectLoader
   ObjectReader
   OperationType TRACE
   Repository TRACE
@@ -49,7 +48,6 @@ Repository
   DirCache TRACE
   ObjectDatabase
   ObjectInserter
-  ObjectLoader
   ObjectReader
   RebaseTodoFile TRACE
   RebaseTodoLine TRACE
@@ -64,7 +62,6 @@ Repository
 
 ObjectDatabase PROTOCOL + MODULE
   ObjectInserter
-  ObjectLoader
   ObjectReader
 
 ObjectInserter
@@ -81,7 +78,6 @@ ContentSource PROTOCOL
 
 ObjectReader PROTOCOL + MODULE
   BitmapIndex
-  ObjectLoader
   ObjectInserter (circular reference via ContentSource)
 
 BitmapIndex PROTOCOL (plus descendants)
@@ -89,7 +85,4 @@ BitmapIndex PROTOCOL (plus descendants)
 
 BitmapObject STRUCT
 
-ObjectLoader PROTOCOL + MODULE
-  ObjectStream
-
-ObjectStream PROTOCOL
+ObjectStream -> Enumerable
