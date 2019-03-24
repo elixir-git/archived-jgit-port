@@ -77,10 +77,6 @@ ContentSource PROTOCOL
   WorkingTreeIterator DEFER?
 
 ObjectReader PROTOCOL + MODULE
-  BitmapIndex
   ObjectInserter (circular reference via ContentSource)
-
-BitmapIndex PROTOCOL (plus descendants)
-  BitmapObject
 
 ObjectStream -> Enumerable
