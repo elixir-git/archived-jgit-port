@@ -37,5 +37,5 @@ defprotocol Xgit.Lib.ObjectLoader do
   def stream(loader)
 
   # PORTING NOTE: It is expected that the `copyTo` function in jgit's ObjectLoader
-  # class can be mimiced by using `Sream.into/1`, so it's unnecessary to port it.
+  # class can be mimiced by using `Stream.into/1`, so it's unnecessary to port it.
 end
