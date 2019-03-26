@@ -8,6 +8,8 @@ defmodule Xgit.Lib.AbbreviatedObjectId do
   period of time, especially if they contain at least 6-10 hex digits.
   """
 
+  @type t :: String.t()
+
   @doc ~S"""
   Test a string of characters to verify it is a valid abbreviated ID.
   """
