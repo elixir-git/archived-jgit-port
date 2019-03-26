@@ -18,6 +18,7 @@ defmodule Xgit.Lib.ObjectReader do
 
   alias Xgit.Lib.AbbreviatedObjectId
   alias Xgit.Lib.ObjectId
+  alias Xgit.Lib.ObjectLoader
 
   defprotocol Strategy do
     @moduledoc ~S"""
@@ -77,6 +78,25 @@ defmodule Xgit.Lib.ObjectReader do
     """
     @spec open(reader :: term, object_id :: ObjectId.t(), type_hint :: term) :: ObjectLoader.t()
     def open(reader, object_id, type_hint)
+
+    @doc ~S"""
+    Get only the size of an object.
+
+    `type_hint` may be one of the `obj_*` constants from `Constants` or
+    the wildcard term `:any` if the caller does not know the object type.
+
+    Should return the size of the object in bytes.
+
+    A default implementation exists. It will call `open/3` and use the resulting
+    `ObjectLoader` to determine the object's size. If an implementation wishes
+    to use this implementation, it can simply return `:default` from this
+    function.
+
+    Should raise `MissingObjectError` if no such object exists.
+    """
+    @spec object_size(reader :: term, object_id :: ObjectId.t(), type_hint :: term) ::
+            non_neg_integer() | :default
+    def object_size(reader, object_id, type_hint)
   end
 
   @doc ~S"""
@@ -235,36 +255,32 @@ defmodule Xgit.Lib.ObjectReader do
   #     }
   #   };
   # }
-  #
-  # /**
-  #  * Get only the size of an object.
-  #  * <p>
-  #  * The default implementation of this method opens an ObjectLoader.
-  #  * Databases are encouraged to override this if a faster access method is
-  #  * available to them.
-  #  *
-  #  * @param objectId
-  #  *            identity of the object to open.
-  #  * @param typeHint
-  #  *            hint about the type of object being requested, e.g.
-  #  *            {@link org.eclipse.jgit.lib.Constants#OBJ_BLOB};
-  #  *            {@link #:any} if the object type is not known, or does not
-  #  *            matter to the caller.
-  #  * @return size of object in bytes.
-  #  * @throws org.eclipse.jgit.errors.MissingObjectException
-  #  *             the object does not exist.
-  #  * @throws org.eclipse.jgit.errors.IncorrectObjectTypeException
-  #  *             typeHint was not :any, and the object's actual type does
-  #  *             not match typeHint.
-  #  * @throws java.io.IOException
-  #  *             the object store cannot be accessed.
-  #  */
-  # public long getObjectSize(AnyObjectId objectId, int typeHint)
-  #     throws MissingObjectException, IncorrectObjectTypeException,
-  #     IOException {
-  #   return open(objectId, typeHint).getSize();
-  # }
-  #
+
+  @doc ~S"""
+  Get only the size of an object.
+
+  `type_hint` should be one of the `obj_*` constants from `Constants` or
+  the wildcard term `:any` if the object type is not known. (The default value
+  is `:any`.)
+
+  Returns the size of the object in bytes.
+
+  Raises `MissingObjectError` if no such object exists.
+  """
+  @spec object_size(reader :: term, object_id :: ObjectId.t(), type_hint :: term) ::
+          ObjectLoader.t()
+  def object_size(reader, object_id, type_hint \\ :any) do
+    case Strategy.object_size(reader, object_id, type_hint) do
+      size when is_integer(size) ->
+        size
+
+      :default ->
+        reader
+        |> open(object_id, type_hint)
+        |> ObjectLoader.size()
+    end
+  end
+
   # /**
   #  * Asynchronous object size lookup.
   #  *
