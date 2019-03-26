@@ -3,12 +3,17 @@ defmodule Xgit.Lib.ObjectReader do
   Reads an `ObjectDatabase` for a single process.
 
   Readers that can support efficient reuse of pack encoded objects should also
-  implement the companion interface `ObjectReuseAsIs`.
+  implement the companion protocol `ObjectReuseAsIs`.
+
+  PORTING NOTE: Is this necessarily tied to a single process in Elixir?
 
   PORTING NOTE: `ObjectReuseAsIs` is not yet ported.
 
   PORTING NOTE: `streamFileThreadhold` is considered an implementation detail
   and thus is not part of the generic interface.
+
+  PORTING NOTE: This jgit class is partially ported for now. Holding off on the
+  rest until I understand the use cases better.
   """
 
   alias Xgit.Lib.AbbreviatedObjectId
@@ -50,6 +55,28 @@ defmodule Xgit.Lib.ObjectReader do
     """
     @spec resolve(reader :: t, abbreviated_id :: AbbreviatedObjectId.t()) :: [ObjectId.t()]
     def resolve(reader, abbreviated_id)
+
+    @doc ~S"""
+    Does the requested object exist in this database?
+
+    `type_hint` may be one of the `obj_*` constants from `Constants` or
+    the wildcard term `:any` if the caller does not know the object type.
+    """
+    @spec has_object?(reader :: term, object_id :: ObjectId.t(), type_hint :: term) :: boolean
+    def has_object?(reader, object_id, type_hint)
+
+    @doc ~S"""
+    Open an object from this database.
+
+    `type_hint` may be one of the `obj_*` constants from `Constants` or
+    the wildcard term `:any` if the caller does not know the object type.
+
+    Should return a struct that implements `ObjectLoader` protocol.
+
+    Should raise `MissingObjectError` if no such object exists in the database.
+    """
+    @spec open(reader :: term, object_id :: ObjectId.t(), type_hint :: term) :: ObjectLoader.t()
+    def open(reader, object_id, type_hint)
   end
 
   @doc ~S"""
@@ -117,87 +144,30 @@ defmodule Xgit.Lib.ObjectReader do
   @spec resolve(reader :: term, abbreviated_id :: AbbreviatedObjectId.t()) :: [ObjectId.t()]
   defdelegate resolve(reader, abbreviated_id), to: Strategy
 
-  # /**
-  #  * Does the requested object exist in this database?
-  #  *
-  #  * @param objectId
-  #  *            identity of the object to test for existence of.
-  #  * @return true if the specified object is stored in this database.
-  #  * @throws java.io.IOException
-  #  *             the object store cannot be accessed.
-  #  */
-  # public boolean has(AnyObjectId objectId) throws IOException {
-  #   return has(objectId, :any);
-  # }
-  #
-  # /**
-  #  * Does the requested object exist in this database?
-  #  *
-  #  * @param objectId
-  #  *            identity of the object to test for existence of.
-  #  * @param typeHint
-  #  *            hint about the type of object being requested, e.g.
-  #  *            {@link org.eclipse.jgit.lib.Constants#OBJ_BLOB};
-  #  *            {@link #:any} if the object type is not known, or does not
-  #  *            matter to the caller.
-  #  * @return true if the specified object is stored in this database.
-  #  * @throws IncorrectObjectTypeException
-  #  *             typeHint was not :any, and the object's actual type does
-  #  *             not match typeHint.
-  #  * @throws java.io.IOException
-  #  *             the object store cannot be accessed.
-  #  */
-  # public boolean has(AnyObjectId objectId, int typeHint) throws IOException {
-  #   -- is overridden
-  #   try {
-  #     open(objectId, typeHint);
-  #     return true;
-  #   } catch (MissingObjectException notFound) {
-  #     return false;
-  #   }
-  # }
-  #
-  # /**
-  #  * Open an object from this database.
-  #  *
-  #  * @param objectId
-  #  *            identity of the object to open.
-  #  * @return a {@link org.eclipse.jgit.lib.ObjectLoader} for accessing the
-  #  *         object.
-  #  * @throws org.eclipse.jgit.errors.MissingObjectException
-  #  *             the object does not exist.
-  #  * @throws java.io.IOException
-  #  *             the object store cannot be accessed.
-  #  */
-  # public ObjectLoader open(AnyObjectId objectId)
-  #     throws MissingObjectException, IOException {
-  #   return open(objectId, :any);
-  # }
-  #
-  # /**
-  #  * Open an object from this database.
-  #  *
-  #  * @param objectId
-  #  *            identity of the object to open.
-  #  * @param typeHint
-  #  *            hint about the type of object being requested, e.g.
-  #  *            {@link org.eclipse.jgit.lib.Constants#OBJ_BLOB};
-  #  *            {@link #:any} if the object type is not known, or does not
-  #  *            matter to the caller.
-  #  * @return a {@link org.eclipse.jgit.lib.ObjectLoader} for accessing the
-  #  *         object.
-  #  * @throws org.eclipse.jgit.errors.MissingObjectException
-  #  *             the object does not exist.
-  #  * @throws org.eclipse.jgit.errors.IncorrectObjectTypeException
-  #  *             typeHint was not :any, and the object's actual type does
-  #  *             not match typeHint.
-  #  * @throws java.io.IOException
-  #  *             the object store cannot be accessed.
-  #  */
-  # public abstract ObjectLoader open(AnyObjectId objectId, int typeHint)
-  #     throws MissingObjectException, IncorrectObjectTypeException,
-  #     IOException;
-  #
+  @doc ~S"""
+  Does the requested object exist in this database?
+
+  `type_hint` should be one of the `obj_*` constants from `Constants` or
+  the wildcard term `:any` if the object type is not known. (The default value
+  is `:any`.)
+  """
+  @spec has_object?(reader :: term, object_id :: ObjectId.t(), type_hint :: term) :: boolean
+  defdelegate has_object?(reader, object_id, type_hint \\ :any), to: Strategy
+
+  @doc ~S"""
+  Open an object from this database.
+
+  `type_hint` should be one of the `obj_*` constants from `Constants` or
+  the wildcard term `:any` if the object type is not known. (The default value
+  is `:any`.)
+
+  Returns a struct that implements `ObjectLoader` protocol.
+
+  Raises `MissingObjectError` if no such object exists in the database.
+  """
+  @spec open(reader :: term, object_id :: ObjectId.t(), type_hint :: term) :: ObjectLoader.t()
+  defdelegate open(reader, object_id, type_hint \\ :any), to: Strategy
+
   # /**
   #  * Returns IDs for those commits which should be considered as shallow.
   #  *
@@ -208,6 +178,8 @@ defmodule Xgit.Lib.ObjectReader do
   #
   # /**
   #  * Asynchronous object opening.
+  #  *
+  #  * PORTING NOTE: This might be better handled by clients using Task.async_stream.
   #  *
   #  * @param objectIds
   #  *            objects to open from the object store. The supplied collection
@@ -431,109 +403,5 @@ defmodule Xgit.Lib.ObjectReader do
   #  */
   # public int getStreamFileThreshold() {
   #   return streamFileThreshold;
-  # }
-  #
-  # /**
-  #  * Wraps a delegate ObjectReader.
-  #  *
-  #  * @since 4.4
-  #  */
-  # public static abstract class Filter extends ObjectReader {
-  #   /**
-  #    * @return delegate ObjectReader to handle all processing.
-  #    * @since 4.4
-  #    */
-  #   protected abstract ObjectReader delegate();
-  #
-  #   @Override
-  #   public ObjectReader newReader() {
-  #     return delegate().newReader();
-  #   }
-  #
-  #   @Override
-  #   public AbbreviatedObjectId abbreviate(AnyObjectId objectId)
-  #       throws IOException {
-  #     return delegate().abbreviate(objectId);
-  #   }
-  #
-  #   @Override
-  #   public AbbreviatedObjectId abbreviate(AnyObjectId objectId, int len)
-  #       throws IOException {
-  #     return delegate().abbreviate(objectId, len);
-  #   }
-  #
-  #   @Override
-  #   public Collection<ObjectId> resolve(AbbreviatedObjectId id)
-  #       throws IOException {
-  #     return delegate().resolve(id);
-  #   }
-  #
-  #   @Override
-  #   public boolean has(AnyObjectId objectId) throws IOException {
-  #     return delegate().has(objectId);
-  #   }
-  #
-  #   @Override
-  #   public boolean has(AnyObjectId objectId, int typeHint) throws IOException {
-  #     return delegate().has(objectId, typeHint);
-  #   }
-  #
-  #   @Override
-  #   public ObjectLoader open(AnyObjectId objectId)
-  #       throws MissingObjectException, IOException {
-  #     return delegate().open(objectId);
-  #   }
-  #
-  #   @Override
-  #   public ObjectLoader open(AnyObjectId objectId, int typeHint)
-  #       throws MissingObjectException, IncorrectObjectTypeException,
-  #       IOException {
-  #     return delegate().open(objectId, typeHint);
-  #   }
-  #
-  #   @Override
-  #   public Set<ObjectId> getShallowCommits() throws IOException {
-  #     return delegate().getShallowCommits();
-  #   }
-  #
-  #   @Override
-  #   public <T extends ObjectId> AsyncObjectLoaderQueue<T> open(
-  #       Iterable<T> objectIds, boolean reportMissing) {
-  #     return delegate().open(objectIds, reportMissing);
-  #   }
-  #
-  #   @Override
-  #   public long getObjectSize(AnyObjectId objectId, int typeHint)
-  #       throws MissingObjectException, IncorrectObjectTypeException,
-  #       IOException {
-  #     return delegate().getObjectSize(objectId, typeHint);
-  #   }
-  #
-  #   @Override
-  #   public <T extends ObjectId> AsyncObjectSizeQueue<T> getObjectSize(
-  #       Iterable<T> objectIds, boolean reportMissing) {
-  #     return delegate().getObjectSize(objectIds, reportMissing);
-  #   }
-  #
-  #   @Override
-  #   public void setAvoidUnreachableObjects(boolean avoid) {
-  #     delegate().setAvoidUnreachableObjects(avoid);
-  #   }
-  #
-  #   @Override
-  #   public BitmapIndex getBitmapIndex() throws IOException {
-  #     return delegate().getBitmapIndex();
-  #   }
-  #
-  #   @Override
-  #   @Nullable
-  #   public ObjectInserter getCreatedFromInserter() {
-  #     return delegate().getCreatedFromInserter();
-  #   }
-  #
-  #   @Override
-  #   public void close() {
-  #     delegate().close();
-  #   }
   # }
 end

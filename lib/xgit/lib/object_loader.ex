@@ -3,6 +3,8 @@ defprotocol Xgit.Lib.ObjectLoader do
   Protocol that allows for different storage representations of git objects.
   """
 
+  @type t :: term
+
   @doc ~S"""
   Get in-pack object type.
 
