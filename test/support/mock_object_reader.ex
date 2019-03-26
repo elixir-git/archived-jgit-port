@@ -3,7 +3,7 @@ defmodule Xgit.Test.MockObjectReader do
   # Used for testing only.
 
   @enforce_keys [:objects]
-  defstruct [:objects]
+  defstruct [:objects, :skip_default_object_size?]
 end
 
 defimpl Xgit.Lib.ObjectReader.Strategy, for: Xgit.Test.MockObjectReader do
@@ -33,4 +33,16 @@ defimpl Xgit.Lib.ObjectReader.Strategy, for: Xgit.Test.MockObjectReader do
         raise(MissingObjectError, object_id: object_id, type: type_hint)
     end
   end
+
+  def object_size(
+        %MockObjectReader{skip_default_object_size?: true} = _reader,
+        _object_id,
+        _type_hint
+      ) do
+    42
+    # probably wrong, but useful for testing
+  end
+
+  def object_size(%MockObjectReader{objects: _objects} = _reader, _object_id, _type_hint),
+    do: :default
 end

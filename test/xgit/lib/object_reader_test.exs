@@ -91,4 +91,27 @@ defmodule Xgit.Lib.ObjectReaderTest do
                    end
     end
   end
+
+  describe "object_size/3" do
+    test "default implementation works" do
+      reader = %MockObjectReader{
+        objects: %{
+          "f2786440430e74a46dad158e7bd6059d02b8bd9a" => %{type: 4, data: 'foo'}
+        }
+      }
+
+      assert ObjectReader.object_size(reader, "f2786440430e74a46dad158e7bd6059d02b8bd9a") == 3
+    end
+
+    test "will honor non-default implementation" do
+      reader = %MockObjectReader{
+        skip_default_object_size?: true,
+        objects: %{
+          "f2786440430e74a46dad158e7bd6059d02b8bd9a" => %{type: 4, data: 'foo'}
+        }
+      }
+
+      assert ObjectReader.object_size(reader, "f2786440430e74a46dad158e7bd6059d02b8bd9a") == 42
+    end
+  end
 end
