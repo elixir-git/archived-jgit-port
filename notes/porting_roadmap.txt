@@ -37,7 +37,6 @@ WorkingTreeIterator
   Entry TRACE
   IgnoreNode TRACE
   MetadataDiff TRACE
-  ObjectReader
   OperationType TRACE
   Repository TRACE
   TreeWalk TRACE
@@ -48,7 +47,6 @@ Repository
   DirCache TRACE
   ObjectDatabase
   ObjectInserter
-  ObjectReader
   RebaseTodoFile TRACE
   RebaseTodoLine TRACE
   RefDatabase TRACE
@@ -62,19 +60,12 @@ Repository
 
 ObjectDatabase PROTOCOL + MODULE
   ObjectInserter
-  ObjectReader
 
 ObjectInserter
-  ContentSource
   TreeFormatter DEFER?
   CommitBuilder DEFER?
   TagBuilder DEFER?
   PackParser DEFER?
-
-ContentSource PROTOCOL
-  (needs one of ObjectReader or WorkingTreeIterator for implementation)
-  ObjectReader
-  WorkingTreeIterator DEFER?
 
 BitmapIndex PROTOCOL (plus descendants)
   BitmapObject
