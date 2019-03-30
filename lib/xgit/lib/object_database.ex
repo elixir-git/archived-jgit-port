@@ -6,14 +6,17 @@ defprotocol Xgit.Lib.ObjectDatabase do
   `ObjectId`.
   """
 
-  alias Xgit.Lib.ObjectInserter
+  alias Xgit.Lib.ObjectId
+  # alias Xgit.Lib.ObjectInserter
+  alias Xgit.Lib.ObjectLoader
+  alias Xgit.Lib.ObjectReader
 
   @type t :: term
 
   @doc ~S"""
   Does this database exist yet?
   """
-  @spec exists(database :: t) :: boolean
+  @spec exists?(database :: t) :: boolean
   def exists?(database)
 
   @doc ~S"""
