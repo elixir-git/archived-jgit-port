@@ -7,9 +7,10 @@ defmodule Xgit.Storage.File.FileBasedConfig do
   * `path`: Path to the config file.
   * `snapshot`: An `Xgit.Internal.Storage.File.FileSnapshot` for this path.
   """
-  @enforce_keys [:path]
-  defstruct [:path]
+  @enforce_keys [:path, :snapshot]
+  defstruct [:path, :snapshot]
 
+  alias Xgit.Internal.Storage.File.FileSnapshot
   alias Xgit.Lib.Config
 
   @doc ~S"""
@@ -17,8 +18,17 @@ defmodule Xgit.Storage.File.FileBasedConfig do
 
   Options are as for `Xgit.Lib.Config.new/1`.
   """
-  def config_for_path(path, options \\ []) when is_binary(path),
-    do: Config.new(Keyword.put(options, :storage, %__MODULE__{path: path}))
+  def config_for_path(path, options \\ []) when is_binary(path) do
+    Config.new(
+      Keyword.put(options, :storage, %__MODULE__{path: path, snapshot: snapshot_for_path(path)})
+    )
+  end
+
+  defp snapshot_for_path(path) do
+    if File.exists?(path),
+      do: FileSnapshot.save(path),
+      else: FileSnapshot.missing_file()
+  end
 
   # /** {@inheritDoc} */
   # @Override
@@ -33,17 +43,16 @@ defmodule Xgit.Storage.File.FileBasedConfig do
   # public String toString() {
   #   return getClass().getSimpleName() + "[" + getFile().getPath() + "]";
   # }
-  #
-  # /**
-  #  * Whether the currently loaded configuration file is outdated
-  #  *
-  #  * @return returns true if the currently loaded configuration file is older
-  #  *         than the file on disk
-  #  */
-  # public boolean isOutdated() {
-  #   return snapshot.isModified(getFile());
-  # }
-  #
+
+  @doc ~S"""
+  Returns `true` if the currently-loaded configuration file is outdated.
+  """
+  def outdated?(%Config{storage: %__MODULE__{path: path, snapshot: snapshot}}),
+    do: FileSnapshot.modified?(snapshot, path)
+
+  def outdated?(_other_config), do: false
+  # All other forms of configs are never considered outdated.
+
   # /**
   #  * {@inheritDoc}
   #  *

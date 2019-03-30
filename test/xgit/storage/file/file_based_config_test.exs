@@ -85,6 +85,40 @@ defmodule Xgit.Storage.File.FileBasedConfigTest do
     assert File.read!(path) == to_string(@content2)
   end
 
+  describe "outdated?/1" do
+    test "not outdated after first read", %{trash: trash} do
+      path = create_file!(trash, @content1)
+
+      Process.sleep(3000)
+      # Make sure the file is definitively seen as dirty.
+
+      config = FileBasedConfig.config_for_path(path)
+      assert :ok = Config.load(config)
+
+      assert FileBasedConfig.outdated?(config) == false
+    end
+
+    test "outdated after rewrite", %{trash: trash} do
+      path = create_file!(trash, @content1)
+
+      config = FileBasedConfig.config_for_path(path)
+      assert :ok = Config.load(config)
+
+      # Rewrite the file long enough after first write
+      # that we can be sure it will be seen as dirty.
+
+      Process.sleep(3000)
+      File.write!(path, @content2)
+
+      assert FileBasedConfig.outdated?(config) == true
+    end
+
+    test "other config is never outdated" do
+      config = Config.new()
+      assert FileBasedConfig.outdated?(config) == false
+    end
+  end
+
   # @Test
   # public void testIncludeAbsolute()
   #     throws IOException, ConfigInvalidException {
