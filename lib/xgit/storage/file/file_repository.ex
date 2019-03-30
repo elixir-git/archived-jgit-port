@@ -149,7 +149,19 @@ defmodule Xgit.Storage.File.FileRepository do
     }
   end
 
-  defp open_system_config(_system_reader) do
+  defp open_system_config(system_reader) do
+    bypass_system_config?
+      = system_reader
+        |> SystemReader.get_env(Constants.git_config_nosystem_key())
+        |> String.empty_or_nil?()
+
+    if bypass_system_config? do
+      SystemReader.system_config(system_reader, nil)
+    else
+      # TO DO: Implement outdated? on Config. Then, I think, we don't need
+      # the FileBasedConfig override.
+    end
+
     # if (StringUtils.isEmptyOrNull(SystemReader.getInstance().getenv(
     #     Constants.GIT_CONFIG_NOSYSTEM_KEY)))
     #   systemConfig = SystemReader.getInstance().openSystemConfig(null,
