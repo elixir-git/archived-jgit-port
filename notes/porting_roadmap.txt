@@ -45,7 +45,6 @@ WorkingTreeIterator
 Repository
   AttributesNodeProvider TRACE
   DirCache TRACE
-  ObjectDatabase
   ObjectInserter
   RebaseTodoFile TRACE
   RebaseTodoLine TRACE
@@ -57,9 +56,6 @@ Repository
   RepositoryState ENUM
   RevCommit TRACE
   RevWalk TRACE
-
-ObjectDatabase PROTOCOL + MODULE
-  ObjectInserter
 
 ObjectInserter
   TreeFormatter DEFER?
