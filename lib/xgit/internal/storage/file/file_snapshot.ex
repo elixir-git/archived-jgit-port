@@ -3,7 +3,7 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
   Caches when a file was last read, making it possible to detect future edits.
 
   This object tracks the last modified time of a file. Later during an
-  invocation of `modified?/2` the object will return true if the file may have
+  invocation of `modified?/2` the object will return `true` if the file may have
   been modified and should be re-read from disk.
 
   A snapshot does not "live update" when the underlying filesystem changes.
