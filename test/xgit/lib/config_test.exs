@@ -1485,9 +1485,7 @@ defmodule Xgit.Lib.ConfigTest do
   end
 
   test "can handle unexpected messages" do
-    %{ref: ref} = parse("[foo]\nbar\n")
-    config_pid = GenServer.whereis({:global, {:xgit_config, ref}})
-
+    %{config_pid: config_pid} = parse("[foo]\nbar\n")
     send(config_pid, :bogus_message)
   end
 
