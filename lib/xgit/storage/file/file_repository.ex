@@ -1,4 +1,4 @@
-defmodule Xgit.Internal.Storage.File.FileRepository do
+defmodule Xgit.Storage.File.FileRepository do
   @moduledoc ~S"""
    Represents a git repository.
 
@@ -490,8 +490,8 @@ defmodule Xgit.Internal.Storage.File.FileRepository do
   # }
 end
 
-defimpl Xgit.Lib.Repository.Strategy, for: Xgit.Internal.Storage.File.FileRepository do
-  alias Xgit.Internal.Storage.File.FileRepository
+defimpl Xgit.Lib.Repository.Strategy, for: Xgit.Storage.File.FileRepository do
+  alias Xgit.Storage.File.FileRepository
 
   def create!(%FileRepository{}, options) when is_list(options) do
     raise "create! not yet implemented for FileRepository"
@@ -584,5 +584,5 @@ defimpl Xgit.Lib.Repository.Strategy, for: Xgit.Internal.Storage.File.FileReposi
     # cfg.save();
   end
 
-  defdelegate config(repository), to: Xgit.Internal.Storage.File.FileRepository
+  defdelegate config(repository), to: FileRepository
 end
