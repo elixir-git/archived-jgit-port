@@ -45,9 +45,11 @@ defmodule Xgit.Storage.File.FileRepository do
             user_config: nil,
             repo_config: nil
 
+  alias Xgit.Lib.Config
   alias Xgit.Lib.Constants
   alias Xgit.Storage.File.FileBasedConfig
   alias Xgit.Storage.File.FileRepositoryBuilder
+  alias Xgit.Util.StringUtils
   alias Xgit.Util.SystemReader
 
   # private static final String UNNAMED = "Unnamed repository; edit this file to name it for gitweb."; //$NON-NLS-1$
@@ -91,14 +93,12 @@ defmodule Xgit.Storage.File.FileRepository do
       ) do
     system_reader = Keyword.get(options, :system_reader)
 
-    system_config = open_system_config(system_reader)
-    user_config = SystemReader.user_config(system_reader, system_config)
-    repo_config = FileBasedConfig.config_for_path(Path.join(git_dir, Constants.config()))
+    system_config = open_system_config(system_reader) |> load_config()
+    user_config = SystemReader.user_config(system_reader, system_config) |> load_config()
 
-    # loadSystemConfig();
-    # loadUserConfig();
-    # loadRepoConfig();
-    #
+    repo_config =
+      FileBasedConfig.config_for_path(Path.join(git_dir, Constants.config())) |> load_config()
+
     # repoConfig.addChangeListener(new ConfigChangedListener() {
     #   @Override
     #   public void onConfigChanged(ConfigChangedEvent event) {
@@ -150,68 +150,19 @@ defmodule Xgit.Storage.File.FileRepository do
   end
 
   defp open_system_config(system_reader) do
-    bypass_system_config?
-      = system_reader
-        |> SystemReader.get_env(Constants.git_config_nosystem_key())
-        |> String.empty_or_nil?()
+    bypass_system_config? =
+      system_reader
+      |> SystemReader.get_env(Constants.git_config_nosystem_key())
+      |> StringUtils.empty_or_nil?()
 
-    if bypass_system_config? do
-      SystemReader.system_config(system_reader, nil)
-    else
-      # TO DO: Implement outdated? on Config. Then, I think, we don't need
-      # the FileBasedConfig override.
-    end
-
-    # if (StringUtils.isEmptyOrNull(SystemReader.getInstance().getenv(
-    #     Constants.GIT_CONFIG_NOSYSTEM_KEY)))
-    #   systemConfig = SystemReader.getInstance().openSystemConfig(null,
-    #       getFS());
-    # else
-    #   systemConfig = new FileBasedConfig(null, FS.DETECTED) {
-    #     @Override
-    #     public void load() {
-    #       // empty, do not load
-    #     }
-    #
-    #     @Override
-    #     public boolean isOutdated() {
-    #       // regular class would bomb here
-    #       return false;
-    #     }
-    #   };
+    if bypass_system_config?,
+      do: SystemReader.system_config(system_reader, nil),
+      else: Config.new()
   end
 
-  # private void loadSystemConfig() throws IOException {
-  #   try {
-  #     systemConfig.load();
-  #   } catch (ConfigInvalidException e) {
-  #     throw new IOException(MessageFormat.format(JGitText
-  #         .get().systemConfigFileInvalid, systemConfig.getFile()
-  #             .getAbsolutePath(),
-  #         e), e);
-  #   }
-  # }
-  #
-  # private void loadUserConfig() throws IOException {
-  #   try {
-  #     userConfig.load();
-  #   } catch (ConfigInvalidException e) {
-  #     throw new IOException(MessageFormat.format(JGitText
-  #         .get().userConfigFileInvalid, userConfig.getFile()
-  #             .getAbsolutePath(),
-  #         e), e);
-  #   }
-  # }
-  #
-  # private void loadRepoConfig() throws IOException {
-  #   try {
-  #     repoConfig.load();
-  #   } catch (ConfigInvalidException e) {
-  #     throw new IOException(JGitText.get().unknownRepositoryFormat, e);
-  #   }
-  # }
-  #
-  #
+  defp load_config(%Config{storage: nil} = config), do: config
+  defp load_config(config), do: Config.load(config)
+
   # /**
   #  * Get the directory containing the objects owned by this repository
   #  *
