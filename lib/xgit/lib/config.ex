@@ -155,10 +155,10 @@ defmodule Xgit.Lib.Config do
 
   If no value was present, returns `default`.
   """
-  def get_int(c, section, subsection \\ nil, name, default)
+  def get_int(config, section, subsection \\ nil, name, default)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_integer(default) do
-    c
+    config
     |> config_pid()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
     |> replace_empty_with_missing()
@@ -204,10 +204,10 @@ defmodule Xgit.Lib.Config do
   Returns `true` if any value or `default` if `true`; `false` for missing or
   an explicit `false`.
   """
-  def get_boolean(c, section, subsection \\ nil, name, default)
+  def get_boolean(config, section, subsection \\ nil, name, default)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_boolean(default) do
-    c
+    config
     |> config_pid()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
     |> replace_empty_with_missing()
@@ -281,10 +281,10 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Get a single string value from the git config (or `nil` if not found).
   """
-  def get_string(c, section, subsection \\ nil, name)
+  def get_string(config, section, subsection \\ nil, name)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
-    c
+    config
     |> config_pid()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
     |> replace_empty_with_missing()
@@ -303,10 +303,10 @@ defmodule Xgit.Lib.Config do
   If this instance was created with a base, the base's values (if any) are
   returned first.
   """
-  def get_string_list(c, section, subsection \\ nil, name)
+  def get_string_list(config, section, subsection \\ nil, name)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
-    c
+    config
     |> config_pid()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
     |> Enum.map(&fix_missing_or_nil_string_result/1)
@@ -360,8 +360,8 @@ defmodule Xgit.Lib.Config do
   Get set of all subsections of specified section within this configuration
   and its base configuration.
   """
-  def subsections(c, section) when is_binary(section),
-    do: c |> config_pid() |> GenServer.call({:subsections, section})
+  def subsections(config, section) when is_binary(section),
+    do: config |> config_pid() |> GenServer.call({:subsections, section})
 
   # IMPORTANT: subsections_impl/2 runs in GenServer process.
   # See handle_call/3 below.
@@ -378,7 +378,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Get the sections defined in this `Config`.
   """
-  def sections(c), do: c |> config_pid() |> GenServer.call(:sections)
+  def sections(config), do: config |> config_pid() |> GenServer.call(:sections)
 
   # IMPORTANT: sections_impl/1 runs in GenServer process.
   # See handle_call/3 below.
@@ -398,8 +398,9 @@ defmodule Xgit.Lib.Config do
   Options:
   * `recursive`: Include matching names from base config.
   """
-  def names_in_section(c, section, options \\ []) when is_binary(section) and is_list(options),
-    do: c |> config_pid() |> GenServer.call({:names_in_section, section, options})
+  def names_in_section(config, section, options \\ [])
+      when is_binary(section) and is_list(options),
+      do: config |> config_pid() |> GenServer.call({:names_in_section, section, options})
 
   # IMPORTANT: names_in_section_impl/4 runs in GenServer process.
   # See handle_call/3 below.
@@ -427,10 +428,12 @@ defmodule Xgit.Lib.Config do
   Options:
   * `recursive`: Include matching names from base config.
   """
-  def names_in_subsection(c, section, subsection, options \\ [])
+  def names_in_subsection(config, section, subsection, options \\ [])
       when is_binary(section) and is_binary(subsection) and is_list(options),
       do:
-        c |> config_pid() |> GenServer.call({:names_in_subsection, section, subsection, options})
+        config
+        |> config_pid()
+        |> GenServer.call({:names_in_subsection, section, subsection, options})
 
   # IMPORTANT: names_in_subsection_impl/5 runs in GenServer process.
   # See handle_call/3 below.
@@ -633,14 +636,14 @@ defmodule Xgit.Lib.Config do
     name = value
   ```
   """
-  def set_boolean(c, section, subsection \\ nil, name, value)
+  def set_boolean(config, section, subsection \\ nil, name, value)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_boolean(value) do
-    c
+    config
     |> config_pid()
     |> GenServer.call({:set_string_list, section, subsection, name, [to_string(value)]})
 
-    c
+    config
   end
 
   # /**
@@ -682,14 +685,14 @@ defmodule Xgit.Lib.Config do
     name = value
   ```
   """
-  def set_string(c, section, subsection \\ nil, name, value)
+  def set_string(config, section, subsection \\ nil, name, value)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_binary(value) do
-    c
+    config
     |> config_pid()
     |> GenServer.call({:set_string_list, section, subsection, name, [value]})
 
-    c
+    config
   end
 
   # /**
@@ -711,13 +714,13 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Remove all configuration values under a single section.
   """
-  def unset_section(c, section, subsection \\ nil)
+  def unset_section(config, section, subsection \\ nil)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) do
-    c
+    config
     |> config_pid()
     |> GenServer.call({:unset_section, section, subsection})
 
-    c
+    config
   end
 
   # IMPORTANT: unset_section_impl/5 runs in GenServer process.
@@ -738,14 +741,14 @@ defmodule Xgit.Lib.Config do
     name = value2
   ```
   """
-  def set_string_list(c, section, subsection \\ nil, name, values)
+  def set_string_list(config, section, subsection \\ nil, name, values)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_list(values) do
-    c
+    config
     |> config_pid()
     |> GenServer.call({:set_string_list, section, subsection, name, values})
 
-    c
+    config
   end
 
   # IMPORTANT: set_string_list_impl/5 runs in GenServer process.
@@ -922,7 +925,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Get this configuration, formatted as a Git-style text file.
   """
-  def to_text(c), do: GenServer.call(config_pid(c), :to_text)
+  def to_text(config), do: GenServer.call(config_pid(config), :to_text)
 
   # IMPORTANT: to_text_impl/1 runs in GenServer process.
   # See handle_call/3 below.
@@ -1006,10 +1009,10 @@ defmodule Xgit.Lib.Config do
 
   Raises `ConfigInvalidError` if unable to parse string.
   """
-  def from_text(c, text) when is_binary(text) do
-    case GenServer.call(config_pid(c), {:from_text, text}) do
+  def from_text(config, text) when is_binary(text) do
+    case GenServer.call(config_pid(config), {:from_text, text}) do
       {:error, e} -> raise(e)
-      _ -> c
+      _ -> config
     end
   end
 
@@ -1395,7 +1398,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Clear the configuration file.
   """
-  def clear(c), do: c |> config_pid() |> GenServer.call(:clear)
+  def clear(config), do: config |> config_pid() |> GenServer.call(:clear)
 
   # /**
   #  * Check if bytes should be treated as UTF-8 or not.
