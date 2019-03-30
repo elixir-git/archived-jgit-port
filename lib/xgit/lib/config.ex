@@ -1,13 +1,6 @@
 defmodule Xgit.Lib.Config do
   @moduledoc ~S"""
-  Git style `.config`, `.gitconfig`, `.gitmodules` file.
-
-  IMPORTANT IMPLEMENTATION NOTE: The `Config` module represents a mutable state
-  which could easily be shared across multiple client processes. Therefore, we use
-  `pg2` process groups to ensure that the lifetime of the server matches the *set*
-  of potentially-interested client processes. Client processes, other than the first
-  process that creates a `Config` should [`:pg2.join`) the process group defined by
-  `:ref` to ensure that the `GenServer`'s lifetime is appropriately long.
+  Git-style `.config`, `.gitconfig`, `.gitmodules` file.
 
   INCOMPLETE IMPLEMENTATION: The following features have not yet been ported from jgit:
 
@@ -17,8 +10,8 @@ defmodule Xgit.Lib.Config do
   * include file support
   * a few edge cases
   """
-  @enforce_keys [:ref]
-  defstruct [:ref, :storage]
+  @enforce_keys [:config_pid]
+  defstruct [:config_pid, :storage]
 
   @type t :: %__MODULE__{}
 
@@ -29,11 +22,9 @@ defmodule Xgit.Lib.Config do
 
   defmodule State do
     @moduledoc false
-    @enforce_keys [:config_lines, :ref, :base_config]
-    defstruct [:config_lines, :ref, :base_config]
+    @enforce_keys [:config_lines, :base_config]
+    defstruct [:config_lines, :base_config]
   end
-
-  @idle_timeout Application.get_env(:xgit, :config_idle_timeout, 60_000)
 
   @kib 1024
   @mib 1024 * @kib
@@ -55,21 +46,15 @@ defmodule Xgit.Lib.Config do
         x -> raise ArgumentError, message: "Illegal base_config value: #{inspect(x)}"
       end
 
-    ref = make_ref()
-    group = {:xgit_config, ref}
-    :ok = :pg2.create(group)
-    :ok = :pg2.join(group, self())
+    {:ok, pid} = GenServer.start_link(__MODULE__, base_config)
 
-    {:ok, _pid} = GenServer.start(__MODULE__, {ref, base_config}, name: {:global, group})
-
-    %__MODULE__{ref: ref, storage: Keyword.get(options, :storage, nil)}
+    %__MODULE__{config_pid: pid, storage: Keyword.get(options, :storage, nil)}
   end
 
   @impl true
-  def init({ref, base_config}) when is_reference(ref),
-    do:
-      {:ok, %__MODULE__.State{config_lines: [], ref: ref, base_config: base_config},
-       @idle_timeout}
+  def init(base_config) do
+    {:ok, %__MODULE__.State{config_lines: [], base_config: base_config}}
+  end
 
   @doc ~S"""
   Escape the value before saving.
@@ -174,7 +159,7 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_integer(default) do
     c
-    |> process_ref()
+    |> config_pid()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
     |> replace_empty_with_missing()
     |> List.last()
@@ -223,7 +208,7 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_boolean(default) do
     c
-    |> process_ref()
+    |> config_pid()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
     |> replace_empty_with_missing()
     |> List.last()
@@ -300,7 +285,7 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
     c
-    |> process_ref()
+    |> config_pid()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
     |> replace_empty_with_missing()
     |> List.last()
@@ -322,7 +307,7 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
     c
-    |> process_ref()
+    |> config_pid()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
     |> Enum.map(&fix_missing_or_nil_string_result/1)
   end
@@ -376,7 +361,7 @@ defmodule Xgit.Lib.Config do
   and its base configuration.
   """
   def subsections(c, section) when is_binary(section),
-    do: c |> process_ref() |> GenServer.call({:subsections, section})
+    do: c |> config_pid() |> GenServer.call({:subsections, section})
 
   # IMPORTANT: subsections_impl/2 runs in GenServer process.
   # See handle_call/3 below.
@@ -393,7 +378,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Get the sections defined in this `Config`.
   """
-  def sections(c), do: c |> process_ref() |> GenServer.call(:sections)
+  def sections(c), do: c |> config_pid() |> GenServer.call(:sections)
 
   # IMPORTANT: sections_impl/1 runs in GenServer process.
   # See handle_call/3 below.
@@ -414,7 +399,7 @@ defmodule Xgit.Lib.Config do
   * `recursive`: Include matching names from base config.
   """
   def names_in_section(c, section, options \\ []) when is_binary(section) and is_list(options),
-    do: c |> process_ref() |> GenServer.call({:names_in_section, section, options})
+    do: c |> config_pid() |> GenServer.call({:names_in_section, section, options})
 
   # IMPORTANT: names_in_section_impl/4 runs in GenServer process.
   # See handle_call/3 below.
@@ -445,7 +430,7 @@ defmodule Xgit.Lib.Config do
   def names_in_subsection(c, section, subsection, options \\ [])
       when is_binary(section) and is_binary(subsection) and is_list(options),
       do:
-        c |> process_ref() |> GenServer.call({:names_in_subsection, section, subsection, options})
+        c |> config_pid() |> GenServer.call({:names_in_subsection, section, subsection, options})
 
   # IMPORTANT: names_in_subsection_impl/5 runs in GenServer process.
   # See handle_call/3 below.
@@ -652,7 +637,7 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_boolean(value) do
     c
-    |> process_ref()
+    |> config_pid()
     |> GenServer.call({:set_string_list, section, subsection, name, [to_string(value)]})
 
     c
@@ -701,7 +686,7 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_binary(value) do
     c
-    |> process_ref()
+    |> config_pid()
     |> GenServer.call({:set_string_list, section, subsection, name, [value]})
 
     c
@@ -729,7 +714,7 @@ defmodule Xgit.Lib.Config do
   def unset_section(c, section, subsection \\ nil)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) do
     c
-    |> process_ref()
+    |> config_pid()
     |> GenServer.call({:unset_section, section, subsection})
 
     c
@@ -757,7 +742,7 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_list(values) do
     c
-    |> process_ref()
+    |> config_pid()
     |> GenServer.call({:set_string_list, section, subsection, name, values})
 
     c
@@ -937,7 +922,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Get this configuration, formatted as a Git-style text file.
   """
-  def to_text(c), do: GenServer.call(process_ref(c), :to_text)
+  def to_text(c), do: GenServer.call(config_pid(c), :to_text)
 
   # IMPORTANT: to_text_impl/1 runs in GenServer process.
   # See handle_call/3 below.
@@ -1022,7 +1007,7 @@ defmodule Xgit.Lib.Config do
   Raises `ConfigInvalidError` if unable to parse string.
   """
   def from_text(c, text) when is_binary(text) do
-    case GenServer.call(process_ref(c), {:from_text, text}) do
+    case GenServer.call(config_pid(c), {:from_text, text}) do
       {:error, e} -> raise(e)
       _ -> c
     end
@@ -1410,7 +1395,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Clear the configuration file.
   """
-  def clear(c), do: c |> process_ref() |> GenServer.call(:clear)
+  def clear(c), do: c |> config_pid() |> GenServer.call(:clear)
 
   # /**
   #  * Check if bytes should be treated as UTF-8 or not.
@@ -1663,15 +1648,15 @@ defmodule Xgit.Lib.Config do
 
   @impl true
   def handle_call(:to_text, _from, %__MODULE__.State{config_lines: config_lines} = s),
-    do: {:reply, to_text_impl(config_lines), s, @idle_timeout}
+    do: {:reply, to_text_impl(config_lines), s}
 
   @impl true
   def handle_call({:from_text, text}, _from, %__MODULE__.State{} = s) when is_binary(text) do
     try do
       new_config_lines = from_text_impl(text, 1, nil)
-      {:reply, :ok, %{s | config_lines: new_config_lines}, @idle_timeout}
+      {:reply, :ok, %{s | config_lines: new_config_lines}}
     rescue
-      e in ConfigInvalidError -> {:reply, {:error, e}, s, @idle_timeout}
+      e in ConfigInvalidError -> {:reply, {:error, e}, s}
     end
   end
 
@@ -1679,7 +1664,7 @@ defmodule Xgit.Lib.Config do
   def handle_call({:get_raw_strings, section, subsection, name}, _from, %__MODULE__.State{} = s)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
-    {:reply, raw_string_list(s, section, subsection, name), s, @idle_timeout}
+    {:reply, raw_string_list(s, section, subsection, name), s}
   end
 
   @impl true
@@ -1689,12 +1674,12 @@ defmodule Xgit.Lib.Config do
         %__MODULE__.State{config_lines: config_lines} = s
       )
       when is_binary(section) do
-    {:reply, subsections_impl(config_lines, section), s, @idle_timeout}
+    {:reply, subsections_impl(config_lines, section), s}
   end
 
   @impl true
   def handle_call(:sections, _from, %__MODULE__.State{config_lines: config_lines} = s),
-    do: {:reply, sections_impl(config_lines), s, @idle_timeout}
+    do: {:reply, sections_impl(config_lines), s}
 
   @impl true
   def handle_call(
@@ -1703,7 +1688,7 @@ defmodule Xgit.Lib.Config do
         %__MODULE__.State{base_config: base_config, config_lines: config_lines} = s
       )
       when is_binary(section) and is_list(options) do
-    {:reply, names_in_section_impl(config_lines, section, base_config, options), s, @idle_timeout}
+    {:reply, names_in_section_impl(config_lines, section, base_config, options), s}
   end
 
   @impl true
@@ -1713,15 +1698,14 @@ defmodule Xgit.Lib.Config do
         %__MODULE__.State{base_config: base_config, config_lines: config_lines} = s
       )
       when is_binary(section) and is_binary(subsection) and is_list(options) do
-    {:reply, names_in_subsection_impl(config_lines, section, subsection, base_config, options), s,
-     @idle_timeout}
+    {:reply, names_in_subsection_impl(config_lines, section, subsection, base_config, options), s}
   end
 
   @impl true
   def handle_call({:unset_section, section, subsection}, _from, %__MODULE__.State{} = s)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) do
     new_config_lines = unset_section_impl(s, section, subsection)
-    {:reply, :ok, %{s | config_lines: new_config_lines}, @idle_timeout}
+    {:reply, :ok, %{s | config_lines: new_config_lines}}
   end
 
   @impl true
@@ -1733,25 +1717,15 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_list(values) do
     new_config_lines = set_string_list_impl(s, section, subsection, name, values)
-    {:reply, :ok, %{s | config_lines: new_config_lines}, @idle_timeout}
+    {:reply, :ok, %{s | config_lines: new_config_lines}}
   end
 
   @impl true
   def handle_call(:clear, _from, %__MODULE__.State{} = s),
-    do: {:reply, :ok, %{s | config_lines: []}, @idle_timeout}
+    do: {:reply, :ok, %{s | config_lines: []}}
 
   @impl true
-  def handle_info(:timeout, %__MODULE__.State{ref: ref} = s) do
-    members = :pg2.get_members({:xgit_config, ref})
+  def handle_info(_message, %__MODULE__.State{} = s), do: {:noreply, s}
 
-    if Enum.empty?(members),
-      do: {:stop, :normal, s},
-      else: {:noreply, s, @idle_timeout}
-  end
-
-  @impl true
-  def handle_info(_message, %__MODULE__.State{} = s), do: {:noreply, s, @idle_timeout}
-
-  defp process_ref(%__MODULE__{ref: ref}) when is_reference(ref),
-    do: {:global, {:xgit_config, ref}}
+  defp config_pid(%__MODULE__{config_pid: pid}) when is_pid(pid), do: pid
 end
