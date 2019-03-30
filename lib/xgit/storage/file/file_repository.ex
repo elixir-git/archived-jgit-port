@@ -184,33 +184,34 @@ defmodule Xgit.Storage.File.FileRepository do
   #   return refs;
   # }
 
-  def config(%__MODULE__{}) do
-    # /** {@inheritDoc} */
-    # @Override
-    # public FileBasedConfig getConfig() {
-    #   if (systemConfig.isOutdated()) {
-    #     try {
-    #       loadSystemConfig();
-    #     } catch (IOException e) {
-    #       throw new RuntimeException(e);
-    #     }
+  def config(%__MODULE__{repo_config: repo_config}) do
+    # TODO: Port the part that updates the configs if needed.
+    # Trick will be managing the snapshot currently in FileBasedConfig.
+    # Punting on that for now.
+
+    # if (systemConfig.isOutdated()) {
+    #   try {
+    #     loadSystemConfig();
+    #   } catch (IOException e) {
+    #     throw new RuntimeException(e);
     #   }
-    #   if (userConfig.isOutdated()) {
-    #     try {
-    #       loadUserConfig();
-    #     } catch (IOException e) {
-    #       throw new RuntimeException(e);
-    #     }
-    #   }
-    #   if (repoConfig.isOutdated()) {
-    #       try {
-    #         loadRepoConfig();
-    #       } catch (IOException e) {
-    #         throw new RuntimeException(e);
-    #       }
-    #   }
-    #   return repoConfig;
     # }
+    # if (userConfig.isOutdated()) {
+    #   try {
+    #     loadUserConfig();
+    #   } catch (IOException e) {
+    #     throw new RuntimeException(e);
+    #   }
+    # }
+    # if (repoConfig.isOutdated()) {
+    #     try {
+    #       loadRepoConfig();
+    #     } catch (IOException e) {
+    #       throw new RuntimeException(e);
+    #     }
+    # }
+
+    repo_config
   end
 
   #
@@ -456,14 +457,16 @@ end
 defimpl Xgit.Lib.Repository.Strategy, for: Xgit.Storage.File.FileRepository do
   alias Xgit.Storage.File.FileRepository
 
-  def create!(%FileRepository{}, options) when is_list(options) do
-    raise "create! not yet implemented for FileRepository"
-    # final FileBasedConfig cfg = getConfig();
-    # if (cfg.getFile().exists()) {
-    #   throw new IllegalStateException(MessageFormat.format(
-    #       JGitText.get().repositoryAlreadyExists, getDirectory()));
-    # }
-    # FileUtils.mkdirs(getDirectory(), true);
+  def create!(%FileRepository{git_dir: git_dir} = repository, options) when is_list(options) do
+    %{path: config_path} = _config = FileRepository.config(repository)
+
+    if File.exists?(config_path) do
+      raise RuntimeError, "Repository already exists: #{git_dir}"
+    end
+
+    File.mkdir_p!(git_dir)
+
+    # TODO: Pausing here because we need enum support in config and ObjectDatabase.
     # HideDotFiles hideDotFiles = getConfig().getEnum(
     #     ConfigConstants.CONFIG_CORE_SECTION, null,
     #     ConfigConstants.CONFIG_KEY_HIDEDOTFILES,
