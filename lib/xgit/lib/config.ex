@@ -1,24 +1,22 @@
 defmodule Xgit.Lib.Config do
   @moduledoc ~S"""
-  Git style `.config`, `.gitconfig`, `.gitmodules` file.
-
-  IMPORTANT IMPLEMENTATION NOTE: The `Config` module represents a mutable state
-  which could easily be shared across multiple client processes. Therefore, we use
-  `pg2` process groups to ensure that the lifetime of the server matches the *set*
-  of potentially-interested client processes. Client processes, other than the first
-  process that creates a `Config` should [`:pg2.join`) the process group defined by
-  `:ref` to ensure that the `GenServer`'s lifetime is appropriately long.
+  Git-style `.config`, `.gitconfig`, `.gitmodules` file.
 
   INCOMPLETE IMPLEMENTATION: The following features have not yet been ported from jgit:
 
-  * enums
   * parsing time units
   * change notification
   * include file support
   * a few edge cases
+
+  PORTING NOTE: Xgit does not have explicit enum support, unlike jgit. There is very
+  little about the various `ConfigEnum` implementations that is sharable, so it did
+  not seem worth it to port that mechanism. Xgit instead stores the enum values
+  directly as strings. Some one-off modules may provide additional support for
+  recognizing known strings or variants.
   """
-  @enforce_keys [:ref]
-  defstruct [:ref, :storage]
+  @enforce_keys [:config_pid]
+  defstruct [:config_pid, :storage]
 
   @type t :: %__MODULE__{}
 
@@ -29,11 +27,9 @@ defmodule Xgit.Lib.Config do
 
   defmodule State do
     @moduledoc false
-    @enforce_keys [:config_lines, :ref, :base_config]
-    defstruct [:config_lines, :ref, :base_config]
+    @enforce_keys [:config_lines, :base_config]
+    defstruct [:config_lines, :base_config]
   end
-
-  @idle_timeout Application.get_env(:xgit, :config_idle_timeout, 60_000)
 
   @kib 1024
   @mib 1024 * @kib
@@ -55,21 +51,15 @@ defmodule Xgit.Lib.Config do
         x -> raise ArgumentError, message: "Illegal base_config value: #{inspect(x)}"
       end
 
-    ref = make_ref()
-    group = {:xgit_config, ref}
-    :ok = :pg2.create(group)
-    :ok = :pg2.join(group, self())
+    {:ok, pid} = GenServer.start_link(__MODULE__, base_config)
 
-    {:ok, _pid} = GenServer.start(__MODULE__, {ref, base_config}, name: {:global, group})
-
-    %__MODULE__{ref: ref, storage: Keyword.get(options, :storage, nil)}
+    %__MODULE__{config_pid: pid, storage: Keyword.get(options, :storage, nil)}
   end
 
   @impl true
-  def init({ref, base_config}) when is_reference(ref),
-    do:
-      {:ok, %__MODULE__.State{config_lines: [], ref: ref, base_config: base_config},
-       @idle_timeout}
+  def init(base_config) do
+    {:ok, %__MODULE__.State{config_lines: [], base_config: base_config}}
+  end
 
   @doc ~S"""
   Escape the value before saving.
@@ -170,11 +160,11 @@ defmodule Xgit.Lib.Config do
 
   If no value was present, returns `default`.
   """
-  def get_int(c, section, subsection \\ nil, name, default)
+  def get_int(config, section, subsection \\ nil, name, default)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_integer(default) do
-    c
-    |> process_ref()
+    config
+    |> config_pid()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
     |> replace_empty_with_missing()
     |> List.last()
@@ -219,11 +209,11 @@ defmodule Xgit.Lib.Config do
   Returns `true` if any value or `default` if `true`; `false` for missing or
   an explicit `false`.
   """
-  def get_boolean(c, section, subsection \\ nil, name, default)
+  def get_boolean(config, section, subsection \\ nil, name, default)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_boolean(default) do
-    c
-    |> process_ref()
+    config
+    |> config_pid()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
     |> replace_empty_with_missing()
     |> List.last()
@@ -239,68 +229,14 @@ defmodule Xgit.Lib.Config do
   defp to_boolean("0", _default), do: false
   defp to_boolean(_, _default), do: true
 
-  # /**
-  #  * Parse an enumeration from the configuration.
-  #  *
-  #  * @param section
-  #  *            section the key is grouped within.
-  #  * @param subsection
-  #  *            subsection name, such a remote or branch name.
-  #  * @param name
-  #  *            name of the key to get.
-  #  * @param defaultValue
-  #  *            default value to return if no value was present.
-  #  * @return the selected enumeration value, or {@code defaultValue}.
-  #  */
-  # public <T extends Enum<?>> T getEnum(final String section,
-  # 		final String subsection, final String name, final T defaultValue) {
-  # 	final T[] all = allValuesOf(defaultValue);
-  # 	return typedGetter.getEnum(this, all, section, subsection, name,
-  # 			defaultValue);
-  # }
-  #
-  # @SuppressWarnings("unchecked")
-  # private static <T> T[] allValuesOf(T value) {
-  # 	try {
-  # 		return (T[]) value.getClass().getMethod("values").invoke(null); //$NON-NLS-1$
-  # 	} catch (Exception err) {
-  # 		String typeName = value.getClass().getName();
-  # 		String msg = MessageFormat.format(
-  # 				JGitText.get().enumValuesNotAvailable, typeName);
-  # 		throw new IllegalArgumentException(msg, err);
-  # 	}
-  # }
-  #
-  # /**
-  #  * Parse an enumeration from the configuration.
-  #  *
-  #  * @param all
-  #  *            all possible values in the enumeration which should be
-  #  *            recognized. Typically {@code EnumType.values()}.
-  #  * @param section
-  #  *            section the key is grouped within.
-  #  * @param subsection
-  #  *            subsection name, such a remote or branch name.
-  #  * @param name
-  #  *            name of the key to get.
-  #  * @param defaultValue
-  #  *            default value to return if no value was present.
-  #  * @return the selected enumeration value, or {@code defaultValue}.
-  #  */
-  # public <T extends Enum<?>> T getEnum(final T[] all, final String section,
-  # 		final String subsection, final String name, final T defaultValue) {
-  # 	return typedGetter.getEnum(this, all, section, subsection, name,
-  # 			defaultValue);
-  # }
-
   @doc ~S"""
   Get a single string value from the git config (or `nil` if not found).
   """
-  def get_string(c, section, subsection \\ nil, name)
+  def get_string(config, section, subsection \\ nil, name)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
-    c
-    |> process_ref()
+    config
+    |> config_pid()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
     |> replace_empty_with_missing()
     |> List.last()
@@ -318,11 +254,11 @@ defmodule Xgit.Lib.Config do
   If this instance was created with a base, the base's values (if any) are
   returned first.
   """
-  def get_string_list(c, section, subsection \\ nil, name)
+  def get_string_list(config, section, subsection \\ nil, name)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
-    c
-    |> process_ref()
+    config
+    |> config_pid()
     |> GenServer.call({:get_raw_strings, section, subsection, name})
     |> Enum.map(&fix_missing_or_nil_string_result/1)
   end
@@ -375,8 +311,8 @@ defmodule Xgit.Lib.Config do
   Get set of all subsections of specified section within this configuration
   and its base configuration.
   """
-  def subsections(c, section) when is_binary(section),
-    do: c |> process_ref() |> GenServer.call({:subsections, section})
+  def subsections(config, section) when is_binary(section),
+    do: config |> config_pid() |> GenServer.call({:subsections, section})
 
   # IMPORTANT: subsections_impl/2 runs in GenServer process.
   # See handle_call/3 below.
@@ -393,7 +329,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Get the sections defined in this `Config`.
   """
-  def sections(c), do: c |> process_ref() |> GenServer.call(:sections)
+  def sections(config), do: config |> config_pid() |> GenServer.call(:sections)
 
   # IMPORTANT: sections_impl/1 runs in GenServer process.
   # See handle_call/3 below.
@@ -413,8 +349,9 @@ defmodule Xgit.Lib.Config do
   Options:
   * `recursive`: Include matching names from base config.
   """
-  def names_in_section(c, section, options \\ []) when is_binary(section) and is_list(options),
-    do: c |> process_ref() |> GenServer.call({:names_in_section, section, options})
+  def names_in_section(config, section, options \\ [])
+      when is_binary(section) and is_list(options),
+      do: config |> config_pid() |> GenServer.call({:names_in_section, section, options})
 
   # IMPORTANT: names_in_section_impl/4 runs in GenServer process.
   # See handle_call/3 below.
@@ -442,10 +379,12 @@ defmodule Xgit.Lib.Config do
   Options:
   * `recursive`: Include matching names from base config.
   """
-  def names_in_subsection(c, section, subsection, options \\ [])
+  def names_in_subsection(config, section, subsection, options \\ [])
       when is_binary(section) and is_binary(subsection) and is_list(options),
       do:
-        c |> process_ref() |> GenServer.call({:names_in_subsection, section, subsection, options})
+        config
+        |> config_pid()
+        |> GenServer.call({:names_in_subsection, section, subsection, options})
 
   # IMPORTANT: names_in_subsection_impl/5 runs in GenServer process.
   # See handle_call/3 below.
@@ -648,48 +587,20 @@ defmodule Xgit.Lib.Config do
     name = value
   ```
   """
-  def set_boolean(c, section, subsection \\ nil, name, value)
+  def set_boolean(config, section, subsection \\ nil, name, value)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_boolean(value) do
-    c
-    |> process_ref()
+    config
+    |> config_pid()
     |> GenServer.call({:set_string_list, section, subsection, name, [to_string(value)]})
 
-    c
+    config
   end
-
-  # /**
-  #  * Add or modify a configuration value. The parameters will result in a
-  #  * configuration entry like this.
-  #  *
-  #  * <pre>
-  #  * [section &quot;subsection&quot;]
-  #  *         name = value
-  #  * </pre>
-  #  *
-  #  * @param section
-  #  *            section name, e.g "branch"
-  #  * @param subsection
-  #  *            optional subsection value, e.g. a branch name
-  #  * @param name
-  #  *            parameter name, e.g. "filemode"
-  #  * @param value
-  #  *            parameter value
-  #  */
-  # public <T extends Enum<?>> void setEnum(final String section,
-  # 		final String subsection, final String name, final T value) {
-  # 	String n;
-  # 	if (value instanceof ConfigEnum)
-  # 		n = ((ConfigEnum) value).toConfigValue();
-  # 	else
-  # 		n = value.name().toLowerCase(Locale.ROOT).replace('_', ' ');
-  # 	setString(section, subsection, name, n);
-  # }
 
   @doc ~S"""
   Add or modify a configuration value.
 
-  This parameters will result in a configuration entry like this being added
+  These parameters will result in a configuration entry like this being added
   (in-memory only):
 
   ```
@@ -697,14 +608,14 @@ defmodule Xgit.Lib.Config do
     name = value
   ```
   """
-  def set_string(c, section, subsection \\ nil, name, value)
+  def set_string(config, section, subsection \\ nil, name, value)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_binary(value) do
-    c
-    |> process_ref()
+    config
+    |> config_pid()
     |> GenServer.call({:set_string_list, section, subsection, name, [value]})
 
-    c
+    config
   end
 
   # /**
@@ -726,13 +637,13 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Remove all configuration values under a single section.
   """
-  def unset_section(c, section, subsection \\ nil)
+  def unset_section(config, section, subsection \\ nil)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) do
-    c
-    |> process_ref()
+    config
+    |> config_pid()
     |> GenServer.call({:unset_section, section, subsection})
 
-    c
+    config
   end
 
   # IMPORTANT: unset_section_impl/5 runs in GenServer process.
@@ -744,7 +655,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Set a configuration value.
 
-  This parameters will result in a configuration entry like this being added
+  These parameters will result in a configuration entry like this being added
   (in-memory only):
 
   ```
@@ -753,14 +664,14 @@ defmodule Xgit.Lib.Config do
     name = value2
   ```
   """
-  def set_string_list(c, section, subsection \\ nil, name, values)
+  def set_string_list(config, section, subsection \\ nil, name, values)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_list(values) do
-    c
-    |> process_ref()
+    config
+    |> config_pid()
     |> GenServer.call({:set_string_list, section, subsection, name, values})
 
-    c
+    config
   end
 
   # IMPORTANT: set_string_list_impl/5 runs in GenServer process.
@@ -937,7 +848,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Get this configuration, formatted as a Git-style text file.
   """
-  def to_text(c), do: GenServer.call(process_ref(c), :to_text)
+  def to_text(config), do: GenServer.call(config_pid(config), :to_text)
 
   # IMPORTANT: to_text_impl/1 runs in GenServer process.
   # See handle_call/3 below.
@@ -1021,10 +932,10 @@ defmodule Xgit.Lib.Config do
 
   Raises `ConfigInvalidError` if unable to parse string.
   """
-  def from_text(c, text) when is_binary(text) do
-    case GenServer.call(process_ref(c), {:from_text, text}) do
+  def from_text(config, text) when is_binary(text) do
+    case GenServer.call(config_pid(config), {:from_text, text}) do
       {:error, e} -> raise(e)
-      _ -> c
+      _ -> config
     end
   end
 
@@ -1410,7 +1321,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Clear the configuration file.
   """
-  def clear(c), do: c |> process_ref() |> GenServer.call(:clear)
+  def clear(config), do: config |> config_pid() |> GenServer.call(:clear)
 
   # /**
   #  * Check if bytes should be treated as UTF-8 or not.
@@ -1424,172 +1335,7 @@ defmodule Xgit.Lib.Config do
   # 	return bytes.length >= 3 && bytes[0] == (byte) 0xEF
   # 			&& bytes[1] == (byte) 0xBB && bytes[2] == (byte) 0xBF;
   # }
-  #
-  # private static String readSectionName(StringReader in)
-  # 		throws ConfigInvalidException {
-  # 	final StringBuilder name = new StringBuilder();
-  # 	for (;;) {
-  # 		int c = in.read();
-  # 		if (c < 0)
-  # 			throw new ConfigInvalidException(JGitText.get().unexpectedEndOfConfigFile);
-  #
-  # 		if (']' == c) {
-  # 			in.reset();
-  # 			break;
-  # 		}
-  #
-  # 		if (' ' == c || '\t' == c) {
-  # 			for (;;) {
-  # 				c = in.read();
-  # 				if (c < 0)
-  # 					throw new ConfigInvalidException(JGitText.get().unexpectedEndOfConfigFile);
-  #
-  # 				if ('"' == c) {
-  # 					in.reset();
-  # 					break;
-  # 				}
-  #
-  # 				if (' ' == c || '\t' == c)
-  # 					continue; // Skipped...
-  # 				throw new ConfigInvalidException(MessageFormat.format(JGitText.get().badSectionEntry, name));
-  # 			}
-  # 			break;
-  # 		}
-  #
-  # 		if (Character.isLetterOrDigit((char) c) || '.' == c || '-' == c)
-  # 			name.append((char) c);
-  # 		else
-  # 			throw new ConfigInvalidException(MessageFormat.format(JGitText.get().badSectionEntry, name));
-  # 	}
-  # 	return name.toString();
-  # }
-  #
-  # private static String readSubsectionName(StringReader in)
-  # 		throws ConfigInvalidException {
-  # 	StringBuilder r = new StringBuilder();
-  # 	for (;;) {
-  # 		int c = in.read();
-  # 		if (c < 0) {
-  # 			break;
-  # 		}
-  #
-  # 		if ('\n' == c) {
-  # 			throw new ConfigInvalidException(
-  # 					JGitText.get().newlineInQuotesNotAllowed);
-  # 		}
-  # 		if ('\\' == c) {
-  # 			c = in.read();
-  # 			switch (c) {
-  # 			case -1:
-  # 				throw new ConfigInvalidException(JGitText.get().endOfFileInEscape);
-  #
-  # 			case '\\':
-  # 			case '"':
-  # 				r.append((char) c);
-  # 				continue;
-  #
-  # 			default:
-  # 				// C git simply drops backslashes if the escape sequence is not
-  # 				// recognized.
-  # 				r.append((char) c);
-  # 				continue;
-  # 			}
-  # 		}
-  # 		if ('"' == c) {
-  # 			break;
-  # 		}
-  #
-  # 		r.append((char) c);
-  # 	}
-  # 	return r.toString();
-  # }
-  #
-  # private static String readValue(StringReader in)
-  # 		throws ConfigInvalidException {
-  # 	StringBuilder value = new StringBuilder();
-  # 	StringBuilder trailingSpaces = null;
-  # 	boolean quote = false;
-  # 	boolean inLeadingSpace = true;
-  #
-  # 	for (;;) {
-  # 		int c = in.read();
-  # 		if (c < 0) {
-  # 			break;
-  # 		}
-  # 		if ('\n' == c) {
-  # 			if (quote) {
-  # 				throw new ConfigInvalidException(
-  # 						JGitText.get().newlineInQuotesNotAllowed);
-  # 			}
-  # 			in.reset();
-  # 			break;
-  # 		}
-  #
-  # 		if (!quote && (';' == c || '#' == c)) {
-  # 			if (trailingSpaces != null) {
-  # 				trailingSpaces.setLength(0);
-  # 			}
-  # 			in.reset();
-  # 			break;
-  # 		}
-  #
-  # 		char cc = (char) c;
-  # 		if (Character.isWhitespace(cc)) {
-  # 			if (inLeadingSpace) {
-  # 				continue;
-  # 			}
-  # 			if (trailingSpaces == null) {
-  # 				trailingSpaces = new StringBuilder();
-  # 			}
-  # 			trailingSpaces.append(cc);
-  # 			continue;
-  # 		} else {
-  # 			inLeadingSpace = false;
-  # 			if (trailingSpaces != null) {
-  # 				value.append(trailingSpaces);
-  # 				trailingSpaces.setLength(0);
-  # 			}
-  # 		}
-  #
-  # 		if ('\\' == c) {
-  # 			c = in.read();
-  # 			switch (c) {
-  # 			case -1:
-  # 				throw new ConfigInvalidException(JGitText.get().endOfFileInEscape);
-  # 			case '\n':
-  # 				continue;
-  # 			case 't':
-  # 				value.append('\t');
-  # 				continue;
-  # 			case 'b':
-  # 				value.append('\b');
-  # 				continue;
-  # 			case 'n':
-  # 				value.append('\n');
-  # 				continue;
-  # 			case '\\':
-  # 				value.append('\\');
-  # 				continue;
-  # 			case '"':
-  # 				value.append('"');
-  # 				continue;
-  # 			default:
-  # 				throw new ConfigInvalidException(MessageFormat.format(
-  # 						JGitText.get().badEscape,
-  # 						Character.valueOf(((char) c))));
-  # 			}
-  # 		}
-  #
-  # 		if ('"' == c) {
-  # 			quote = !quote;
-  # 			continue;
-  # 		}
-  #
-  # 		value.append(cc);
-  # 	}
-  # 	return value.length() > 0 ? value.toString() : null;
-  # }
-  #
+
   # /**
   #  * Parses a section of the configuration into an application model object.
   #  * <p>
@@ -1637,41 +1383,18 @@ defmodule Xgit.Lib.Config do
   # 		pos--;
   # 	}
   # }
-  #
-  # /**
-  #  * Converts enumeration values into configuration options and vice-versa,
-  #  * allowing to match a config option with an enum value.
-  #  *
-  #  */
-  # public static interface ConfigEnum {
-  # 	/**
-  # 	 * Converts enumeration value into a string to be save in config.
-  # 	 *
-  # 	 * @return the enum value as config string
-  # 	 */
-  # 	String toConfigValue();
-  #
-  # 	/**
-  # 	 * Checks if the given string matches with enum value.
-  # 	 *
-  # 	 * @param in
-  # 	 *            the string to match
-  # 	 * @return true if the given string matches enum value, false otherwise
-  # 	 */
-  # 	boolean matchConfigValue(String in);
-  # }
 
   @impl true
   def handle_call(:to_text, _from, %__MODULE__.State{config_lines: config_lines} = s),
-    do: {:reply, to_text_impl(config_lines), s, @idle_timeout}
+    do: {:reply, to_text_impl(config_lines), s}
 
   @impl true
   def handle_call({:from_text, text}, _from, %__MODULE__.State{} = s) when is_binary(text) do
     try do
       new_config_lines = from_text_impl(text, 1, nil)
-      {:reply, :ok, %{s | config_lines: new_config_lines}, @idle_timeout}
+      {:reply, :ok, %{s | config_lines: new_config_lines}}
     rescue
-      e in ConfigInvalidError -> {:reply, {:error, e}, s, @idle_timeout}
+      e in ConfigInvalidError -> {:reply, {:error, e}, s}
     end
   end
 
@@ -1679,7 +1402,7 @@ defmodule Xgit.Lib.Config do
   def handle_call({:get_raw_strings, section, subsection, name}, _from, %__MODULE__.State{} = s)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
-    {:reply, raw_string_list(s, section, subsection, name), s, @idle_timeout}
+    {:reply, raw_string_list(s, section, subsection, name), s}
   end
 
   @impl true
@@ -1689,12 +1412,12 @@ defmodule Xgit.Lib.Config do
         %__MODULE__.State{config_lines: config_lines} = s
       )
       when is_binary(section) do
-    {:reply, subsections_impl(config_lines, section), s, @idle_timeout}
+    {:reply, subsections_impl(config_lines, section), s}
   end
 
   @impl true
   def handle_call(:sections, _from, %__MODULE__.State{config_lines: config_lines} = s),
-    do: {:reply, sections_impl(config_lines), s, @idle_timeout}
+    do: {:reply, sections_impl(config_lines), s}
 
   @impl true
   def handle_call(
@@ -1703,7 +1426,7 @@ defmodule Xgit.Lib.Config do
         %__MODULE__.State{base_config: base_config, config_lines: config_lines} = s
       )
       when is_binary(section) and is_list(options) do
-    {:reply, names_in_section_impl(config_lines, section, base_config, options), s, @idle_timeout}
+    {:reply, names_in_section_impl(config_lines, section, base_config, options), s}
   end
 
   @impl true
@@ -1713,15 +1436,14 @@ defmodule Xgit.Lib.Config do
         %__MODULE__.State{base_config: base_config, config_lines: config_lines} = s
       )
       when is_binary(section) and is_binary(subsection) and is_list(options) do
-    {:reply, names_in_subsection_impl(config_lines, section, subsection, base_config, options), s,
-     @idle_timeout}
+    {:reply, names_in_subsection_impl(config_lines, section, subsection, base_config, options), s}
   end
 
   @impl true
   def handle_call({:unset_section, section, subsection}, _from, %__MODULE__.State{} = s)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) do
     new_config_lines = unset_section_impl(s, section, subsection)
-    {:reply, :ok, %{s | config_lines: new_config_lines}, @idle_timeout}
+    {:reply, :ok, %{s | config_lines: new_config_lines}}
   end
 
   @impl true
@@ -1733,25 +1455,15 @@ defmodule Xgit.Lib.Config do
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_list(values) do
     new_config_lines = set_string_list_impl(s, section, subsection, name, values)
-    {:reply, :ok, %{s | config_lines: new_config_lines}, @idle_timeout}
+    {:reply, :ok, %{s | config_lines: new_config_lines}}
   end
 
   @impl true
   def handle_call(:clear, _from, %__MODULE__.State{} = s),
-    do: {:reply, :ok, %{s | config_lines: []}, @idle_timeout}
+    do: {:reply, :ok, %{s | config_lines: []}}
 
   @impl true
-  def handle_info(:timeout, %__MODULE__.State{ref: ref} = s) do
-    members = :pg2.get_members({:xgit_config, ref})
+  def handle_info(_message, %__MODULE__.State{} = s), do: {:noreply, s}
 
-    if Enum.empty?(members),
-      do: {:stop, :normal, s},
-      else: {:noreply, s, @idle_timeout}
-  end
-
-  @impl true
-  def handle_info(_message, %__MODULE__.State{} = s), do: {:noreply, s, @idle_timeout}
-
-  defp process_ref(%__MODULE__{ref: ref}) when is_reference(ref),
-    do: {:global, {:xgit_config, ref}}
+  defp config_pid(%__MODULE__{config_pid: pid}) when is_pid(pid), do: pid
 end
