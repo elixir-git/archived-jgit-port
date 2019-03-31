@@ -466,6 +466,8 @@ defimpl Xgit.Lib.Repository.Strategy, for: Xgit.Storage.File.FileRepository do
 
     File.mkdir_p!(git_dir)
 
+    # WINDOWS PORTING NOTE: Skipping this for now since there isn't really a
+    # distinct "hidden" attribute for files on most Posix file systems.
     # TODO: Pausing here because we need enum support in config and ObjectDatabase.
     # HideDotFiles hideDotFiles = getConfig().getEnum(
     #     ConfigConstants.CONFIG_CORE_SECTION, null,
@@ -474,6 +476,9 @@ defimpl Xgit.Lib.Repository.Strategy, for: Xgit.Storage.File.FileRepository do
     # if (hideDotFiles != HideDotFiles.FALSE && !isBare()
     #     && getDirectory().getName().startsWith(".")) //$NON-NLS-1$
     #   getFS().setHidden(getDirectory(), true);
+
+    # TODO: Port at least minimal portion of RefDatabase and ObjectDirectory.
+
     # refs.create();
     # objectDatabase.create();
     #
