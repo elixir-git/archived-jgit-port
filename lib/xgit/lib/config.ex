@@ -4,11 +4,16 @@ defmodule Xgit.Lib.Config do
 
   INCOMPLETE IMPLEMENTATION: The following features have not yet been ported from jgit:
 
-  * enums
   * parsing time units
   * change notification
   * include file support
   * a few edge cases
+
+  PORTING NOTE: Xgit does not have explicit enum support, unlike jgit. There is very
+  little about the various `ConfigEnum` implementations that is sharable, so it did
+  not seem worth it to port that mechanism. Xgit instead stores the enum values
+  directly as strings. Some one-off modules may provide additional support for
+  recognizing known strings or variants.
   """
   @enforce_keys [:config_pid]
   defstruct [:config_pid, :storage]
@@ -223,60 +228,6 @@ defmodule Xgit.Lib.Config do
   defp to_boolean("off", _default), do: false
   defp to_boolean("0", _default), do: false
   defp to_boolean(_, _default), do: true
-
-  # /**
-  #  * Parse an enumeration from the configuration.
-  #  *
-  #  * @param section
-  #  *            section the key is grouped within.
-  #  * @param subsection
-  #  *            subsection name, such a remote or branch name.
-  #  * @param name
-  #  *            name of the key to get.
-  #  * @param defaultValue
-  #  *            default value to return if no value was present.
-  #  * @return the selected enumeration value, or {@code defaultValue}.
-  #  */
-  # public <T extends Enum<?>> T getEnum(final String section,
-  # 		final String subsection, final String name, final T defaultValue) {
-  # 	final T[] all = allValuesOf(defaultValue);
-  # 	return typedGetter.getEnum(this, all, section, subsection, name,
-  # 			defaultValue);
-  # }
-  #
-  # @SuppressWarnings("unchecked")
-  # private static <T> T[] allValuesOf(T value) {
-  # 	try {
-  # 		return (T[]) value.getClass().getMethod("values").invoke(null); //$NON-NLS-1$
-  # 	} catch (Exception err) {
-  # 		String typeName = value.getClass().getName();
-  # 		String msg = MessageFormat.format(
-  # 				JGitText.get().enumValuesNotAvailable, typeName);
-  # 		throw new IllegalArgumentException(msg, err);
-  # 	}
-  # }
-  #
-  # /**
-  #  * Parse an enumeration from the configuration.
-  #  *
-  #  * @param all
-  #  *            all possible values in the enumeration which should be
-  #  *            recognized. Typically {@code EnumType.values()}.
-  #  * @param section
-  #  *            section the key is grouped within.
-  #  * @param subsection
-  #  *            subsection name, such a remote or branch name.
-  #  * @param name
-  #  *            name of the key to get.
-  #  * @param defaultValue
-  #  *            default value to return if no value was present.
-  #  * @return the selected enumeration value, or {@code defaultValue}.
-  #  */
-  # public <T extends Enum<?>> T getEnum(final T[] all, final String section,
-  # 		final String subsection, final String name, final T defaultValue) {
-  # 	return typedGetter.getEnum(this, all, section, subsection, name,
-  # 			defaultValue);
-  # }
 
   @doc ~S"""
   Get a single string value from the git config (or `nil` if not found).
@@ -646,38 +597,10 @@ defmodule Xgit.Lib.Config do
     config
   end
 
-  # /**
-  #  * Add or modify a configuration value. The parameters will result in a
-  #  * configuration entry like this.
-  #  *
-  #  * <pre>
-  #  * [section &quot;subsection&quot;]
-  #  *         name = value
-  #  * </pre>
-  #  *
-  #  * @param section
-  #  *            section name, e.g "branch"
-  #  * @param subsection
-  #  *            optional subsection value, e.g. a branch name
-  #  * @param name
-  #  *            parameter name, e.g. "filemode"
-  #  * @param value
-  #  *            parameter value
-  #  */
-  # public <T extends Enum<?>> void setEnum(final String section,
-  # 		final String subsection, final String name, final T value) {
-  # 	String n;
-  # 	if (value instanceof ConfigEnum)
-  # 		n = ((ConfigEnum) value).toConfigValue();
-  # 	else
-  # 		n = value.name().toLowerCase(Locale.ROOT).replace('_', ' ');
-  # 	setString(section, subsection, name, n);
-  # }
-
   @doc ~S"""
   Add or modify a configuration value.
 
-  This parameters will result in a configuration entry like this being added
+  These parameters will result in a configuration entry like this being added
   (in-memory only):
 
   ```
@@ -732,7 +655,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Set a configuration value.
 
-  This parameters will result in a configuration entry like this being added
+  These parameters will result in a configuration entry like this being added
   (in-memory only):
 
   ```
@@ -1459,29 +1382,6 @@ defmodule Xgit.Lib.Config do
   # 	void reset() {
   # 		pos--;
   # 	}
-  # }
-  #
-  # /**
-  #  * Converts enumeration values into configuration options and vice-versa,
-  #  * allowing to match a config option with an enum value.
-  #  *
-  #  */
-  # public static interface ConfigEnum {
-  # 	/**
-  # 	 * Converts enumeration value into a string to be save in config.
-  # 	 *
-  # 	 * @return the enum value as config string
-  # 	 */
-  # 	String toConfigValue();
-  #
-  # 	/**
-  # 	 * Checks if the given string matches with enum value.
-  # 	 *
-  # 	 * @param in
-  # 	 *            the string to match
-  # 	 * @return true if the given string matches enum value, false otherwise
-  # 	 */
-  # 	boolean matchConfigValue(String in);
   # }
 
   @impl true
