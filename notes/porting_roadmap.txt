@@ -42,6 +42,21 @@ WorkingTreeIterator
   TreeWalk TRACE
   WorkingTreeOptions TRACE
 
+FileRepository TRACE
+  AttributesNode TRACE
+  GC DEFER?
+  GlobalAttributesNode TRACE
+  InfoAttributesNode TRACE
+  LockFile TRACE
+  ObjectDatabase
+  ObjectDirectory TRACE
+  RefDatabase
+  RefDirectory TRACE
+  ReflogReaderImpl TRACE
+  RefTreeDatabase TRACE
+  RefUpdate TRACE
+  Repository
+
 Repository
   AttributesNodeProvider TRACE
   DirCache TRACE
@@ -56,6 +71,32 @@ Repository
   RepositoryState ENUM
   RevCommit TRACE
   RevWalk TRACE
+
+ObjectDatabase TRACE
+
+RefDirectory (use RefDatabase)
+  DigestInputStream TRACE
+  LockFile TRACE
+  MessageDigest TRACE
+  ObjectIdRef.PeeledNonTag TRACE
+  ObjectIdRef.PeeledTag TRACE
+  PackedBatchRefUpdate DEFER?
+  RefDatabase
+  RefDirectoryRename DEFER?
+  RefDirectoryUpdate DEFER?
+  RefList TRACE
+  RefMap TRACE
+  ReflogWriter DEFER?
+  RefWriter TRACE
+  RevObject TRACE
+  RevWalk TRACE
+  SymbolicRef TRACE
+  INCOMPLETE: continue from 590
+
+RefDatabase (GenServer + behaviour)
+  BatchRefUpdate DEFER?
+  RefRename DEFER?
+  RefUpdate DEFER?
 
 ObjectInserter
   TreeFormatter DEFER?
