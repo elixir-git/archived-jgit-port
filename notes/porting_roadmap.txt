@@ -74,7 +74,8 @@ Repository
 
 ObjectDatabase TRACE
 
-RefDirectory (use RefDatabase)
+RefDirectory + RefDatabase PARTIALLY DONE
+  BatchRefUpdate DEFER?
   DigestInputStream TRACE
   LockFile TRACE
   MessageDigest TRACE
@@ -87,16 +88,13 @@ RefDirectory (use RefDatabase)
   RefList TRACE
   RefMap TRACE
   ReflogWriter DEFER?
+  RefRename DEFER?
+  RefUpdate DEFER?
   RefWriter TRACE
   RevObject TRACE
   RevWalk TRACE
   SymbolicRef TRACE
   INCOMPLETE: continue from 590
-
-RefDatabase (GenServer + behaviour)
-  BatchRefUpdate DEFER?
-  RefRename DEFER?
-  RefUpdate DEFER?
 
 ObjectInserter
   TreeFormatter DEFER?
