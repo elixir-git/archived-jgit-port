@@ -11,9 +11,6 @@ defmodule Xgit.Lib.RefDatabase do
 
   @type t :: pid
 
-  # TODO: Need to rework this so we track the implementation module.
-  # See GenStage as an example.
-
   @doc """
   Starts a `RefDatabase` process linked to the current process.
 
