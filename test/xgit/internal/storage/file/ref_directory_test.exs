@@ -28,8 +28,8 @@ defmodule Xgit.Internal.Storage.File.RefDirectoryTest do
 
   test "handles unexpected calls", %{ref_directory: ref_directory} do
     assert capture_log(fn ->
-      assert {:error, :unknown_message} = GenServer.call(ref_directory, :bogus)
-    end) =~ "[warn]  RefDatabase received unrecognized call :bogus"
+             assert {:error, :unknown_message} = GenServer.call(ref_directory, :bogus)
+           end) =~ "[warn]  RefDatabase received unrecognized call :bogus"
 
     assert Process.alive?(ref_directory)
   end
