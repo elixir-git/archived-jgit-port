@@ -48,8 +48,6 @@ FileRepository TRACE
   GlobalAttributesNode TRACE
   InfoAttributesNode TRACE
   LockFile TRACE
-  ObjectDatabase
-  ObjectDirectory TRACE
   RefDatabase
   RefDirectory TRACE
   ReflogReaderImpl TRACE
@@ -63,7 +61,6 @@ Repository
   ObjectInserter
   RebaseTodoFile TRACE
   RebaseTodoLine TRACE
-  RefDatabase TRACE
   ReflogEntry TRACE
   ReflogReader TRACE
   RefRename TRACE
@@ -72,29 +69,9 @@ Repository
   RevCommit TRACE
   RevWalk TRACE
 
-ObjectDatabase + FileObjectDatabase + ObjectDirectory TRACE
+ObjectDatabase + FileObjectDatabase + ObjectDirectory PARTIALLY DONE
 
 RefDirectory + RefDatabase PARTIALLY DONE
-  BatchRefUpdate DEFER?
-  DigestInputStream TRACE
-  LockFile TRACE
-  MessageDigest TRACE
-  ObjectIdRef.PeeledNonTag TRACE
-  ObjectIdRef.PeeledTag TRACE
-  PackedBatchRefUpdate DEFER?
-  RefDatabase
-  RefDirectoryRename DEFER?
-  RefDirectoryUpdate DEFER?
-  RefList TRACE
-  RefMap TRACE
-  ReflogWriter DEFER?
-  RefRename DEFER?
-  RefUpdate DEFER?
-  RefWriter TRACE
-  RevObject TRACE
-  RevWalk TRACE
-  SymbolicRef TRACE
-  INCOMPLETE: continue from 590
 
 ObjectInserter
   TreeFormatter DEFER?
