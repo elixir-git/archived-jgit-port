@@ -39,16 +39,6 @@ defmodule Xgit.Internal.Storage.File.RefDirectory do
   #
   # private final FileRepository parent;
   #
-  # private final File gitDir;
-  #
-  # final File refsDir;
-  #
-  # final File packedRefsFile;
-  #
-  # final File logsDir;
-  #
-  # final File logsRefsDir;
-  #
   # /**
   #  * Immutable sorted list of loose references.
   #  * <p>
@@ -97,7 +87,7 @@ defmodule Xgit.Internal.Storage.File.RefDirectory do
   # private List<Integer> retrySleepMs = RETRY_SLEEP_MS;
 
   @doc ~S"""
-  Start a RefDirectory.
+  Start a `RefDirectory`.
 
   Pass in the location of the `.git` directory.
   """
