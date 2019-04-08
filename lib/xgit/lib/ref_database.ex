@@ -86,12 +86,6 @@ defmodule Xgit.Lib.RefDatabase do
   """
   @callback handle_create(state :: term) :: :ok
 
-  #  *
-  #  * @throws java.io.IOException
-  #  *             the database could not be created.
-  #  */
-  # public abstract void create() throws IOException;
-  #
   # /**
   #  * Close any resources held by this database.
   #  */
