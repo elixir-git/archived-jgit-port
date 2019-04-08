@@ -2,54 +2,14 @@ defmodule Xgit.Lib.Repository do
   @moduledoc ~S"""
   Represents a git repository.
 
-  A repository holds all objects and refs used for managing source code (could
-  be any type of file, but source code is what SCMs are typically used for).
-
-  Repositories may be backed by a variety of storage mechanisms, which are represented
-  by structs that implement the `Strategy` protocol. This module provides wrapper
-  functions that build on the `Strategy` API.
-
-  PORTING NOTE: Verify following claim in Elixir:
-  The thread-safety of a `Repository` very much depends on the concrete
-  implementation (see `Strategy` protocol). Applications working with a generic
-  `Repository` type must not assume the instance is thread-safe.
-
-  PORTING NOTE: Verify the following:
-  * `FileRepository` is thread-safe.
-  * `DfsRepository` thread-safety is determined by its subclass.
+  A repository holds all objects and refs used for managing source code. (It could
+  be any type of file, but source code is what SCMs are typically used for.)
   """
 
-  defprotocol Strategy do
-    @moduledoc ~S"""
-    Concrete implementation of a git repository.
-    """
+  require Logger
 
-    @type t :: term
+  @type t :: pid
 
-    alias Xgit.Lib.Config
-
-    @doc ~S"""
-    Create a new git repository initializing the necessary files and directories.
-
-    Options:
-      * `bare?`: If `true`, a repository without a working directory is created.
-
-    Should return `repository` for convenience in pipe chains.
-    """
-    @spec create!(repository :: t, options :: keyword) :: t
-    def create!(repository, options \\ [])
-
-    @doc ~S"""
-    Get the configuration of this repository.
-
-    Should return an instance of struct `Xgit.Lib.Config`.
-    """
-    @spec config(repository :: t) :: Config.t()
-    def config(repository)
-  end
-
-  # private static final ListenerList globalListeners = new ListenerList();
-  #
   # /**
   #  * Branch names containing slashes should not have a name component that is
   #  * one of the reserved device names on Windows.
@@ -78,30 +38,38 @@ defmodule Xgit.Lib.Repository do
   # /** Metadata directory holding the repository's critical files. */
   # private final File gitDir;
   #
-  # /** File abstraction used to resolve paths. */
-  # private final FS fs;
-  #
   # private final ListenerList myListeners = new ListenerList();
-  #
-  # /** If not bare, the top level directory of the working files. */
-  # private final File workTree;
   #
   # /** If not bare, the index file caching the working file states. */
   # private final File indexFile;
-  #
-  # /**
-  #  * Initialize a new repository instance.
-  #  *
-  #  * @param options
-  #  *            options to configure the repository.
-  #  */
-  # protected Repository(BaseRepositoryBuilder options) {
-  #   gitDir = options.getGitDir();
-  #   fs = options.getFS();
-  #   workTree = options.getWorkTree();
-  #   indexFile = options.getIndexFile();
-  # }
-  #
+
+  @doc """
+  Starts a `Repository` process based on settings derived in a `RepositoryBuiler`
+  struct.
+
+  This should be called by the `start_link` function for a specific implementation
+  module.
+
+  Once the server is started, the `init/1` function of the given `module` is
+  called with `args` as its arguments to initialize the stage. To ensure a
+  synchronized start-up procedure, this function does not return until `init/1`
+  has returned.
+
+  The lifetime of this process is similar to that for `GenServer` or `GenStage`
+  processes.
+  """
+  @spec start_link(module, term, GenServer.options()) :: GenServer.on_start()
+  def start_link(module, args, options) when is_atom(module) and is_list(options),
+    do: GenServer.start_link(__MODULE__, {module, args}, options)
+
+  @doc false
+  def init({mod, args}) do
+    case mod.init(args) do
+      {:ok, state} -> {:ok, {mod, state}}
+      {:stop, reason} -> {:stop, reason}
+    end
+  end
+
   # /**
   #  * Get listeners observing only events on this repository.
   #  *
@@ -128,31 +96,66 @@ defmodule Xgit.Lib.Repository do
   # }
 
   @doc ~S"""
-  Create a new git repository initializing the necessary files and directories.
+  Creates a new git repository.
 
-  Options:
-    * `bare?`: If `true`, a repository without a working directory is created.
+  Options (`opts`) are:
+  * `bare?`: If `true`, a bare repository (without a working tree) is created.
 
-  Returns `repository` for convenience in pipe chains.
+  Returns `{:ok, repository}` if successful or `{:error, reason}` if not.
   """
-  defdelegate create!(repository, options \\ []), to: Strategy
+  @spec create!(repository :: t, opts :: Keyword.t()) :: t
+  def create(repository, opts \\ []) when is_pid(repository) and is_list(opts),
+    do: GenServer.call(repository, {:create, opts})
 
-  # /**
-  #  * Get local metadata directory
-  #  *
-  #  * @return local metadata directory; {@code null} if repository isn't local.
-  #  */
-  # /*
-  #  * TODO This method should be annotated as Nullable, because in some
-  #  * specific configurations metadata is not located in the local file system
-  #  * (for example in memory databases). In "usual" repositories this
-  #  * annotation would only cause compiler errors at places where the actual
-  #  * directory can never be null.
-  #  */
-  # public File getDirectory() {
-  #   return gitDir;
-  # }
-  #
+  @doc ~S"""
+  Creates a new git repository; raises if unable to complete.
+
+  Options (`opts`) are:
+  * `bare?`: If `true`, a bare repository (without a working tree) is created.
+
+  Returns `repository` for function chaining; raises an error if not.
+  """
+  @spec create!(repository :: t, opts :: Keyword.t()) :: t
+  def create!(repository, opts \\ []) when is_pid(repository) and is_list(opts) do
+    case create(repository, opts) do
+      :ok -> repository
+      {:error, e} -> raise e
+    end
+  end
+
+  @doc ~S"""
+  Invoked when `create/2` is called on this repository.
+
+  Should initialize a new repository at this location.
+
+  May raise `File.Error` or similar if the repository could not be created.
+
+  Should return `:ok`.
+  """
+  @callback handle_create(state :: term, opts :: Keyword.t()) ::
+              {:ok, state :: term} | {:error, reason :: term}
+
+  @doc ~S"""
+  Get local metadata directory.
+
+  This is typically the `.git` directory in a local repository.
+
+  Will return `nil` if the repository isn't local.
+  """
+  def git_dir!(repository) when is_pid(repository) do
+    case GenServer.call(repository, :git_dir) do
+      {:ok, dir} -> dir
+      {:error, e} -> raise e
+    end
+  end
+
+  @doc ~S"""
+  Invoked when `git_dir!/1` is called on this repository.
+
+  Should return the path to the `.git` directory if applicable, or `nil` if not.
+  """
+  @callback handle_git_dir(state :: term) :: String.t() | nil
+
   # /**
   #  * Get the object database which stores this repository's data.
   #  *
@@ -188,14 +191,7 @@ defmodule Xgit.Lib.Repository do
   #  */
   # @NonNull
   # public abstract RefDatabase getRefDatabase();
-
-  @doc ~S"""
-  Get the configuration of this repository.
-
-  Returns an instance of struct `Xgit.Lib.Config`.
-  """
-  defdelegate config(repository), to: Strategy
-
+  #
   # /**
   #  * Get the configuration of this repository.
   #  *
@@ -1456,24 +1452,29 @@ defmodule Xgit.Lib.Repository do
   # public boolean isBare() {
   #   return workTree == null;
   # }
-  #
-  # /**
-  #  * Get the root directory of the working tree, where files are checked out
-  #  * for viewing and editing.
-  #  *
-  #  * @return the root directory of the working tree, where files are checked
-  #  *         out for viewing and editing.
-  #  * @throws org.eclipse.jgit.errors.NoWorkTreeException
-  #  *             if this is bare, which implies it has no working directory.
-  #  *             See {@link #isBare()}.
-  #  */
-  # @NonNull
-  # public File getWorkTree() throws NoWorkTreeException {
-  #   if (isBare())
-  #     throw new NoWorkTreeException();
-  #   return workTree;
-  # }
-  #
+
+  @doc ~S"""
+  Get the root directory of the working tree.
+
+  This is where files are checked out for viewing and editing.
+
+  Will return `nil` if there is no working tree (i.e. the repository is bare or
+  there is no local representation of the repository).
+  """
+  def work_tree!(repository) when is_pid(repository) do
+    case GenServer.call(repository, :work_tree) do
+      {:ok, dir} -> dir
+      {:error, e} -> raise e
+    end
+  end
+
+  @doc ~S"""
+  Invoked when `work_tree!/1` is called on this repository.
+
+  Should return the path to working tree directory if applicable, or `nil` if not.
+  """
+  @callback handle_work_tree(state :: term) :: String.t() | nil
+
   # /**
   #  * Force a scan for changed refs. Fires an IndexChangedEvent(false) if
   #  * changes are detected.
@@ -1994,4 +1995,42 @@ defmodule Xgit.Lib.Repository do
   # public void autoGC(ProgressMonitor monitor) {
   #   // default does nothing
   # }
+
+  def handle_call({:create, opts}, _from, {mod, mod_state}) when is_list(opts) do
+    case mod.handle_create(mod_state, opts) do
+      {:ok, mod_state} -> {:reply, :ok, {mod, mod_state}}
+      {:error, reason} -> {:stop, reason}
+    end
+  end
+
+  def handle_call(:git_dir, _from, {mod, mod_state}) do
+    case mod.handle_git_dir(mod_state) do
+      {:ok, dir, mod_state} -> {:reply, {:ok, dir}, {mod, mod_state}}
+      {:error, reason} -> {:stop, reason}
+    end
+  end
+
+  def handle_call(:work_tree, _from, {mod, mod_state}) do
+    case mod.handle_work_tree(mod_state) do
+      {:ok, dir, mod_state} -> {:reply, {:ok, dir}, {mod, mod_state}}
+      {:error, reason} -> {:stop, reason}
+    end
+  end
+
+  def handle_call(message, _from, state) do
+    Logger.warn("Repository received unrecognized call #{inspect(message)}")
+    {:reply, {:error, :unknown_message}, state}
+  end
+
+  defmacro __using__(opts) do
+    quote location: :keep, bind_quoted: [opts: opts] do
+      use GenServer, opts
+      alias Xgit.Lib.Repository
+
+      def handle_git_dir(state), do: {:ok, nil, state}
+      def handle_work_tree(state), do: {:ok, nil, state}
+
+      defoverridable handle_git_dir: 1, handle_work_tree: 1
+    end
+  end
 end

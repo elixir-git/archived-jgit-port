@@ -1,21 +1,19 @@
 defmodule Xgit.Storage.File.FileRepository do
   @moduledoc ~S"""
-   Represents a git repository.
+  Represents a git repository.
 
-   A repository holds all objects and refs used for managing source code (could be
-   any type of file, but source code is what SCMs are typically used for).
+  A repository holds all objects and refs used for managing source code (could be
+  any type of file, but source code is what SCMs are typically used for).
 
-   In git terms all data is stored in `GIT_DIR`, typically a directory called
-   `.git`. A work tree is maintained unless the repository is a bare repository.
-   Typically the `.git` directory is located at the root of the work dir.
+  In git terms all data is stored in `GIT_DIR`, typically a directory called
+  `.git`. A work tree is maintained unless the repository is a bare repository.
+  Typically the `.git` directory is located at the root of the work dir.
 
-   * `GIT_DIR`
-     * `objects/`
-     * `refs/` - tags and heads
-     * `config` - configuration
-     * `info/` - more configurations
-
-  This class is thread-safe.
+  * `GIT_DIR`
+    * `objects/`
+    * `refs/` - tags and heads
+    * `config` - configuration
+    * `info/` - more configurations
 
   This implementation only handles a subtly undocumented subset of git features.
 
@@ -32,69 +30,84 @@ defmodule Xgit.Storage.File.FileRepository do
   * `ceiling_directories`: A list of directories limiting the search for a Git repository.
   """
 
-  defstruct system_reader: nil,
-            git_dir: nil,
-            object_dir: nil,
-            # alternate_object_directories: nil,
-            bare?: false,
-            # must_exist?: false,
-            work_tree: nil,
-            index_file: nil,
-            # ceiling_directories: nil
-            system_config: nil,
-            user_config: nil,
-            repo_config: nil
+  use Xgit.Lib.Repository
 
   alias Xgit.Lib.Config
   alias Xgit.Lib.Constants
-  alias Xgit.Storage.File.FileBasedConfig
-  alias Xgit.Storage.File.FileRepositoryBuilder
   alias Xgit.Util.StringUtils
   alias Xgit.Util.SystemReader
-
-  # private static final String UNNAMED = "Unnamed repository; edit this file to name it for gitweb."; //$NON-NLS-1$
-  #
-  # private final RefDatabase refs;
-  # private final ObjectDirectory objectDatabase;
-  #
-  # private final Object snapshotLock = new Object();
-  #
-  # // protected by snapshotLock
-  # private FileSnapshot snapshot;
+  alias Xgit.Storage.File.FileBasedConfig
+  alias Xgit.Storage.File.FileRepositoryBuilder
 
   @doc ~S"""
-  Construct a representation of a git repository.
+  Start an on-disk git repository.
 
-  The work tree, object directory, alternate object directories and index
-  file locations are deduced from the given git directory and the default
-  rules by running `FileRepositoryBuilder`.
+  `builder` should be a `FileRepositoryBuilder` which has been fully configured
+  (typically by calling `FileRepositoryBuilder.setup!/1`.
 
-  Options:
-  * `system_reader`: Override the default `SystemReader` instance. (Used mostly for testing.)
+  `opts` corresponds to the options recognized by `GenServer.start_link/3`.
 
-  Returns an instance of `FileRepository`.
+  The following additonal options may be specified:
+
+  * `system_reader`: A `SystemReader` instance which overrides
   """
-  def from_git_dir!(git_dir, options \\ []) when is_binary(git_dir) and is_list(options) do
-    %FileRepositoryBuilder{git_dir: git_dir}
-    |> FileRepositoryBuilder.setup!()
-    |> build!(options)
+  def start_link(
+        %FileRepositoryBuilder{
+          git_dir: git_dir,
+          object_dir: object_dir,
+          work_tree: work_tree,
+          index_file: index_file
+        } = builder,
+        opts \\ []
+      )
+      when is_binary(git_dir) and is_binary(object_dir) and is_binary(work_tree) and
+             is_binary(index_file) and is_list(opts) do
+    Repository.start_link(__MODULE__, {builder, opts}, opts)
   end
 
   @doc ~S"""
-  Create a repository from the specification of a `FileRepositoryBuilder`.
+  Start an on-disk git repository.
+
+  `builder` should be a `FileRepositoryBuilder` which has been fully configured
+  (typically by calling `FileRepositoryBuilder.setup!/1`.
+
+  `opts` corresponds to the options recognized by `GenServer.start_link/3`.
+
+  The following additonal options may be specified:
+
+  * `system_reader`: A `SystemReader` instance which overrides
+
+  Returns a PID for the repository process or raises if unable to do so.
   """
-  def build!(
-        %FileRepositoryBuilder{
-          git_dir: git_dir,
-          work_tree: work_tree,
-          index_file: index_file
-        },
-        options \\ []
-      ) do
-    system_reader = Keyword.get(options, :system_reader)
+  def start_link!(builder, opts \\ []) do
+    case Repository.start_link(__MODULE__, {builder, opts}, opts) do
+      {:ok, pid} when is_pid(pid) -> pid
+      {:error, e} -> raise e
+    end
+  end
+
+  @doc false
+  def init(
+        {%FileRepositoryBuilder{
+           git_dir: git_dir,
+           object_dir: object_dir,
+           alternate_object_directories: alternate_object_directories,
+           bare?: bare?,
+           must_exist?: must_exist?,
+           work_tree: work_tree,
+           index_file: index_file,
+           ceiling_directories: ceiling_directories
+         }, opts}
+      )
+      when is_list(opts) do
+    system_reader = Keyword.get(opts, :system_reader)
 
     system_config = open_system_config(system_reader) |> load_config()
-    user_config = SystemReader.user_config(system_reader, system_config) |> load_config()
+
+    user_config =
+      system_reader
+      |> SystemReader.user_config(system_config)
+      |> load_config()
 
     repo_config =
       FileBasedConfig.config_for_path(Path.join(git_dir, Constants.config())) |> load_config()
@@ -139,14 +152,21 @@ defmodule Xgit.Storage.File.FileRepository do
     #   snapshot = FileSnapshot.save(getIndexFile());
     # }
 
-    %__MODULE__{
-      git_dir: git_dir,
-      work_tree: work_tree,
-      index_file: index_file,
-      system_config: system_config,
-      user_config: user_config,
-      repo_config: repo_config
-    }
+    {:ok,
+     %{
+       system_reader: system_reader,
+       git_dir: git_dir,
+       object_dir: object_dir,
+       alternate_object_directories: alternate_object_directories,
+       bare?: bare?,
+       must_exist?: must_exist?,
+       work_tree: work_tree,
+       index_file: index_file,
+       ceiling_directories: ceiling_directories,
+       system_config: system_config,
+       user_config: user_config,
+       repo_config: repo_config
+     }}
   end
 
   defp open_system_config(system_reader) do
@@ -161,7 +181,25 @@ defmodule Xgit.Storage.File.FileRepository do
   end
 
   defp load_config(%Config{storage: nil} = config), do: config
-  defp load_config(config), do: Config.load(config)
+
+  defp load_config(config) when not is_nil(config) do
+    Config.load(config)
+    config
+  end
+
+  # defp load_config(wtf) do
+  #   IO.inspect(wtf, label: "load config WTF")
+  #   Config.new()
+  # end
+
+  # private static final String UNNAMED = "Unnamed repository; edit this file to name it for gitweb."; //$NON-NLS-1$
+  #
+  # private final RefDatabase refs;
+  #
+  # private final Object snapshotLock = new Object();
+  #
+  # // protected by snapshotLock
+  # private FileSnapshot snapshot;
 
   # /**
   #  * Get the directory containing the objects owned by this repository
@@ -184,37 +222,140 @@ defmodule Xgit.Storage.File.FileRepository do
   #   return refs;
   # }
 
-  def config(%__MODULE__{repo_config: repo_config}) do
-    # TODO: Port the part that updates the configs if needed.
-    # Trick will be managing the snapshot currently in FileBasedConfig.
-    # Punting on that for now.
+  def handle_create(
+        %{git_dir: git_dir, repo_config: %{storage: %{path: repo_config_path}}} = state,
+        options
+      )
+      when is_list(options) do
+    if File.exists?(repo_config_path) do
+      raise RuntimeError, "Repository already exists: #{git_dir}"
+    end
 
-    # if (systemConfig.isOutdated()) {
+    File.mkdir_p!(git_dir)
+
+    # WINDOWS PORTING NOTE: Skipping this for now since there isn't really a
+    # distinct "hidden" attribute for files on most Posix file systems.
+    # TODO: Pausing here because we need enum support in config and ObjectDatabase.
+    # HideDotFiles hideDotFiles = getConfig().getEnum(
+    #     ConfigConstants.CONFIG_CORE_SECTION, null,
+    #     ConfigConstants.CONFIG_KEY_HIDEDOTFILES,
+    #     HideDotFiles.DOTGITONLY);
+    # if (hideDotFiles != HideDotFiles.FALSE && !isBare()
+    #     && getDirectory().getName().startsWith(".")) //$NON-NLS-1$
+    #   getFS().setHidden(getDirectory(), true);
+
+    # refs.create();
+    # objectDatabase.create();
+    #
+    # FileUtils.mkdir(new File(getDirectory(), "branches")); //$NON-NLS-1$
+    # FileUtils.mkdir(new File(getDirectory(), "hooks")); //$NON-NLS-1$
+    #
+    # RefUpdate head = updateRef(Constants.HEAD);
+    # head.disableRefLog();
+    # head.link(Constants.R_HEADS + Constants.MASTER);
+    #
+    # final boolean fileMode;
+    # if (getFS().supportsExecute()) {
+    #   File tmp = File.createTempFile("try", "execute", getDirectory()); //$NON-NLS-1$ //$NON-NLS-2$
+    #
+    #   getFS().setExecute(tmp, true);
+    #   final boolean on = getFS().canExecute(tmp);
+    #
+    #   getFS().setExecute(tmp, false);
+    #   final boolean off = getFS().canExecute(tmp);
+    #   FileUtils.delete(tmp);
+    #
+    #   fileMode = on && !off;
+    # } else {
+    #   fileMode = false;
+    # }
+    #
+    # SymLinks symLinks = SymLinks.FALSE;
+    # if (getFS().supportsSymlinks()) {
+    #   File tmp = new File(getDirectory(), "tmplink"); //$NON-NLS-1$
     #   try {
-    #     loadSystemConfig();
+    #     getFS().createSymLink(tmp, "target"); //$NON-NLS-1$
+    #     symLinks = null;
+    #     FileUtils.delete(tmp);
     #   } catch (IOException e) {
-    #     throw new RuntimeException(e);
+    #     // Normally a java.nio.file.FileSystemException
     #   }
     # }
-    # if (userConfig.isOutdated()) {
-    #   try {
-    #     loadUserConfig();
-    #   } catch (IOException e) {
-    #     throw new RuntimeException(e);
-    #   }
-    # }
-    # if (repoConfig.isOutdated()) {
+    # if (symLinks != null)
+    #   cfg.setString(ConfigConstants.CONFIG_CORE_SECTION, null,
+    #       ConfigConstants.CONFIG_KEY_SYMLINKS, symLinks.name()
+    #           .toLowerCase(Locale.ROOT));
+    # cfg.setInt(ConfigConstants.CONFIG_CORE_SECTION, null,
+    #     ConfigConstants.CONFIG_KEY_REPO_FORMAT_VERSION, 0);
+    # cfg.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null,
+    #     ConfigConstants.CONFIG_KEY_FILEMODE, fileMode);
+    # if (bare)
+    #   cfg.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null,
+    #       ConfigConstants.CONFIG_KEY_BARE, true);
+    # cfg.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null,
+    #     ConfigConstants.CONFIG_KEY_LOGALLREFUPDATES, !bare);
+    # if (SystemReader.getInstance().isMacOS())
+    #   // Java has no other way
+    #   cfg.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null,
+    #       ConfigConstants.CONFIG_KEY_PRECOMPOSEUNICODE, true);
+    # if (!bare) {
+    #   File workTree = getWorkTree();
+    #   if (!getDirectory().getParentFile().equals(workTree)) {
+    #     cfg.setString(ConfigConstants.CONFIG_CORE_SECTION, null,
+    #         ConfigConstants.CONFIG_KEY_WORKTREE, getWorkTree()
+    #             .getAbsolutePath());
+    #     LockFile dotGitLockFile = new LockFile(new File(workTree,
+    #         Constants.DOT_GIT));
     #     try {
-    #       loadRepoConfig();
-    #     } catch (IOException e) {
-    #       throw new RuntimeException(e);
+    #       if (dotGitLockFile.lock()) {
+    #         dotGitLockFile.write(Constants.encode(Constants.GITDIR
+    #             + getDirectory().getAbsolutePath()));
+    #         dotGitLockFile.commit();
+    #       }
+    #     } finally {
+    #       dotGitLockFile.unlock();
     #     }
+    #   }
     # }
+    # cfg.save();
 
-    repo_config
+    {:ok, state}
   end
 
+  def handle_git_dir(%{git_dir: git_dir} = state), do: {:ok, git_dir, state}
+
+  def handle_work_tree(%{work_tree: work_tree} = state), do: {:ok, work_tree, state}
+
+  # defp update_config(%{repo_config: repo_config}) do
+  #   # TODO: Port the part that updates the configs if needed.
+  #   # Trick will be managing the snapshot currently in FileBasedConfig.
+  #   # Punting on that for now.
   #
+  #   # if (systemConfig.isOutdated()) {
+  #   #   try {
+  #   #     loadSystemConfig();
+  #   #   } catch (IOException e) {
+  #   #     throw new RuntimeException(e);
+  #   #   }
+  #   # }
+  #   # if (userConfig.isOutdated()) {
+  #   #   try {
+  #   #     loadUserConfig();
+  #   #   } catch (IOException e) {
+  #   #     throw new RuntimeException(e);
+  #   #   }
+  #   # }
+  #   # if (repoConfig.isOutdated()) {
+  #   #     try {
+  #   #       loadRepoConfig();
+  #   #     } catch (IOException e) {
+  #   #       throw new RuntimeException(e);
+  #   #     }
+  #   # }
+  #
+  #   repo_config
+  # end
+
   # /** {@inheritDoc} */
   # @Override
   # @Nullable
@@ -452,108 +593,4 @@ defmodule Xgit.Storage.File.FileRepository do
   #     throw new JGitInternalException(JGitText.get().gcFailed, e);
   #   }
   # }
-end
-
-defimpl Xgit.Lib.Repository.Strategy, for: Xgit.Storage.File.FileRepository do
-  alias Xgit.Storage.File.FileRepository
-
-  def create!(%FileRepository{git_dir: git_dir} = repository, options) when is_list(options) do
-    %{path: config_path} = _config = FileRepository.config(repository)
-
-    if File.exists?(config_path) do
-      raise RuntimeError, "Repository already exists: #{git_dir}"
-    end
-
-    File.mkdir_p!(git_dir)
-
-    # WINDOWS PORTING NOTE: Skipping this for now since there isn't really a
-    # distinct "hidden" attribute for files on most Posix file systems.
-    # TODO: Pausing here because we need enum support in config and ObjectDatabase.
-    # HideDotFiles hideDotFiles = getConfig().getEnum(
-    #     ConfigConstants.CONFIG_CORE_SECTION, null,
-    #     ConfigConstants.CONFIG_KEY_HIDEDOTFILES,
-    #     HideDotFiles.DOTGITONLY);
-    # if (hideDotFiles != HideDotFiles.FALSE && !isBare()
-    #     && getDirectory().getName().startsWith(".")) //$NON-NLS-1$
-    #   getFS().setHidden(getDirectory(), true);
-
-    # TODO: Port at least minimal portion of RefDatabase and ObjectDirectory.
-
-    # refs.create();
-    # objectDatabase.create();
-    #
-    # FileUtils.mkdir(new File(getDirectory(), "branches")); //$NON-NLS-1$
-    # FileUtils.mkdir(new File(getDirectory(), "hooks")); //$NON-NLS-1$
-    #
-    # RefUpdate head = updateRef(Constants.HEAD);
-    # head.disableRefLog();
-    # head.link(Constants.R_HEADS + Constants.MASTER);
-    #
-    # final boolean fileMode;
-    # if (getFS().supportsExecute()) {
-    #   File tmp = File.createTempFile("try", "execute", getDirectory()); //$NON-NLS-1$ //$NON-NLS-2$
-    #
-    #   getFS().setExecute(tmp, true);
-    #   final boolean on = getFS().canExecute(tmp);
-    #
-    #   getFS().setExecute(tmp, false);
-    #   final boolean off = getFS().canExecute(tmp);
-    #   FileUtils.delete(tmp);
-    #
-    #   fileMode = on && !off;
-    # } else {
-    #   fileMode = false;
-    # }
-    #
-    # SymLinks symLinks = SymLinks.FALSE;
-    # if (getFS().supportsSymlinks()) {
-    #   File tmp = new File(getDirectory(), "tmplink"); //$NON-NLS-1$
-    #   try {
-    #     getFS().createSymLink(tmp, "target"); //$NON-NLS-1$
-    #     symLinks = null;
-    #     FileUtils.delete(tmp);
-    #   } catch (IOException e) {
-    #     // Normally a java.nio.file.FileSystemException
-    #   }
-    # }
-    # if (symLinks != null)
-    #   cfg.setString(ConfigConstants.CONFIG_CORE_SECTION, null,
-    #       ConfigConstants.CONFIG_KEY_SYMLINKS, symLinks.name()
-    #           .toLowerCase(Locale.ROOT));
-    # cfg.setInt(ConfigConstants.CONFIG_CORE_SECTION, null,
-    #     ConfigConstants.CONFIG_KEY_REPO_FORMAT_VERSION, 0);
-    # cfg.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null,
-    #     ConfigConstants.CONFIG_KEY_FILEMODE, fileMode);
-    # if (bare)
-    #   cfg.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null,
-    #       ConfigConstants.CONFIG_KEY_BARE, true);
-    # cfg.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null,
-    #     ConfigConstants.CONFIG_KEY_LOGALLREFUPDATES, !bare);
-    # if (SystemReader.getInstance().isMacOS())
-    #   // Java has no other way
-    #   cfg.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null,
-    #       ConfigConstants.CONFIG_KEY_PRECOMPOSEUNICODE, true);
-    # if (!bare) {
-    #   File workTree = getWorkTree();
-    #   if (!getDirectory().getParentFile().equals(workTree)) {
-    #     cfg.setString(ConfigConstants.CONFIG_CORE_SECTION, null,
-    #         ConfigConstants.CONFIG_KEY_WORKTREE, getWorkTree()
-    #             .getAbsolutePath());
-    #     LockFile dotGitLockFile = new LockFile(new File(workTree,
-    #         Constants.DOT_GIT));
-    #     try {
-    #       if (dotGitLockFile.lock()) {
-    #         dotGitLockFile.write(Constants.encode(Constants.GITDIR
-    #             + getDirectory().getAbsolutePath()));
-    #         dotGitLockFile.commit();
-    #       }
-    #     } finally {
-    #       dotGitLockFile.unlock();
-    #     }
-    #   }
-    # }
-    # cfg.save();
-  end
-
-  defdelegate config(repository), to: FileRepository
 end
