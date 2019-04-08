@@ -1,9 +1,10 @@
-defmodule Xgit.Lib.ObjectDatabase do
+defmodule Xgit.Lib.RefDatabase do
   @moduledoc ~S"""
-  Abstraction of arbitrary object storage.
+  Abstraction of name to `ObjectId` mapping.
 
-  An object database stores one or more git objects, indexed by their unique
-  `ObjectId`.
+  A reference database stores a mapping of reference names to `ObjectId`.
+  Every `Repository` has a single reference database, mapping names to the
+  tips of the object graph contained by the `ObjectDatabase`.
   """
 
   require Logger
@@ -11,7 +12,7 @@ defmodule Xgit.Lib.ObjectDatabase do
   @type t :: pid
 
   @doc """
-  Starts an `ObjectDatabase` process linked to the current process.
+  Starts a `RefDatabase` process linked to the current process.
 
   Once the server is started, the `init/1` function of the given `module` is
   called with `args` as its arguments to initialize the stage. To ensure a
@@ -65,7 +66,7 @@ defmodule Xgit.Lib.ObjectDatabase do
   # public static final String ALL = "";//$NON-NLS-1$
 
   @doc ~S"""
-  Initialize a new object database at this location.
+  Initialize a new reference database at this location.
 
   May raise `File.Error` or similar if the database could not be created.
 
@@ -548,14 +549,14 @@ defmodule Xgit.Lib.ObjectDatabase do
   end
 
   def handle_call(message, _from, state) do
-    Logger.warn("ObjectDatabase received unrecognized call #{inspect(message)}")
+    Logger.warn("RefDatabase received unrecognized call #{inspect(message)}")
     {:reply, {:error, :unknown_message}, state}
   end
 
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
       use GenServer, opts
-      alias Xgit.Lib.ObjectDatabase
+      alias Xgit.Lib.RefDatabase
     end
   end
 end
