@@ -72,7 +72,7 @@ Repository
   RevCommit TRACE
   RevWalk TRACE
 
-ObjectDatabase TRACE
+ObjectDatabase + FileObjectDatabase + ObjectDirectory TRACE
 
 RefDirectory + RefDatabase PARTIALLY DONE
   BatchRefUpdate DEFER?
