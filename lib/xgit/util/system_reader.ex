@@ -182,16 +182,16 @@ defimpl Xgit.Util.SystemReader, for: Any do
 
   def get_env(_, variable), do: System.get_env(variable)
 
-  def user_config(_, nil) do
-    System.user_home!()
-    |> Path.join(".gitconfig")
-    |> FileBasedConfig.config_for_path()
-  end
-
-  def user_config(_, base_config) do
+  def user_config(nil, %Xgit.Lib.Config{config_pid: pid} = base_config) when is_pid(pid) do
     System.user_home!()
     |> Path.join(".gitconfig")
     |> FileBasedConfig.config_for_path(base_config: base_config)
+  end
+
+  def user_config(nil, nil) do
+    System.user_home!()
+    |> Path.join(".gitconfig")
+    |> FileBasedConfig.config_for_path()
   end
 
   def system_config(_, nil), do: Config.new()
