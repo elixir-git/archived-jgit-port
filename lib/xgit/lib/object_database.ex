@@ -547,15 +547,22 @@ defmodule Xgit.Lib.ObjectDatabase do
     end
   end
 
-  def handle_call(message, _from, state) do
-    Logger.warn("ObjectDatabase received unrecognized call #{inspect(message)}")
-    {:reply, {:error, :unknown_message}, state}
+  def handle_call(message, from, {mod, mod_state}) do
+    {:reply, dir, mod_state} = mod.handle_extra_call(message, from, mod_state)
+    {:reply, dir, {mod, mod_state}}
   end
 
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
       use GenServer, opts
       alias Xgit.Lib.ObjectDatabase
+
+      def handle_extra_call(message, _from, state) do
+        Logger.warn("ObjectDatabase received unrecognized call #{inspect(message)}")
+        {:reply, {:error, :unknown_message}, state}
+      end
+
+      defoverridable handle_extra_call: 3
     end
   end
 end
