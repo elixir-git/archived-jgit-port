@@ -20,8 +20,23 @@ defmodule Xgit.Util.SystemReaderTest do
     end
   end
 
-  test "user_config/1" do
-    _user_config = %Config{} = SystemReader.user_config()
+  describe "user_config/1" do
+    test "no base config" do
+      assert %Config{} = SystemReader.user_config()
+    end
+
+    test "with base config" do
+      base_config =
+        Config.new()
+        |> Config.set_string("my", "somename", "false")
+
+      user_config = SystemReader.user_config(nil, base_config)
+      assert Config.get_string(user_config, "my", "somename") == "false"
+    end
+  end
+
+  test "system_reader/1" do
+    assert %Config{storage: nil} = SystemReader.system_config()
   end
 
   test "current_time/1" do
