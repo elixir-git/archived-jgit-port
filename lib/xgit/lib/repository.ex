@@ -8,6 +8,8 @@ defmodule Xgit.Lib.Repository do
 
   require Logger
 
+  alias Xgit.Errors.NoWorkTreeError
+
   @type t :: pid
 
   # /**
@@ -1083,23 +1085,28 @@ defmodule Xgit.Lib.Repository do
   #   }
   #   return ret;
   # }
-  #
-  # /**
-  #  * Get the index file location or {@code null} if repository isn't local.
-  #  *
-  #  * @return the index file location or {@code null} if repository isn't
-  #  *         local.
-  #  * @throws org.eclipse.jgit.errors.NoWorkTreeException
-  #  *             if this is bare, which implies it has no working directory.
-  #  *             See {@link #isBare()}.
-  #  */
-  # @NonNull
-  # public File getIndexFile() throws NoWorkTreeException {
-  #   if (isBare())
-  #     throw new NoWorkTreeException();
-  #   return indexFile;
-  # }
-  #
+
+  @doc ~S"""
+  Get the path to the index file or `nil` if repository isn't local.
+
+  Will return `nil` if there is no working tree (i.e. the repository is bare or
+  there is no local representation of the repository).
+  """
+  def index_file!(repository) when is_pid(repository) do
+    case GenServer.call(repository, :index_file) do
+      {:ok, file} -> file
+      {:error, e} -> raise e
+    end
+  end
+
+  @doc ~S"""
+  Invoked when `index_file!/1` is called on this repository.
+
+  Should return the path to the index file if applicable, or raise
+  `NoWorkTreeError` if not.
+  """
+  @callback handle_index_file(state :: term) :: String.t()
+
   # /**
   #  * Locate a reference to a commit and immediately parse its content.
   #  * <p>
@@ -2017,6 +2024,13 @@ defmodule Xgit.Lib.Repository do
     end
   end
 
+  def handle_call(:index_file, _from, {mod, mod_state}) do
+    case mod.handle_index_file(mod_state) do
+      {:ok, file, mod_state} -> {:reply, {:ok, file}, {mod, mod_state}}
+      {:error, reason} -> {:stop, reason}
+    end
+  end
+
   def handle_call(message, _from, state) do
     Logger.warn("Repository received unrecognized call #{inspect(message)}")
     {:reply, {:error, :unknown_message}, state}
@@ -2029,8 +2043,9 @@ defmodule Xgit.Lib.Repository do
 
       def handle_git_dir(state), do: {:ok, nil, state}
       def handle_work_tree(state), do: {:ok, nil, state}
+      def handle_index_file(state), do: raise(NoWorkTreeError)
 
-      defoverridable handle_git_dir: 1, handle_work_tree: 1
+      defoverridable handle_git_dir: 1, handle_index_file: 1, handle_work_tree: 1
     end
   end
 end

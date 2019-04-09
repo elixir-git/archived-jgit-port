@@ -326,6 +326,8 @@ defmodule Xgit.Storage.File.FileRepository do
 
   def handle_work_tree(%{work_tree: work_tree} = state), do: {:ok, work_tree, state}
 
+  def handle_index_file(%{index_file: index_file} = state), do: {:ok, index_file, state}
+
   # defp update_config(%{repo_config: repo_config}) do
   #   # TODO: Port the part that updates the configs if needed.
   #   # Trick will be managing the snapshot currently in FileBasedConfig.

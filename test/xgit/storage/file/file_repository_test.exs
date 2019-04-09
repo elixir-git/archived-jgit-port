@@ -32,7 +32,9 @@ defmodule Xgit.Storage.File.FileRepositoryTest do
       assert ^repo_parent = Repository.work_tree!(r1)
       assert File.dir?(repo_parent)
 
-      # assertEqualsPath(new File(theDir, "index"), r.getIndexFile());
+      index_file = Repository.index_file!(r1)
+      assert ^index_file = Path.join(git_dir, "index")
+
       # assertEqualsPath(new File(theDir, "objects"), r.getObjectDatabase()
       #     .getDirectory());
     end
