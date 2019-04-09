@@ -158,14 +158,19 @@ defmodule Xgit.Lib.Repository do
   """
   @callback handle_git_dir(state :: term) :: String.t() | nil
 
-  # /**
-  #  * Get the object database which stores this repository's data.
-  #  *
-  #  * @return the object database which stores this repository's data.
-  #  */
-  # @NonNull
-  # public abstract ObjectDatabase getObjectDatabase();
-  #
+  @doc ~S"""
+  Get the object database which stores this repository's data.
+  """
+  def object_database(repository) when is_pid(repository),
+    do: GenServer.call(repository, :object_database)
+
+  @doc ~S"""
+  Invoked when `object_database/1` is called on this repository.
+
+  Must return the PID for the object database or raise if unable.
+  """
+  @callback handle_object_database(state :: term) :: pid
+
   # /**
   #  * Create a new inserter to create objects in {@link #getObjectDatabase()}.
   #  *
@@ -2031,6 +2036,11 @@ defmodule Xgit.Lib.Repository do
     end
   end
 
+  def handle_call(:object_database, _from, {mod, mod_state}) do
+    {pid, mod_state} = mod.handle_object_database(mod_state)
+    {:reply, pid, {mod, mod_state}}
+  end
+
   def handle_call(message, _from, state) do
     Logger.warn("Repository received unrecognized call #{inspect(message)}")
     {:reply, {:error, :unknown_message}, state}
@@ -2044,8 +2054,12 @@ defmodule Xgit.Lib.Repository do
       def handle_git_dir(state), do: {:ok, nil, state}
       def handle_work_tree(state), do: {:ok, nil, state}
       def handle_index_file(state), do: raise(NoWorkTreeError)
+      def handle_object_database(state), do: raise(NoWorkTreeError)
 
-      defoverridable handle_git_dir: 1, handle_index_file: 1, handle_work_tree: 1
+      defoverridable handle_git_dir: 1,
+                     handle_index_file: 1,
+                     handle_work_tree: 1,
+                     handle_object_database: 1
     end
   end
 end

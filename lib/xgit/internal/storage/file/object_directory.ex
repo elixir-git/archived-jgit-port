@@ -19,6 +19,8 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
 
   # TO DO: See if CachedObjectDirectory can be folded into this implementation.
 
+  require Logger
+
   use Xgit.Lib.ObjectDatabase
 
   # static enum InsertLooseObjectResult {
@@ -111,12 +113,12 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
      }}
   end
 
-  # /** {@inheritDoc} */
-  # @Override
-  # public final File getDirectory() {
-  # 	return objects;
-  # }
-  #
+  @doc ~S"""
+  Get the object database which stores this repository's data.
+  """
+  def directory(db) when is_pid(db),
+    do: GenServer.call(db, :directory)
+
   # /**
   #  * <p>Getter for the field <code>packDirectory</code>.</p>
   #  *
@@ -1081,4 +1083,12 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
   # AlternateHandle.Id getAlternateId() {
   # 	return new AlternateHandle.Id(objects);
   # }
+
+  def handle_extra_call(:directory, _from, %{objects: objects} = state),
+    do: {:reply, objects, state}
+
+  def handle_extra_call(message, _from, state) do
+    Logger.warn("ObjectDatabase received unrecognized call #{inspect(message)}")
+    {:reply, {:error, :unknown_message}, state}
+  end
 end

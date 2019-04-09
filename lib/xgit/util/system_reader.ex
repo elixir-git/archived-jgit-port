@@ -171,7 +171,6 @@ defprotocol Xgit.Util.SystemReader do
 end
 
 defimpl Xgit.Util.SystemReader, for: Any do
-  alias Xgit.Lib.Config
   alias Xgit.Storage.File.FileBasedConfig
   alias Xgit.Util.Time.MonotonicSystemClock
 
@@ -188,13 +187,7 @@ defimpl Xgit.Util.SystemReader, for: Any do
     |> FileBasedConfig.config_for_path()
   end
 
-  def user_config(_, base_config) do
-    System.user_home!()
-    |> Path.join(".gitconfig")
-    |> FileBasedConfig.config_for_path(base_config: base_config)
-  end
-
-  def system_config(_, nil), do: Config.new()
+  def system_config(_, nil), do: nil
   # PORTING NOTE: For now, we're going to ignore the system configuration file.
   # Likely use cases for xgit (as a server product) suggest system git configuration
   # should be ignored in favor of explicit configuration. A PR is welcome if this

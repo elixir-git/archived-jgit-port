@@ -32,6 +32,7 @@ defmodule Xgit.Storage.File.FileRepository do
 
   use Xgit.Lib.Repository
 
+  alias Xgit.Internal.Storage.File.ObjectDirectory
   alias Xgit.Lib.Config
   alias Xgit.Lib.Constants
   alias Xgit.Util.StringUtils
@@ -134,7 +135,13 @@ defmodule Xgit.Storage.File.FileRepository do
     # } else {
     #   refs = new RefDirectory(this);
     # }
-    #
+
+    {:ok, object_database_pid} =
+      ObjectDirectory.start_link(config: Config.new(), objects: object_dir)
+
+    # TODO: Pass additional options (repoConfig, alternateObjectDirectories, Constants.SHALLOW)
+    # through to ObjectDirectory.
+
     # objectDatabase = new ObjectDirectory(repoConfig, //
     #     options.getObjectDirectory(), //
     #     options.getAlternateObjectDirectories(), //
@@ -156,7 +163,7 @@ defmodule Xgit.Storage.File.FileRepository do
      %{
        system_reader: system_reader,
        git_dir: git_dir,
-       object_dir: object_dir,
+       object_database: object_database_pid,
        alternate_object_directories: alternate_object_directories,
        bare?: bare?,
        must_exist?: must_exist?,
@@ -201,21 +208,6 @@ defmodule Xgit.Storage.File.FileRepository do
   # // protected by snapshotLock
   # private FileSnapshot snapshot;
 
-  # /**
-  #  * Get the directory containing the objects owned by this repository
-  #  *
-  #  * @return the directory containing the objects owned by this repository.
-  #  */
-  # public File getObjectsDirectory() {
-  #   return objectDatabase.getDirectory();
-  # }
-  #
-  # /** {@inheritDoc} */
-  # @Override
-  # public ObjectDirectory getObjectDatabase() {
-  #   return objectDatabase;
-  # }
-  #
   # /** {@inheritDoc} */
   # @Override
   # public RefDatabase getRefDatabase() {
@@ -327,6 +319,9 @@ defmodule Xgit.Storage.File.FileRepository do
   def handle_work_tree(%{work_tree: work_tree} = state), do: {:ok, work_tree, state}
 
   def handle_index_file(%{index_file: index_file} = state), do: {:ok, index_file, state}
+
+  def handle_object_database(%{object_database: object_database} = state),
+    do: {object_database, state}
 
   # defp update_config(%{repo_config: repo_config}) do
   #   # TODO: Port the part that updates the configs if needed.
