@@ -348,7 +348,7 @@ defmodule Xgit.Lib.Repository do
   #  * </ul>
   #  *
   #  * <p>
-  #  * The following operators are specified by Git conventions, but are not
+  #  * The following operators are specified by git conventions, but are not
   #  * supported by this method:
   #  * <ul>
   #  * <li><b>ref@{n}</b>: n-th version of ref as given by its reflog</li>

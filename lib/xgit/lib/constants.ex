@@ -222,7 +222,7 @@ defmodule Xgit.Lib.Constants do
 
   @doc ~S"""
   The environment variable that limits how close to the root of the file
-  systems JGit will traverse when looking for a repository root.
+  systems XGit will traverse when looking for a repository root.
   """
   def git_ceiling_directories_key, do: "GIT_CEILING_DIRECTORIES"
 
