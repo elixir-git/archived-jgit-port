@@ -161,7 +161,7 @@ defmodule Xgit.Util.RawParseUtils do
     do: parse_hex_digits(b, n * 16 + (d - ?a + 10), rem - 1)
 
   @doc ~S"""
-  Parse a Git style timezone string.
+  Parse a git-style timezone string.
 
   The sequence `-0315` will be parsed as the numeric value -195, as the
   lower two positions count minutes, not 100ths of an hour.

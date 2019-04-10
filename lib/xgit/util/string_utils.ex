@@ -148,7 +148,7 @@ defmodule Xgit.Util.StringUtils do
   # }
   #
   # /**
-  #  * Parse a string as a standard Git boolean value. See
+  #  * Parse a string as a standard git boolean value. See
   #  * {@link #toBooleanOrNull(String)}.
   #  *
   #  * @param stringValue
@@ -170,7 +170,7 @@ defmodule Xgit.Util.StringUtils do
   # }
   #
   # /**
-  #  * Parse a string as a standard Git boolean value.
+  #  * Parse a string as a standard git boolean value.
   #  * <p>
   #  * The terms {@code yes}, {@code true}, {@code 1}, {@code on} can all be
   #  * used to mean {@code true}.

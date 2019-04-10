@@ -1,6 +1,6 @@
 defmodule Xgit.Errors.CorruptObjectError do
   @moduledoc ~S"""
-  Raised when an object cannot be read from Git.
+  Raised when an object cannot be read from git.
   """
   defexception [:message, :error_type]
 

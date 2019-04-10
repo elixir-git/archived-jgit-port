@@ -846,7 +846,7 @@ defmodule Xgit.Lib.Config do
   end
 
   @doc ~S"""
-  Get this configuration, formatted as a Git-style text file.
+  Get this configuration, formatted as a git-style text file.
   """
   def to_text(config), do: GenServer.call(config_pid(config), :to_text)
 
@@ -928,7 +928,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Clear this configuration and reset to the contents of the parsed string.
 
-  `text` should be a Git-style text file listing configuration properties
+  `text` should be a git-style text file listing configuration properties
 
   Raises `ConfigInvalidError` if unable to parse string.
   """

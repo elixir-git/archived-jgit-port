@@ -120,7 +120,7 @@ defmodule Xgit.Internal.Storage.File.RefDirectory do
   #  * Locate the log file on disk for a single reference name.
   #  *
   #  * @param name
-  #  *            name of the ref, relative to the Git repository top level
+  #  *            name of the ref, relative to the git repository top level
   #  *            directory (so typically starts with refs/).
   #  * @return the log file location.
   #  */
@@ -1155,7 +1155,7 @@ defmodule Xgit.Internal.Storage.File.RefDirectory do
   #  * Locate the file on disk for a single reference name.
   #  *
   #  * @param name
-  #  *            name of the ref, relative to the Git repository top level
+  #  *            name of the ref, relative to the git repository top level
   #  *            directory (so typically starts with refs/).
   #  * @return the loose file location.
   #  */

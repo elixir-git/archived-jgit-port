@@ -1,6 +1,6 @@
 defmodule Xgit.Lib.PersonIdent do
   @moduledoc ~S"""
-  A combination of a person identity and time in Git.
+  A combination of a person identity and time in git.
 
   Git combines Name + email + time + time zone to specify who wrote or
   committed something.
@@ -38,7 +38,7 @@ defmodule Xgit.Lib.PersonIdent do
   end
 
   @doc ~S"""
-  Formats the person identity for Git storage.
+  Formats the person identity for git storage.
   """
   def to_external_string(%__MODULE__{name: name, email: email, when: whxn, tz_offset: tz_offset})
       when is_binary(name) and is_binary(email) and is_integer(whxn) and is_integer(tz_offset) do
