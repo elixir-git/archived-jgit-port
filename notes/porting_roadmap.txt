@@ -42,18 +42,7 @@ WorkingTreeIterator
   TreeWalk TRACE
   WorkingTreeOptions TRACE
 
-FileRepository TRACE
-  AttributesNode TRACE
-  GC DEFER?
-  GlobalAttributesNode TRACE
-  InfoAttributesNode TRACE
-  LockFile TRACE
-  RefDatabase
-  RefDirectory TRACE
-  ReflogReaderImpl TRACE
-  RefTreeDatabase TRACE
-  RefUpdate TRACE
-  Repository
+FileRepository PARTIALLY DONE
 
 Repository PARTIALLY DONE
 
@@ -61,13 +50,8 @@ ObjectDatabase + FileObjectDatabase + ObjectDirectory PARTIALLY DONE
 
 RefDirectory + RefDatabase PARTIALLY DONE
 
-ObjectInserter
-  TreeFormatter DEFER?
-  CommitBuilder DEFER?
-  TagBuilder DEFER?
-  PackParser DEFER?
+ObjectInserter DEFER
 
-BitmapIndex PROTOCOL (plus descendants)
-  BitmapObject
+BitmapIndex DEFER PROTOCOL (plus descendants)
 
 ObjectStream -> Enumerable
