@@ -47,7 +47,7 @@ defmodule Xgit.Storage.File.FileRepositoryTest do
       File.mkdir_p!(git_dir)
       File.touch!(Path.join(git_dir, "config"))
 
-      assert_raise(RuntimeError, "Repository already exists:", fn ->
+      assert_raise(RuntimeError, "Repository already exists: #{git_dir}", fn ->
         %FileRepositoryBuilder{git_dir: git_dir}
         |> FileRepositoryBuilder.setup!()
         |> FileRepository.start_link!()

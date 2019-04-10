@@ -1997,16 +1997,8 @@ defmodule Xgit.Lib.Repository do
   #   // default does nothing
   # }
 
-  def handle_call({:create, opts}, _from, {mod, mod_state}) when is_list(opts) do
-    try do
-      case mod.handle_create(mod_state, opts) do
-        {:ok, mod_state} -> {:reply, :ok, {mod, mod_state}}
-        {:error, reason, mod_state} -> {:reply, {:error, reason}, {mod, mod_state}}
-      end
-    catch
-      e -> {:reply, {:error, e}, {mod, mod_state}}
-    end
-  end
+  def handle_call({:create, opts}, _from, {mod, mod_state}) when is_list(opts),
+    do: GenServerUtils.handle_delegate(mod, :handle_create, [mod_state, opts], mod_state)
 
   def handle_call(:git_dir, _from, {mod, mod_state}) do
     case mod.handle_git_dir(mod_state) do
