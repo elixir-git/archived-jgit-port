@@ -39,5 +39,20 @@ defmodule Xgit.Storage.File.FileRepositoryTest do
       object_db = r1 |> Repository.object_database() |> ObjectDirectory.directory()
       assert ^object_db = Path.join(git_dir, "objects")
     end
+
+    test "fails when config exists", %{trash: trash} do
+      repo_parent = Path.join(trash, "r1")
+      git_dir = Path.join(repo_parent, Constants.dot_git())
+
+      File.mkdir_p!(git_dir)
+      File.touch!(Path.join(git_dir, "config"))
+
+      assert_raise(RuntimeError, "Repository already exists:", fn ->
+        %FileRepositoryBuilder{git_dir: git_dir}
+        |> FileRepositoryBuilder.setup!()
+        |> FileRepository.start_link!()
+        |> Repository.create!()
+      end)
+    end
   end
 end
