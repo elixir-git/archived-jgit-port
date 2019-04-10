@@ -98,18 +98,6 @@ defmodule Xgit.Lib.Repository do
   # }
 
   @doc ~S"""
-  Creates a new git repository.
-
-  Options (`opts`) are:
-  * `bare?`: If `true`, a bare repository (without a working tree) is created.
-
-  Returns `{:ok, repository}` if successful or `{:error, reason}` if not.
-  """
-  @spec create!(repository :: t, opts :: Keyword.t()) :: t
-  def create(repository, opts \\ []) when is_pid(repository) and is_list(opts),
-    do: GenServer.call(repository, {:create, opts})
-
-  @doc ~S"""
   Creates a new git repository; raises if unable to complete.
 
   Options (`opts`) are:
@@ -119,7 +107,7 @@ defmodule Xgit.Lib.Repository do
   """
   @spec create!(repository :: t, opts :: Keyword.t()) :: t
   def create!(repository, opts \\ []) when is_pid(repository) and is_list(opts) do
-    case create(repository, opts) do
+    case GenServer.call(repository, {:create, opts}) do
       :ok -> repository
       {:error, e} -> raise e
     end
@@ -2009,9 +1997,13 @@ defmodule Xgit.Lib.Repository do
   # }
 
   def handle_call({:create, opts}, _from, {mod, mod_state}) when is_list(opts) do
-    case mod.handle_create(mod_state, opts) do
-      {:ok, mod_state} -> {:reply, :ok, {mod, mod_state}}
-      {:error, reason} -> {:stop, reason}
+    try do
+      case mod.handle_create(mod_state, opts) do
+        {:ok, mod_state} -> {:reply, :ok, {mod, mod_state}}
+        {:error, reason, mod_state} -> {:reply, {:error, reason}, {mod, mod_state}}
+      end
+    catch
+      e -> {:reply, {:error, e}, {mod, mod_state}}
     end
   end
 

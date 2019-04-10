@@ -50,33 +50,8 @@ defmodule Xgit.Storage.File.FileRepository do
 
   The following additonal options may be specified:
 
-  * `system_reader`: A `SystemReader` instance which overrides
-  """
-  def start_link(
-        %FileRepositoryBuilder{
-          git_dir: git_dir,
-          object_dir: object_dir,
-          work_tree: work_tree,
-          index_file: index_file
-        } = builder,
-        opts \\ []
-      )
-      when is_binary(git_dir) and is_binary(object_dir) and is_binary(work_tree) and
-             is_binary(index_file) and is_list(opts) do
-    Repository.start_link(__MODULE__, {builder, opts}, opts)
-  end
-
-  @doc ~S"""
-  Start an on-disk git repository.
-
-  `builder` should be a `FileRepositoryBuilder` which has been fully configured
-  (typically by calling `FileRepositoryBuilder.setup!/1`.
-
-  `opts` corresponds to the options recognized by `GenServer.start_link/3`.
-
-  The following additonal options may be specified:
-
-  * `system_reader`: A `SystemReader` instance which overrides
+  * `system_reader`: A `SystemReader` instance which overrides default system behavior
+    (mostly for testing).
 
   Returns a PID for the repository process or raises if unable to do so.
   """
