@@ -74,7 +74,10 @@ defmodule Xgit.Storage.File.FileRepository do
       when is_list(opts) do
     system_reader = Keyword.get(opts, :system_reader)
 
-    system_config = open_system_config(system_reader) |> load_config()
+    system_config =
+      system_reader
+      |> open_system_config()
+      |> load_config()
 
     user_config =
       system_reader
@@ -82,7 +85,10 @@ defmodule Xgit.Storage.File.FileRepository do
       |> load_config()
 
     repo_config =
-      FileBasedConfig.config_for_path(Path.join(git_dir, Constants.config())) |> load_config()
+      git_dir
+      |> Path.join(Constants.config())
+      |> FileBasedConfig.config_for_path()
+      |> load_config()
 
     # repoConfig.addChangeListener(new ConfigChangedListener() {
     #   @Override
@@ -110,7 +116,7 @@ defmodule Xgit.Storage.File.FileRepository do
     {:ok, object_database_pid} =
       ObjectDirectory.start_link(config: Config.new(), objects: object_dir)
 
-    # TODO: Pass additional options (repoConfig, alternateObjectDirectories, Constants.SHALLOW)
+    # TO DO: Pass additional options (repoConfig, alternateObjectDirectories, Constants.SHALLOW)
     # through to ObjectDirectory.
 
     # objectDatabase = new ObjectDirectory(repoConfig, //
@@ -193,7 +199,6 @@ defmodule Xgit.Storage.File.FileRepository do
 
     # WINDOWS PORTING NOTE: Skipping this for now since there isn't really a
     # distinct "hidden" attribute for files on most Posix file systems.
-    # TODO: Pausing here because we need enum support in config and ObjectDatabase.
     # HideDotFiles hideDotFiles = getConfig().getEnum(
     #     ConfigConstants.CONFIG_CORE_SECTION, null,
     #     ConfigConstants.CONFIG_KEY_HIDEDOTFILES,
@@ -290,7 +295,7 @@ defmodule Xgit.Storage.File.FileRepository do
     do: {:ok, object_database, state}
 
   # defp update_config(%{repo_config: repo_config}) do
-  #   # TODO: Port the part that updates the configs if needed.
+  #   # TO DO: Port the part that updates the configs if needed.
   #   # Trick will be managing the snapshot currently in FileBasedConfig.
   #   # Punting on that for now.
   #
