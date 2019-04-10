@@ -828,7 +828,7 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
   # 		}
   #
   # 		if ((extensions & PACK.getBit()) == 0) {
-  # 			// Sometimes C Git's HTTP fetch transport leaves a
+  # 			// Sometimes C git's HTTP fetch transport leaves a
   # 			// .idx file behind and does not download the .pack.
   # 			// We have to skip over such useless indexes.
   # 			//

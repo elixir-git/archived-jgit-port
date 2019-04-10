@@ -85,7 +85,7 @@ defimpl Xgit.Lib.Config.Storage, for: Xgit.Storage.File.FileBasedConfig do
   alias Xgit.Lib.Config
 
   @doc ~S"""
-  Load the configuration as a Git text style configuration file.
+  Load the configuration as a git text-style configuration file.
 
   If the file does not exist, this configuration is cleared, and thus
   behaves the same as though the file exists, but is empty.
@@ -107,7 +107,7 @@ defimpl Xgit.Lib.Config.Storage, for: Xgit.Storage.File.FileBasedConfig do
   end
 
   @doc ~S"""
-  Save the configuration as a Git text style configuration file.
+  Save the configuration as a git text-style configuration file.
   """
   def save(%Xgit.Storage.File.FileBasedConfig{path: path}, config) do
     # PORTING NOTE: jgit's implementation contains logic to ensure that there

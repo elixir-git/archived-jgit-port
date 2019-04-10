@@ -10,7 +10,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   * `must_exist?`: True if the caller requires the repository to exist.
   * `work_tree`: The top level directory of the working files.
   * `index_file`: The local index file that is caching checked out file status.
-  * `ceiling_directories`: A list of directories limiting the search for a Git repository.
+  * `ceiling_directories`: A list of directories limiting the search for a git repository.
 
   PORTING NOTE: Unlike the jgit implementation, this version has no setters or getters
   for the configuration options. Set up the struct directly and then call the

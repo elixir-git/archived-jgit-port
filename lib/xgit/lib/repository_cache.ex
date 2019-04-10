@@ -406,7 +406,7 @@ defmodule Xgit.Lib.RepositoryCache do
     # }
 
     @doc ~S"""
-    Guess if a directory contains a Git repository.
+    Guess if a directory contains a git repository.
 
     This method guesses by looking for the existence of some key files
     and directories.
@@ -438,7 +438,7 @@ defmodule Xgit.Lib.RepositoryCache do
     end
 
     # /**
-    #  * Guess the proper path for a Git repository.
+    #  * Guess the proper path for a git repository.
     #  * <p>
     #  * The method performs some basic guessing to locate the repository.
     #  * Searched paths are:

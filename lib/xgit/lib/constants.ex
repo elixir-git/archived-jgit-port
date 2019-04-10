@@ -4,14 +4,14 @@ defmodule Xgit.Lib.Constants do
   """
 
   @doc ~S"""
-  A Git object hash is 160 bits, i.e. 20 bytes.
+  A git object hash is 160 bits, i.e. 20 bytes.
 
   Changing this assumption is not going to be as easy as changing this declaration.
   """
   def object_id_length, do: 20
 
   @doc ~S"""
-  A Git object can be expressed as a 40 character string of hexadecimal digits.
+  A git object can be expressed as a 40 character string of hexadecimal digits.
   """
   def object_id_string_length, do: object_id_length() * 2
 
@@ -71,7 +71,7 @@ defmodule Xgit.Lib.Constants do
 
   Indicates the associated object is a commit.
 
-  *This constant is fixed and is defined by the Git packfile format.*
+  *This constant is fixed and is defined by the git packfile format.*
 
   See `type_commit/0`.
   """
@@ -82,7 +82,7 @@ defmodule Xgit.Lib.Constants do
 
   Indicates the associated object is a tree.
 
-  *This constant is fixed and is defined by the Git packfile format.*
+  *This constant is fixed and is defined by the git packfile format.*
 
   See `type_tree/0`.
   """
@@ -93,7 +93,7 @@ defmodule Xgit.Lib.Constants do
 
   Indicates the associated object is a blob.
 
-  *This constant is fixed and is defined by the Git packfile format.*
+  *This constant is fixed and is defined by the git packfile format.*
 
   See `type_blob/0`.
   """
@@ -104,7 +104,7 @@ defmodule Xgit.Lib.Constants do
 
   Indicates the associated object is an annotated tag.
 
-  *This constant is fixed and is defined by the Git packfile format.*
+  *This constant is fixed and is defined by the git packfile format.*
 
   See `type_tag/0`.
   """
@@ -125,7 +125,7 @@ defmodule Xgit.Lib.Constants do
   refer to its delta base. The base object must exist in this packfile
   (even in the case of a thin pack).
 
-  *This constant is fixed and is defined by the Git packfile format.*
+  *This constant is fixed and is defined by the git packfile format.*
   """
   def obj_ofs_delta, do: 6
 
@@ -141,15 +141,15 @@ defmodule Xgit.Lib.Constants do
   base. The base object is allowed to be omitted from the packfile, but
   only in the case of a thin pack being transferred over the network.
 
-  *This constant is fixed and is defined by the Git packfile format.*
+  *This constant is fixed and is defined by the git packfile format.*
   """
   def obj_ref_delta, do: 7
 
   @doc ~S"""
-  Pack file signature that occurs at file header - identifies file as Git
+  Pack file signature that occurs at file header - identifies file as git
   packfile formatted.
 
-  *This constant is fixed and is defined by the Git packfile format.*
+  *This constant is fixed and is defined by the git packfile format.*
   """
   def pack_signature, do: 'PACK'
 
@@ -238,7 +238,7 @@ defmodule Xgit.Lib.Constants do
   """
   def git_work_tree_key, do: "GIT_WORK_TREE"
 
-  @doc "The environment variable that tells us which file holds the Git index."
+  @doc "The environment variable that tells us which file holds the git index."
   def git_index_file_key, do: "GIT_INDEX_FILE"
 
   @doc "The environment variable that tells us where objects are stored."
