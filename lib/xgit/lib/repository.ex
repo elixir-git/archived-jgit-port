@@ -1998,7 +1998,7 @@ defmodule Xgit.Lib.Repository do
   # }
 
   def handle_call({:create, opts}, _from, {mod, mod_state}) when is_list(opts),
-    do: GenServerUtils.handle_delegate(mod, :handle_create, [mod_state, opts], mod_state)
+    do: GenServerUtils.delegate_call_to(mod, :handle_create, [mod_state, opts], mod_state)
 
   def handle_call(:git_dir, _from, {mod, mod_state}) do
     case mod.handle_git_dir(mod_state) do
