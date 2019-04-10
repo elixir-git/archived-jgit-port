@@ -36,7 +36,7 @@ defmodule Xgit.Storage.File.FileRepositoryTest do
       index_file = Repository.index_file!(r1)
       assert ^index_file = Path.join(git_dir, "index")
 
-      object_db = r1 |> Repository.object_database() |> ObjectDirectory.directory()
+      object_db = r1 |> Repository.object_database!() |> ObjectDirectory.directory()
       assert ^object_db = Path.join(git_dir, "objects")
     end
 

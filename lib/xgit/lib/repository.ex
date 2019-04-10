@@ -142,7 +142,7 @@ defmodule Xgit.Lib.Repository do
   @doc ~S"""
   Get the object database which stores this repository's data.
   """
-  def object_database(repository) when is_pid(repository),
+  def object_database!(repository) when is_pid(repository),
     do: GenServerUtils.call!(repository, :object_database)
 
   @doc ~S"""
@@ -2004,12 +2004,14 @@ defmodule Xgit.Lib.Repository do
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
       use GenServer, opts
+
+      alias Xgit.Errors.NoWorkTreeError
       alias Xgit.Lib.Repository
 
       def handle_git_dir(state), do: {:ok, nil, state}
       def handle_work_tree(state), do: {:ok, nil, state}
-      def handle_index_file(state), do: raise(NoWorkTreeError)
-      def handle_object_database(state), do: raise(NoWorkTreeError)
+      def handle_index_file(state), do: raise(NoWorkTreeError, [])
+      def handle_object_database(state), do: raise(NoWorkTreeError, [])
 
       defoverridable handle_git_dir: 1,
                      handle_index_file: 1,
