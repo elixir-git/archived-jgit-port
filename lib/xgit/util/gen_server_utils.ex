@@ -37,7 +37,7 @@ defmodule Xgit.Util.GenServerUtils do
 
   Wraps common `:ok` and error responses and exceptions and returns them to caller.
   """
-  def handle_delegate(mod, function, args, mod_state) do
+  def delegate_call_to(mod, function, args, mod_state) do
     try do
       case apply(mod, function, args) do
         {:ok, mod_state} -> {:reply, :ok, {mod, mod_state}}

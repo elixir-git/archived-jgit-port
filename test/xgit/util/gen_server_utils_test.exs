@@ -32,7 +32,7 @@ defmodule Xgit.Util.GenServerUtilsTest do
     end
   end
 
-  describe "handle_delegate/4" do
+  describe "delegate_call_to/4" do
     test "generates appropriate :reply when response is :ok" do
       {:ok, pid} = GenServer.start_link(__MODULE__.TestServer, [])
       assert pid = GenServerUtils.call!(pid, :delegate_ok)
@@ -87,15 +87,15 @@ defmodule Xgit.Util.GenServerUtilsTest do
     def handle_call(:respond_error_foo, _from, _state), do: {:reply, {:error, "foo"}, nil}
 
     def handle_call(:delegate_ok, _from, _state),
-      do: handle_delegate(TestDelegate, :delegate_ok, [42], 42)
+      do: delegate_call_to(TestDelegate, :delegate_ok, [42], 42)
 
     def handle_call(:delegate_ok_foo, _from, _state),
-      do: handle_delegate(TestDelegate, :delegate_ok_foo, [44], 44)
+      do: delegate_call_to(TestDelegate, :delegate_ok_foo, [44], 44)
 
     def handle_call(:delegate_error_bogus, _from, _state),
-      do: handle_delegate(TestDelegate, :delegate_error_bogus, [44], 44)
+      do: delegate_call_to(TestDelegate, :delegate_error_bogus, [44], 44)
 
     def handle_call(:delegate_raise_error, _from, _state),
-      do: handle_delegate(TestDelegate, :delegate_raise_error, [45], 45)
+      do: delegate_call_to(TestDelegate, :delegate_raise_error, [45], 45)
   end
 end
