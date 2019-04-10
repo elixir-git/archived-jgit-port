@@ -2,8 +2,8 @@ defprotocol Xgit.Lib.Ref do
   @moduledoc ~S"""
   Pairing of a name and the `Xgit.Lib.ObjectId` it currently has.
 
-  A ref in Git is (more or less) a variable that holds a single object identifier.
-  The object identifier can be any valid Git object (blob, tree, commit,
+  A ref in git is (more or less) a variable that holds a single object identifier.
+  The object identifier can be any valid git object (blob, tree, commit,
   annotated tag, ...).
 
   The ref name has the attributes of the ref that was asked for as well as the
@@ -30,8 +30,8 @@ defprotocol Xgit.Lib.Ref do
     the loose file and the packed refs file.
 
   * `:network`: The ref came from a network advertisement and storage is unknown.
-    This ref cannot be updated without Git-aware support on the remote side, as
-    Git-aware code consolidate the remote refs and reported them to this process.
+    This ref cannot be updated without git-aware support on the remote side, as
+    git-aware code consolidate the remote refs and reported them to this process.
   """
   @type storage :: :new | :loose | :packed | :loose_packed | :network
 

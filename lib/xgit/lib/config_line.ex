@@ -1,6 +1,6 @@
 defmodule Xgit.Lib.ConfigLine do
   @moduledoc ~S"""
-  A line in a Git `Config` file.
+  A line in a git `Config` file.
 
   Struct members:
   * `prefix`: The text content before entry.
