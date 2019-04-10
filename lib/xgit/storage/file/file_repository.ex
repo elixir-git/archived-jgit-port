@@ -165,11 +165,6 @@ defmodule Xgit.Storage.File.FileRepository do
     config
   end
 
-  # defp load_config(wtf) do
-  #   IO.inspect(wtf, label: "load config WTF")
-  #   Config.new()
-  # end
-
   # private static final String UNNAMED = "Unnamed repository; edit this file to name it for gitweb."; //$NON-NLS-1$
   #
   # private final RefDatabase refs;
