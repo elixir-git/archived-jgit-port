@@ -32,14 +32,20 @@ defmodule Xgit.Test.MockSystemReader do
 end
 
 defimpl Xgit.Util.SystemReader, for: Xgit.Test.MockSystemReader do
+  alias Xgit.Lib.Config
   alias Xgit.Test.MockSystemReader
 
   def hostname(%{hostname: hostname}), do: hostname
   def get_env(%{env: env}, variable), do: Map.get(env, variable)
 
-  def user_config(%MockSystemReader{user_config: user_config} = _reader, nil = _parent_config) do
-    user_config
-  end
+  def user_config(%MockSystemReader{user_config: user_config} = _reader, nil = _parent_config),
+    do: user_config
+
+  def user_config(%MockSystemReader{user_config: user_config} = _reader, %Config{storage: nil}),
+    do: user_config
+
+  # Assume in this case that the idle system config will never be written to.
+  # This is probably for testing.
 
   def system_config(
         %MockSystemReader{system_config: system_config} = _reader,
