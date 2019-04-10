@@ -23,18 +23,22 @@ defmodule Xgit.Lib.RepositoryTest do
     pid = __MODULE__.BogusRepository.start_link!()
     assert is_pid(pid)
 
-    assert_raise NoWorkTreeError, "Bare Repository has neither a working tree, nor an index", fn ->
-      Repository.index_file!(pid)
-    end
+    assert_raise NoWorkTreeError,
+                 "Bare Repository has neither a working tree, nor an index",
+                 fn ->
+                   Repository.index_file!(pid)
+                 end
   end
 
   test "raises NoWorkTreeError for object_database!/1 call" do
     pid = __MODULE__.BogusRepository.start_link!()
     assert is_pid(pid)
 
-    assert_raise NoWorkTreeError, "Bare Repository has neither a working tree, nor an index", fn ->
-      Repository.object_database!(pid)
-    end
+    assert_raise NoWorkTreeError,
+                 "Bare Repository has neither a working tree, nor an index",
+                 fn ->
+                   Repository.object_database!(pid)
+                 end
   end
 
   defmodule BogusRepository do
