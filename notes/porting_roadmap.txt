@@ -55,19 +55,7 @@ FileRepository TRACE
   RefUpdate TRACE
   Repository
 
-Repository
-  AttributesNodeProvider TRACE
-  DirCache TRACE
-  ObjectInserter
-  RebaseTodoFile TRACE
-  RebaseTodoLine TRACE
-  ReflogEntry TRACE
-  ReflogReader TRACE
-  RefRename TRACE
-  RefUpdate TRACE
-  RepositoryState ENUM
-  RevCommit TRACE
-  RevWalk TRACE
+Repository PARTIALLY DONE
 
 ObjectDatabase + FileObjectDatabase + ObjectDirectory PARTIALLY DONE
 
