@@ -292,7 +292,7 @@ defmodule Xgit.Storage.File.FileRepository do
   def handle_index_file(%{index_file: index_file} = state), do: {:ok, index_file, state}
 
   def handle_object_database(%{object_database: object_database} = state),
-    do: {object_database, state}
+    do: {:ok, object_database, state}
 
   # defp update_config(%{repo_config: repo_config}) do
   #   # TODO: Port the part that updates the configs if needed.

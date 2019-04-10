@@ -107,12 +107,8 @@ defmodule Xgit.Lib.Repository do
   Returns `repository` for function chaining; raises an error if not.
   """
   @spec create!(repository :: t, opts :: Keyword.t()) :: t
-  def create!(repository, opts \\ []) when is_pid(repository) and is_list(opts) do
-    case GenServer.call(repository, {:create, opts}) do
-      :ok -> repository
-      {:error, e} -> raise e
-    end
-  end
+  def create!(repository, opts \\ []) when is_pid(repository) and is_list(opts),
+    do: GenServerUtils.call!(repository, {:create, opts})
 
   @doc ~S"""
   Invoked when `create/2` is called on this repository.
@@ -133,12 +129,8 @@ defmodule Xgit.Lib.Repository do
 
   Will return `nil` if the repository isn't local.
   """
-  def git_dir!(repository) when is_pid(repository) do
-    case GenServer.call(repository, :git_dir) do
-      {:ok, dir} -> dir
-      {:error, e} -> raise e
-    end
-  end
+  def git_dir!(repository) when is_pid(repository),
+    do: GenServerUtils.call!(repository, :git_dir)
 
   @doc ~S"""
   Invoked when `git_dir!/1` is called on this repository.
@@ -151,7 +143,7 @@ defmodule Xgit.Lib.Repository do
   Get the object database which stores this repository's data.
   """
   def object_database(repository) when is_pid(repository),
-    do: GenServer.call(repository, :object_database)
+    do: GenServerUtils.call!(repository, :object_database)
 
   @doc ~S"""
   Invoked when `object_database/1` is called on this repository.
@@ -1086,12 +1078,8 @@ defmodule Xgit.Lib.Repository do
   Will return `nil` if there is no working tree (i.e. the repository is bare or
   there is no local representation of the repository).
   """
-  def index_file!(repository) when is_pid(repository) do
-    case GenServer.call(repository, :index_file) do
-      {:ok, file} -> file
-      {:error, e} -> raise e
-    end
-  end
+  def index_file!(repository) when is_pid(repository),
+    do: GenServerUtils.call!(repository, :index_file)
 
   @doc ~S"""
   Invoked when `index_file!/1` is called on this repository.
@@ -1462,12 +1450,8 @@ defmodule Xgit.Lib.Repository do
   Will return `nil` if there is no working tree (i.e. the repository is bare or
   there is no local representation of the repository).
   """
-  def work_tree!(repository) when is_pid(repository) do
-    case GenServer.call(repository, :work_tree) do
-      {:ok, dir} -> dir
-      {:error, e} -> raise e
-    end
-  end
+  def work_tree!(repository) when is_pid(repository),
+    do: GenServerUtils.call!(repository, :work_tree)
 
   @doc ~S"""
   Invoked when `work_tree!/1` is called on this repository.
@@ -2000,31 +1984,17 @@ defmodule Xgit.Lib.Repository do
   def handle_call({:create, opts}, _from, {mod, mod_state}) when is_list(opts),
     do: GenServerUtils.delegate_call_to(mod, :handle_create, [mod_state, opts], mod_state)
 
-  def handle_call(:git_dir, _from, {mod, mod_state}) do
-    case mod.handle_git_dir(mod_state) do
-      {:ok, dir, mod_state} -> {:reply, {:ok, dir}, {mod, mod_state}}
-      {:error, reason} -> {:stop, reason}
-    end
-  end
+  def handle_call(:git_dir, _from, {mod, mod_state}),
+    do: GenServerUtils.delegate_call_to(mod, :handle_git_dir, [mod_state], mod_state)
 
-  def handle_call(:work_tree, _from, {mod, mod_state}) do
-    case mod.handle_work_tree(mod_state) do
-      {:ok, dir, mod_state} -> {:reply, {:ok, dir}, {mod, mod_state}}
-      {:error, reason} -> {:stop, reason}
-    end
-  end
+  def handle_call(:work_tree, _from, {mod, mod_state}),
+    do: GenServerUtils.delegate_call_to(mod, :handle_work_tree, [mod_state], mod_state)
 
-  def handle_call(:index_file, _from, {mod, mod_state}) do
-    case mod.handle_index_file(mod_state) do
-      {:ok, file, mod_state} -> {:reply, {:ok, file}, {mod, mod_state}}
-      {:error, reason} -> {:stop, reason}
-    end
-  end
+  def handle_call(:index_file, _from, {mod, mod_state}),
+    do: GenServerUtils.delegate_call_to(mod, :handle_index_file, [mod_state], mod_state)
 
-  def handle_call(:object_database, _from, {mod, mod_state}) do
-    {pid, mod_state} = mod.handle_object_database(mod_state)
-    {:reply, pid, {mod, mod_state}}
-  end
+  def handle_call(:object_database, _from, {mod, mod_state}),
+    do: GenServerUtils.delegate_call_to(mod, :handle_object_database, [mod_state], mod_state)
 
   def handle_call(message, _from, state) do
     Logger.warn("Repository received unrecognized call #{inspect(message)}")
