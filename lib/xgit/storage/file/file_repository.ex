@@ -55,12 +55,8 @@ defmodule Xgit.Storage.File.FileRepository do
 
   Returns a PID for the repository process or raises if unable to do so.
   """
-  def start_link!(builder, opts \\ []) do
-    case Repository.start_link(__MODULE__, {builder, opts}, opts) do
-      {:ok, pid} when is_pid(pid) -> pid
-      {:error, e} -> raise e
-    end
-  end
+  def start_link!(builder, opts \\ []),
+    do: Repository.start_link!(__MODULE__, {builder, opts}, opts)
 
   @doc false
   def init(

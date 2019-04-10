@@ -9,6 +9,7 @@ defmodule Xgit.Lib.Repository do
   require Logger
 
   alias Xgit.Errors.NoWorkTreeError
+  alias Xgit.Util.GenServerUtils
 
   @type t :: pid
 
@@ -60,9 +61,9 @@ defmodule Xgit.Lib.Repository do
   The lifetime of this process is similar to that for `GenServer` or `GenStage`
   processes.
   """
-  @spec start_link(module, term, GenServer.options()) :: GenServer.on_start()
-  def start_link(module, args, options) when is_atom(module) and is_list(options),
-    do: GenServer.start_link(__MODULE__, {module, args}, options)
+  @spec start_link!(module, term, GenServer.options()) :: GenServer.on_start()
+  def start_link!(module, args, options) when is_atom(module) and is_list(options),
+    do: GenServerUtils.start_link!(__MODULE__, {module, args}, options)
 
   @doc false
   def init({mod, args}) do
