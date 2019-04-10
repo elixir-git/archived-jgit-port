@@ -262,10 +262,10 @@ defmodule Xgit.Lib.Constants do
   @doc "Default remote name used by clone, push and fetch operations."
   def default_remote_name, do: "origin"
 
-  @doc "Default name for the Git repository directory."
+  @doc "Default name for the git repository directory."
   def dot_git, do: ".git"
 
-  @doc "Default name for the Git repository configuration."
+  @doc "Default name for the git repository configuration."
   def config, do: "config"
 
   @doc "A bare repository typically ends with this string."
