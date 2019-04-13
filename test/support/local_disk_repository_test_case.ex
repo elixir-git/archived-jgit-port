@@ -27,8 +27,8 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   alias Xgit.Lib.ConfigConstants
   alias Xgit.Lib.PersonIdent
   alias Xgit.Storage.File.FileBasedConfig
-  alias Xgit.Util.SystemReader
   alias Xgit.Test.MockSystemReader
+  alias Xgit.Util.SystemReader
 
   # private static final boolean useMMAP = "true".equals(System
   #     .getProperty("jgit.junit.usemmap"));
