@@ -23,10 +23,10 @@ defmodule Xgit.Storage.File.FileRepositoryTest do
       repo_parent = Path.join(trash, "r1")
       git_dir = Path.join(repo_parent, Constants.dot_git())
 
-      r1 =
+      {:ok, r1} =
         %FileRepositoryBuilder{git_dir: git_dir}
         |> FileRepositoryBuilder.setup!()
-        |> FileRepository.start_link!()
+        |> FileRepository.start_link()
 
       assert ^r1 = Repository.create!(r1)
       assert ^git_dir = Repository.git_dir!(r1)
@@ -48,10 +48,10 @@ defmodule Xgit.Storage.File.FileRepositoryTest do
 
       msr = %MockSystemReader{env: %{"GIT_CONFIG_NOSYSTEM" => "true"}, user_config: Config.new()}
 
-      r1 =
+      {:ok, r1} =
         %FileRepositoryBuilder{git_dir: git_dir}
         |> FileRepositoryBuilder.setup!()
-        |> FileRepository.start_link!(system_reader: msr)
+        |> FileRepository.start_link(system_reader: msr)
 
       assert ^r1 = Repository.create!(r1)
       assert ^git_dir = Repository.git_dir!(r1)
@@ -74,11 +74,13 @@ defmodule Xgit.Storage.File.FileRepositoryTest do
       File.mkdir_p!(git_dir)
       File.touch!(Path.join(git_dir, "config"))
 
-      assert_raise(RuntimeError, "Repository already exists: #{git_dir}", fn ->
+      {:ok, r1} =
         %FileRepositoryBuilder{git_dir: git_dir}
         |> FileRepositoryBuilder.setup!()
-        |> FileRepository.start_link!()
-        |> Repository.create!()
+        |> FileRepository.start_link()
+
+      assert_raise(RuntimeError, "Repository already exists: #{git_dir}", fn ->
+        Repository.create!(r1)
       end)
     end
   end
