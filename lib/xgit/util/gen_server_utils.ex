@@ -6,16 +6,6 @@ defmodule Xgit.Util.GenServerUtils do
   """
 
   @doc ~S"""
-  Starts a `GenServer` process linked to the current process.
-
-  Raises if the process fails to start.
-  """
-  def start_link!(module, init_arg, options \\ []) do
-    {:ok, pid} = GenServer.start_link(module, init_arg, options)
-    pid
-  end
-
-  @doc ~S"""
   Makes a synchronous call to the server and waits for its reply.
 
   If the response is `:ok`, return `server` (for function chaining).

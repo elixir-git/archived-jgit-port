@@ -59,7 +59,7 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
   # private Set<ObjectId> shallowCommitsIds;
 
   @doc ~S"""
-  Start an on-disk object direcotry.
+  Starts an on-disk object directory.
 
   In addition to the `options` recognized by `GenServer`, the following options
   are also recognized:
