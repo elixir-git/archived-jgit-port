@@ -6,7 +6,7 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   fresh environment. The temporary directory is cleaned up after the test ends.
 
   PORTING NOTE: I'm still figuring out a porting strategy for the hierarchy
-  of test case classes in jgit. So, for now, I'm keeping this fairlu minimal.
+  of test case classes in jgit. So, for now, I'm keeping this fairly minimal.
   """
 
   # /**
