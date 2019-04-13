@@ -9,7 +9,7 @@ defmodule Xgit.Lib.RepositoryTest do
   doctest Xgit.Lib.Repository
 
   test "handles unexpected calls" do
-    pid = __MODULE__.BogusRepository.start_link!()
+    {:ok, pid} = __MODULE__.BogusRepository.start_link()
     assert is_pid(pid)
 
     assert capture_log(fn ->
@@ -20,7 +20,7 @@ defmodule Xgit.Lib.RepositoryTest do
   end
 
   test "raises NoWorkTreeError for index_file!/1 call" do
-    pid = __MODULE__.BogusRepository.start_link!()
+    {:ok, pid} = __MODULE__.BogusRepository.start_link()
     assert is_pid(pid)
 
     assert_raise NoWorkTreeError,
@@ -31,7 +31,7 @@ defmodule Xgit.Lib.RepositoryTest do
   end
 
   test "raises NoWorkTreeError for object_database!/1 call" do
-    pid = __MODULE__.BogusRepository.start_link!()
+    {:ok, pid} = __MODULE__.BogusRepository.start_link()
     assert is_pid(pid)
 
     assert_raise NoWorkTreeError,
@@ -46,7 +46,7 @@ defmodule Xgit.Lib.RepositoryTest do
 
     use Xgit.Lib.Repository
 
-    def start_link!, do: Repository.start_link!(__MODULE__, nil, [])
+    def start_link, do: Repository.start_link(__MODULE__, nil, [])
     def init(_), do: {:ok, nil}
   end
 end

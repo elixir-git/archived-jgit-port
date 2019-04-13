@@ -3,15 +3,6 @@ defmodule Xgit.Util.GenServerUtilsTest do
 
   alias Xgit.Util.GenServerUtils
 
-  describe "start_link!/3" do
-    test "returns server PID when process starts normally" do
-      pid = GenServerUtils.start_link!(__MODULE__.TestServer, [])
-      assert is_pid(pid)
-
-      assert ^pid = GenServerUtils.call!(pid, :respond_ok)
-    end
-  end
-
   describe "call!/3" do
     test "returns server PID when response is simply :ok" do
       {:ok, pid} = GenServer.start_link(__MODULE__.TestServer, [])
