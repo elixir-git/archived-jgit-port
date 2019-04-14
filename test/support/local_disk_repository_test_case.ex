@@ -23,12 +23,26 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   #  * descriptors or address space for the test process.
   #  */
 
+  use ExUnit.CaseTemplate
+
   alias Xgit.Lib.Config
   alias Xgit.Lib.ConfigConstants
+  alias Xgit.Lib.Constants
   alias Xgit.Lib.PersonIdent
+  alias Xgit.Lib.Repository
   alias Xgit.Storage.File.FileBasedConfig
+  alias Xgit.Storage.File.FileRepository
+  alias Xgit.Storage.File.FileRepositoryBuilder
   alias Xgit.Test.MockSystemReader
   alias Xgit.Util.SystemReader
+
+  import ExUnit.Assertions
+
+  using do
+    quote do
+      alias Xgit.Test.LocalDiskRepositoryTestCase
+    end
+  end
 
   # private static final boolean useMMAP = "true".equals(System
   #     .getProperty("jgit.junit.usemmap"));
@@ -229,88 +243,57 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   #   }
   #   return sb.toString();
   # }
-  #
-  #
-  # /**
-  #  * Creates a new empty bare repository.
-  #  *
-  #  * @return the newly created repository, opened for access
-  #  * @throws IOException
-  #  *             the repository could not be created in the temporary area
-  #  */
-  # protected FileRepository createBareRepository() throws IOException {
-  #   return createRepository(true /* bare */);
-  # }
-  #
-  # /**
-  #  * Creates a new empty repository within a new empty working directory.
-  #  *
-  #  * @return the newly created repository, opened for access
-  #  * @throws IOException
-  #  *             the repository could not be created in the temporary area
-  #  */
-  # protected FileRepository createWorkRepository() throws IOException {
-  #   return createRepository(false /* not bare */);
-  # }
-  #
-  # /**
-  #  * Creates a new empty repository.
-  #  *
-  #  * @param bare
-  #  *            true to create a bare repository; false to make a repository
-  #  *            within its working directory
-  #  * @return the newly created repository, opened for access
-  #  * @throws IOException
-  #  *             the repository could not be created in the temporary area
-  #  * @since 5.3
-  #  */
-  # protected FileRepository createRepository(boolean bare)
-  #     throws IOException {
-  #   return createRepository(bare, false /* auto close */);
-  # }
-  #
-  # /**
-  #  * Creates a new empty repository.
-  #  *
-  #  * @param bare
-  #  *            true to create a bare repository; false to make a repository
-  #  *            within its working directory
-  #  * @param autoClose
-  #  *            auto close the repository in {@link #tearDown()}
-  #  * @return the newly created repository, opened for access
-  #  * @throws IOException
-  #  *             the repository could not be created in the temporary area
-  #  * @deprecated use {@link #createRepository(boolean)} instead
-  #  */
-  # @Deprecated
-  # public FileRepository createRepository(boolean bare, boolean autoClose)
-  #     throws IOException {
-  #   File gitdir = createUniqueTestGitDir(bare);
-  #   FileRepository db = new FileRepository(gitdir);
-  #   assertFalse(gitdir.exists());
-  #   db.create(bare);
-  #   if (autoClose) {
-  #     addRepoToClose(db);
-  #   }
-  #   return db;
-  # }
-  #
-  # /**
-  #  * Creates a new unique directory for a test repository
-  #  *
-  #  * @param bare
-  #  *            true for a bare repository; false for a repository with a
-  #  *            working directory
-  #  * @return a unique directory for a test repository
-  #  * @throws IOException
-  #  */
-  # protected File createUniqueTestGitDir(boolean bare) throws IOException {
-  #   String gitdirName = createTempFile().getPath();
-  #   if (!bare)
-  #     gitdirName += "/";
-  #   return new File(gitdirName + Constants.DOT_GIT);
-  # }
-  #
+
+  @doc ~S"""
+  Creates a new empty bare repository.
+
+  Returns the PID for the new repository.
+  """
+  def create_bare_repository!, do: create_repository!(bare: true)
+
+  @doc ~S"""
+  Creates a new empty repository within a new empty working directory.
+
+  Returns the PID for the new repository.
+  """
+  def create_work_repository!, do: create_repository!(bare?: false)
+
+  @doc ~S"""
+  Creates a new empty repository.
+
+  `bare?` should be `true` for a bare repository; `false` for a repository with a
+  working directory.
+
+  Returns the PID for the new repository.
+  """
+  def create_repository!(bare?: bare?) do
+    git_dir = create_unique_test_git_dir!(bare?: bare?)
+
+    {:ok, db} =
+      %FileRepositoryBuilder{git_dir: git_dir, bare?: bare?}
+      |> FileRepositoryBuilder.setup!()
+      |> FileRepository.start_link()
+
+    refute File.exists?(git_dir)
+
+    Repository.create!(db)
+  end
+
+  @doc ~S"""
+  Creates a new unique directory for a test repository.
+
+  `bare?` should be `true` for a bare repository; `false` for a repository with a
+  working directory.
+
+  Returns the path to the new directory.
+  """
+  def create_unique_test_git_dir!(bare?: bare?) do
+    Temp.track!()
+    tmp = Temp.mkdir!(prefix: "tmp_")
+    tmp = if bare?, do: tmp, else: "#{tmp}/"
+    "#{tmp}#{Constants.dot_git()}"
+  end
+
   # /**
   #  * Run a hook script in the repository, returning the exit status.
   #  *

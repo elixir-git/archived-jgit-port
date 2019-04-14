@@ -33,8 +33,12 @@ defmodule Xgit.Storage.File.FileRepository do
   use Xgit.Lib.Repository
 
   alias Xgit.Internal.Storage.File.ObjectDirectory
+  alias Xgit.Internal.Storage.File.RefDirectory
   alias Xgit.Lib.Config
   alias Xgit.Lib.Constants
+  alias Xgit.Lib.ObjectDatabase
+  alias Xgit.Lib.RefDatabase
+  alias Xgit.Lib.RefDatabase
   alias Xgit.Util.StringUtils
   alias Xgit.Util.SystemReader
   alias Xgit.Storage.File.FileBasedConfig
@@ -113,6 +117,11 @@ defmodule Xgit.Storage.File.FileRepository do
     #   refs = new RefDirectory(this);
     # }
 
+    # TO DO: Port ref-tree config options above. For now, we're assuming the
+    # "typical" case.
+
+    {:ok, ref_database_pid} = RefDirectory.start_link(git_dir)
+
     {:ok, object_database_pid} =
       ObjectDirectory.start_link(config: Config.new(), objects: object_dir)
 
@@ -140,6 +149,7 @@ defmodule Xgit.Storage.File.FileRepository do
      %{
        system_reader: system_reader,
        git_dir: git_dir,
+       ref_database: ref_database_pid,
        object_database: object_database_pid,
        alternate_object_directories: alternate_object_directories,
        bare?: bare?,
@@ -173,8 +183,6 @@ defmodule Xgit.Storage.File.FileRepository do
 
   # private static final String UNNAMED = "Unnamed repository; edit this file to name it for gitweb."; //$NON-NLS-1$
   #
-  # private final RefDatabase refs;
-  #
   # private final Object snapshotLock = new Object();
   #
   # // protected by snapshotLock
@@ -187,7 +195,12 @@ defmodule Xgit.Storage.File.FileRepository do
   # }
 
   def handle_create(
-        %{git_dir: git_dir, repo_config: %{storage: %{path: repo_config_path}}} = state,
+        %{
+          git_dir: git_dir,
+          ref_database: ref_database_pid,
+          object_database: object_database_pid,
+          repo_config: %{storage: %{path: repo_config_path}}
+        } = state,
         options
       )
       when is_list(options) do
@@ -207,16 +220,21 @@ defmodule Xgit.Storage.File.FileRepository do
     #     && getDirectory().getName().startsWith(".")) //$NON-NLS-1$
     #   getFS().setHidden(getDirectory(), true);
 
-    # refs.create();
-    # objectDatabase.create();
-    #
-    # FileUtils.mkdir(new File(getDirectory(), "branches")); //$NON-NLS-1$
-    # FileUtils.mkdir(new File(getDirectory(), "hooks")); //$NON-NLS-1$
-    #
+    RefDatabase.create(ref_database_pid)
+    ObjectDatabase.create(object_database_pid)
+
+    File.mkdir_p!(Path.join(git_dir, "branches"))
+    File.mkdir_p!(Path.join(git_dir, "hooks"))
+
+    # TEMPORARY / BOOTSTRAPPING: Remove the File.write! and replace with the
+    # RefUpdate code below. Porting RefUpdate draws in a few too many things just yet.
+    File.write!(Path.join(git_dir, "HEAD"), "ref: refs/heads/master")
+
     # RefUpdate head = updateRef(Constants.HEAD);
     # head.disableRefLog();
     # head.link(Constants.R_HEADS + Constants.MASTER);
-    #
+    # --- end replacement for File.write!
+
     # final boolean fileMode;
     # if (getFS().supportsExecute()) {
     #   File tmp = File.createTempFile("try", "execute", getDirectory()); //$NON-NLS-1$ //$NON-NLS-2$
