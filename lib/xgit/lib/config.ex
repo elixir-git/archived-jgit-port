@@ -520,63 +520,36 @@ defmodule Xgit.Lib.Config do
   # private ConfigSnapshot getBaseState() {
   # 	return baseConfig != null ? baseConfig.getState() : null;
   # }
-  #
-  # /**
-  #  * Add or modify a configuration value. The parameters will result in a
-  #  * configuration entry like this.
-  #  *
-  #  * <pre>
-  #  * [section &quot;subsection&quot;]
-  #  *         name = value
-  #  * </pre>
-  #  *
-  #  * @param section
-  #  *            section name, e.g "branch"
-  #  * @param subsection
-  #  *            optional subsection value, e.g. a branch name
-  #  * @param name
-  #  *            parameter name, e.g. "filemode"
-  #  * @param value
-  #  *            parameter value
-  #  */
-  # public void setInt(final String section, final String subsection,
-  # 		final String name, final int value) {
-  # 	setLong(section, subsection, name, value);
-  # }
-  #
-  # /**
-  #  * Add or modify a configuration value. The parameters will result in a
-  #  * configuration entry like this.
-  #  *
-  #  * <pre>
-  #  * [section &quot;subsection&quot;]
-  #  *         name = value
-  #  * </pre>
-  #  *
-  #  * @param section
-  #  *            section name, e.g "branch"
-  #  * @param subsection
-  #  *            optional subsection value, e.g. a branch name
-  #  * @param name
-  #  *            parameter name, e.g. "filemode"
-  #  * @param value
-  #  *            parameter value
-  #  */
-  # public void setLong(final String section, final String subsection,
-  # 		final String name, final long value) {
-  # 	final String s;
-  #
-  # 	if (value >= GiB && (value % GiB) == 0)
-  # 		s = String.valueOf(value / GiB) + "g"; //$NON-NLS-1$
-  # 	else if (value >= MiB && (value % MiB) == 0)
-  # 		s = String.valueOf(value / MiB) + "m"; //$NON-NLS-1$
-  # 	else if (value >= KiB && (value % KiB) == 0)
-  # 		s = String.valueOf(value / KiB) + "k"; //$NON-NLS-1$
-  # 	else
-  # 		s = String.valueOf(value);
-  #
-  # 	setString(section, subsection, name, s);
-  # }
+
+  @doc ~s"""
+  Add or modify a configuration value. The parameters will result in a
+  configuration entry like this:
+
+  ```
+  [section "subsection"]
+    name = value
+  ```
+  """
+  def set_int(config, section, subsection \\ nil, name, value)
+      when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
+             is_binary(name) and is_integer(value) do
+    config
+    |> config_pid()
+    |> GenServer.call(
+      {:set_string_list, section, subsection, name, [to_string_with_units(value)]}
+    )
+
+    config
+  end
+
+  def to_string_with_units(value) do
+    cond do
+      value >= @gib and rem(value, @gib) == 0 -> "#{div(value, @gib)}g"
+      value >= @mib and rem(value, @mib) == 0 -> "#{div(value, @mib)}m"
+      value >= @kib and rem(value, @kib) == 0 -> "#{div(value, @kib)}k"
+      true -> "#{value}"
+    end
+  end
 
   @doc ~s"""
   Add or modify a configuration value. The parameters will result in a
