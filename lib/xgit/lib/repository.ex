@@ -179,15 +179,20 @@ defmodule Xgit.Lib.Repository do
   #  */
   # @NonNull
   # public abstract RefDatabase getRefDatabase();
-  #
-  # /**
-  #  * Get the configuration of this repository.
-  #  *
-  #  * @return the configuration of this repository.
-  #  */
-  # @NonNull
-  # public abstract StoredConfig getConfig();
-  #
+
+  @doc ~S"""
+  Get the configuration of this repository.
+  """
+  def config!(repository) when is_pid(repository),
+    do: GenServerUtils.call!(repository, :config)
+
+  @doc ~S"""
+  Invoked when `config!/1` is called on this repository.
+
+  Should return the `Config` instance for this repository.
+  """
+  @callback handle_config(state :: term) :: String.t() | nil
+
   # /**
   #  * Create a new {@link org.eclipse.jgit.attributes.AttributesNodeProvider}.
   #  *
@@ -1995,6 +2000,9 @@ defmodule Xgit.Lib.Repository do
 
   def handle_call(:object_database, _from, {mod, mod_state}),
     do: GenServerUtils.delegate_call_to(mod, :handle_object_database, [mod_state], mod_state)
+
+  def handle_call(:config, _from, {mod, mod_state}),
+    do: GenServerUtils.delegate_call_to(mod, :handle_config, [mod_state], mod_state)
 
   def handle_call(message, _from, state) do
     Logger.warn("Repository received unrecognized call #{inspect(message)}")
