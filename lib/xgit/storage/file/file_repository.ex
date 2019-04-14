@@ -35,6 +35,7 @@ defmodule Xgit.Storage.File.FileRepository do
   alias Xgit.Internal.Storage.File.ObjectDirectory
   alias Xgit.Internal.Storage.File.RefDirectory
   alias Xgit.Lib.Config
+  alias Xgit.Lib.ConfigConstants
   alias Xgit.Lib.Constants
   alias Xgit.Lib.ObjectDatabase
   alias Xgit.Lib.RefDatabase
@@ -102,27 +103,33 @@ defmodule Xgit.Storage.File.FileRepository do
     #     fireEvent(event);
     #   }
     # });
-    #
-    # final long repositoryFormatVersion = getConfig().getLong(
-    #     ConfigConstants.CONFIG_CORE_SECTION, null,
-    #     ConfigConstants.CONFIG_KEY_REPO_FORMAT_VERSION, 0);
-    #
-    # String reftype = repoConfig.getString(
-    #     "extensions", null, "refStorage"); //$NON-NLS-1$ //$NON-NLS-2$
-    # if (repositoryFormatVersion >= 1 && reftype != null) {
-    #   if (StringUtils.equalsIgnoreCase(reftype, "reftree")) { //$NON-NLS-1$
-    #     refs = new RefTreeDatabase(this, new RefDirectory(this));
-    #   } else {
-    #     throw new IOException(JGitText.get().unknownRepositoryFormat);
-    #   }
-    # } else {
-    #   refs = new RefDirectory(this);
-    # }
 
-    # TO DO: Port ref-tree config options above. For now, we're assuming the
-    # "typical" case.
+    repository_format_version =
+      Config.get_int(
+        repo_config,
+        ConfigConstants.config_core_section(),
+        ConfigConstants.config_key_repo_format_version(),
+        0
+      )
 
-    {:ok, ref_database_pid} = RefDirectory.start_link(git_dir)
+    reftype =
+      repo_config
+      |> Config.get_string("extensions", "refStorage")
+      |> downcase_if_not_nil()
+
+    {:ok, ref_database_pid} =
+      cond do
+        repository_format_version >= 1 and reftype == "reftree" ->
+          raise ArgumentError, "RefTreeDatabase not yet implemented"
+
+        # new RefTreeDatabase(this, new RefDirectory(this));
+
+        repository_format_version >= 1 ->
+          raise ArgumentError, "Unknown repository format"
+
+        true ->
+          RefDirectory.start_link(git_dir)
+      end
 
     {:ok, object_database_pid} =
       ObjectDirectory.start_link(config: Config.new(), objects: object_dir)
@@ -182,6 +189,9 @@ defmodule Xgit.Storage.File.FileRepository do
     Config.load(config)
     config
   end
+
+  defp downcase_if_not_nil(nil), do: nil
+  defp downcase_if_not_nil(s), do: String.downcase(s)
 
   # private static final String UNNAMED = "Unnamed repository; edit this file to name it for gitweb."; //$NON-NLS-1$
   #

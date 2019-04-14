@@ -1,8 +1,11 @@
 defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
   use Xgit.Test.LocalDiskRepositoryTestCase, async: true
 
+  alias Xgit.Lib.Config
+  alias Xgit.Lib.ConfigConstants
   alias Xgit.Lib.Constants
   alias Xgit.Lib.Repository
+  alias Xgit.Storage.File.FileRepository
   alias Xgit.Storage.File.FileRepositoryBuilder
   alias Xgit.Test.MockSystemReader
 
@@ -446,59 +449,100 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
     assert Repository.git_dir!(r) == d2
   end
 
-  # @Test
-  # public void testShouldAutomagicallyDetectGitDirectory() throws Exception {
-  #   Repository r = createWorkRepository();
-  #   File d = new File(r.getDirectory(), "sub-dir");
-  #   FileUtils.mkdir(d);
-  #
-  #   assertEquals(r.getDirectory(), new FileRepositoryBuilder()
-  #       .findGitDir(d).getGitDir());
-  # }
-  #
-  # @Test
-  # public void emptyRepositoryFormatVersion() throws Exception {
-  #   Repository r = createWorkRepository();
-  #   StoredConfig config = r.getConfig();
-  #   config.setString(ConfigConstants.CONFIG_CORE_SECTION, null,
-  #       ConfigConstants.CONFIG_KEY_REPO_FORMAT_VERSION, "");
-  #   config.save();
-  #
-  #   try (FileRepository repo = new FileRepository(r.getDirectory())) {
-  #     // Unused
-  #   }
-  # }
-  #
-  # @Test
-  # public void invalidRepositoryFormatVersion() throws Exception {
-  #   Repository r = createWorkRepository();
-  #   StoredConfig config = r.getConfig();
-  #   config.setString(ConfigConstants.CONFIG_CORE_SECTION, null,
-  #       ConfigConstants.CONFIG_KEY_REPO_FORMAT_VERSION, "notanumber");
-  #   config.save();
-  #
-  #   try (FileRepository repo = new FileRepository(r.getDirectory())) {
-  #     fail("IllegalArgumentException not thrown");
-  #   } catch (IllegalArgumentException e) {
-  #     assertNotNull(e.getMessage());
-  #   }
-  # }
-  #
-  # @Test
-  # public void unknownRepositoryFormatVersion() throws Exception {
-  #   Repository r = createWorkRepository();
-  #   StoredConfig config = r.getConfig();
-  #   config.setLong(ConfigConstants.CONFIG_CORE_SECTION, null,
-  #       ConfigConstants.CONFIG_KEY_REPO_FORMAT_VERSION, 999999);
-  #   config.save();
-  #
-  #   try (FileRepository repo = new FileRepository(r.getDirectory())) {
-  #     fail("IOException not thrown");
-  #   } catch (IOException e) {
-  #     assertNotNull(e.getMessage());
-  #   }
-  # }
-  #
+  test "can read empty format version from config" do
+    r = LocalDiskRepositoryTestCase.create_work_repository!()
+    git_dir = Repository.git_dir!(r)
+    config = Repository.config!(r)
+
+    Config.set_string(
+      config,
+      ConfigConstants.config_core_section(),
+      ConfigConstants.config_key_repo_format_version(),
+      ""
+    )
+
+    Config.save(config)
+
+    assert {:ok, _} =
+             %FileRepositoryBuilder{git_dir: git_dir}
+             |> FileRepositoryBuilder.setup!()
+             |> FileRepository.start_link()
+  end
+
+  test "raises error if repository format version is invalid" do
+    r = LocalDiskRepositoryTestCase.create_work_repository!()
+    git_dir = Repository.git_dir!(r)
+    config = Repository.config!(r)
+
+    Config.set_string(
+      config,
+      ConfigConstants.config_core_section(),
+      ConfigConstants.config_key_repo_format_version(),
+      "notanumber"
+    )
+
+    Config.save(config)
+
+    Process.flag(:trap_exit, true)
+
+    %FileRepositoryBuilder{git_dir: git_dir}
+    |> FileRepositoryBuilder.setup!()
+    |> FileRepository.start_link()
+
+    assert_receive {:EXIT, _pid,
+                    {%Xgit.Errors.ConfigInvalidError{
+                       message: "Invalid integer value: core.repositoryformatversion=notanumber"
+                     }, _}}
+  end
+
+  test "raises error if repository format version is unknown" do
+    r = LocalDiskRepositoryTestCase.create_work_repository!()
+    git_dir = Repository.git_dir!(r)
+    config = Repository.config!(r)
+
+    Config.set_int(
+      config,
+      ConfigConstants.config_core_section(),
+      ConfigConstants.config_key_repo_format_version(),
+      999_999
+    )
+
+    Config.save(config)
+
+    Process.flag(:trap_exit, true)
+
+    %FileRepositoryBuilder{git_dir: git_dir}
+    |> FileRepositoryBuilder.setup!()
+    |> FileRepository.start_link()
+
+    assert_receive {:EXIT, _pid, {%ArgumentError{message: "Unknown repository format"}, _}}
+  end
+
+  test "TEMPORARY: raises error if repository format calls for reftree" do
+    r = LocalDiskRepositoryTestCase.create_work_repository!()
+    git_dir = Repository.git_dir!(r)
+    config = Repository.config!(r)
+
+    Config.set_int(
+      config,
+      ConfigConstants.config_core_section(),
+      ConfigConstants.config_key_repo_format_version(),
+      1
+    )
+
+    Config.set_string(config, "extensions", "refStorage", "reftree")
+    Config.save(config)
+
+    Process.flag(:trap_exit, true)
+
+    %FileRepositoryBuilder{git_dir: git_dir}
+    |> FileRepositoryBuilder.setup!()
+    |> FileRepository.start_link()
+
+    assert_receive {:EXIT, _pid,
+                    {%ArgumentError{message: "RefTreeDatabase not yet implemented"}, _}}
+  end
+
   # @Test
   # public void absoluteGitDirRef() throws Exception {
   #   Repository repo1 = createWorkRepository();
