@@ -1360,6 +1360,28 @@ defmodule Xgit.Lib.ConfigTest do
     assert Config.to_text(c) == ""
   end
 
+  @values_and_strings [
+    {0, "0"},
+    {1, "1"},
+    {1024, "1k"},
+    {1025, "1025"},
+    {1_048_576, "1m"},
+    {3_145_728, "3m"},
+    {1_073_741_824, "1g"},
+    {1_073_741_825, "1073741825"}
+  ]
+
+  test "put+get int" do
+    for {value, str} <- @values_and_strings do
+      c =
+        Config.new()
+        |> Config.set_int("my", "number", value)
+
+      assert Config.get_string_list(c, "my", "number") == [str]
+      assert Config.get_int(c, "my", "number", 99) == value
+    end
+  end
+
   test "put+get boolean + clear" do
     c =
       Config.new()
