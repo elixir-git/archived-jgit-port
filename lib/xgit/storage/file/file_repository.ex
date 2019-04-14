@@ -94,6 +94,8 @@ defmodule Xgit.Storage.File.FileRepository do
       |> FileBasedConfig.config_for_path()
       |> load_config()
 
+    # TO DO: Shouldn't this fall back to user_config?
+
     # repoConfig.addChangeListener(new ConfigChangedListener() {
     #   @Override
     #   public void onConfigChanged(ConfigChangedEvent event) {
@@ -311,6 +313,11 @@ defmodule Xgit.Storage.File.FileRepository do
 
   def handle_object_database(%{object_database: object_database} = state),
     do: {:ok, object_database, state}
+
+  def handle_config(%{repo_config: repo_config} = state),
+    do: {:ok, repo_config, state}
+
+  # TO DO: Should this call through to update_config?
 
   # defp update_config(%{repo_config: repo_config}) do
   #   # TO DO: Port the part that updates the configs if needed.

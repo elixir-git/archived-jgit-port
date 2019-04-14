@@ -84,4 +84,22 @@ defmodule Xgit.Storage.File.FileRepositoryTest do
       end)
     end
   end
+
+  test "config!/1", %{trash: trash} do
+    repo_parent = Path.join(trash, "r1")
+    git_dir = Path.join(repo_parent, Constants.dot_git())
+
+    {:ok, r1} =
+      %FileRepositoryBuilder{git_dir: git_dir}
+      |> FileRepositoryBuilder.setup!()
+      |> FileRepository.start_link()
+
+    assert ^r1 = Repository.create!(r1)
+
+    config = Repository.config!(r1)
+    Config.set_string(config, "user", "name", "bob")
+    assert :ok = Config.save(config)
+
+    assert File.regular?(Path.join(git_dir, "config"))
+  end
 end
