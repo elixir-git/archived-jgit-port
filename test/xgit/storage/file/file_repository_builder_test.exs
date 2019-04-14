@@ -1,7 +1,11 @@
 defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
-  use ExUnit.Case, async: true
+  use Xgit.Test.LocalDiskRepositoryTestCase, async: true
 
+  alias Xgit.Lib.Config
+  alias Xgit.Lib.ConfigConstants
   alias Xgit.Lib.Constants
+  alias Xgit.Lib.Repository
+  alias Xgit.Storage.File.FileRepository
   alias Xgit.Storage.File.FileRepositoryBuilder
   alias Xgit.Test.MockSystemReader
 
@@ -431,4 +435,178 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
       end
     end
   end
+
+  test "should automagically detect .git directory" do
+    r = LocalDiskRepositoryTestCase.create_work_repository!()
+    d = r |> Repository.git_dir!() |> Path.join("sub_dir")
+    File.mkdir_p!(d)
+
+    d2 =
+      %FileRepositoryBuilder{}
+      |> FileRepositoryBuilder.find_git_dir(d)
+      |> Map.get(:git_dir)
+
+    assert Repository.git_dir!(r) == d2
+  end
+
+  test "can read empty format version from config" do
+    r = LocalDiskRepositoryTestCase.create_work_repository!()
+    git_dir = Repository.git_dir!(r)
+    config = Repository.config!(r)
+
+    Config.set_string(
+      config,
+      ConfigConstants.config_core_section(),
+      ConfigConstants.config_key_repo_format_version(),
+      ""
+    )
+
+    Config.save(config)
+
+    assert {:ok, _} =
+             %FileRepositoryBuilder{git_dir: git_dir}
+             |> FileRepositoryBuilder.setup!()
+             |> FileRepository.start_link()
+  end
+
+  test "raises error if repository format version is invalid" do
+    r = LocalDiskRepositoryTestCase.create_work_repository!()
+    git_dir = Repository.git_dir!(r)
+    config = Repository.config!(r)
+
+    Config.set_string(
+      config,
+      ConfigConstants.config_core_section(),
+      ConfigConstants.config_key_repo_format_version(),
+      "notanumber"
+    )
+
+    Config.save(config)
+
+    Process.flag(:trap_exit, true)
+
+    %FileRepositoryBuilder{git_dir: git_dir}
+    |> FileRepositoryBuilder.setup!()
+    |> FileRepository.start_link()
+
+    assert_receive {:EXIT, _pid,
+                    {%Xgit.Errors.ConfigInvalidError{
+                       message: "Invalid integer value: core.repositoryformatversion=notanumber"
+                     }, _}}
+  end
+
+  test "raises error if repository format version is unknown" do
+    r = LocalDiskRepositoryTestCase.create_work_repository!()
+    git_dir = Repository.git_dir!(r)
+    config = Repository.config!(r)
+
+    Config.set_int(
+      config,
+      ConfigConstants.config_core_section(),
+      ConfigConstants.config_key_repo_format_version(),
+      999_999
+    )
+
+    Config.save(config)
+
+    Process.flag(:trap_exit, true)
+
+    %FileRepositoryBuilder{git_dir: git_dir}
+    |> FileRepositoryBuilder.setup!()
+    |> FileRepository.start_link()
+
+    assert_receive {:EXIT, _pid, {%ArgumentError{message: "Unknown repository format"}, _}}
+  end
+
+  test "TEMPORARY: raises error if repository format calls for reftree" do
+    r = LocalDiskRepositoryTestCase.create_work_repository!()
+    git_dir = Repository.git_dir!(r)
+    config = Repository.config!(r)
+
+    Config.set_int(
+      config,
+      ConfigConstants.config_core_section(),
+      ConfigConstants.config_key_repo_format_version(),
+      1
+    )
+
+    Config.set_string(config, "extensions", "refStorage", "reftree")
+    Config.save(config)
+
+    Process.flag(:trap_exit, true)
+
+    %FileRepositoryBuilder{git_dir: git_dir}
+    |> FileRepositoryBuilder.setup!()
+    |> FileRepository.start_link()
+
+    assert_receive {:EXIT, _pid,
+                    {%ArgumentError{message: "RefTreeDatabase not yet implemented"}, _}}
+  end
+
+  # @Test
+  # public void absoluteGitDirRef() throws Exception {
+  #   Repository repo1 = createWorkRepository();
+  #   File dir = createTempDirectory("dir");
+  #   File dotGit = new File(dir, Constants.DOT_GIT);
+  #   try (BufferedWriter writer = Files.newBufferedWriter(dotGit.toPath(),
+  #       UTF_8)) {
+  #     writer.append("gitdir: " + repo1.getDirectory().getAbsolutePath());
+  #   }
+  #   FileRepositoryBuilder builder = new FileRepositoryBuilder();
+  #
+  #   builder.setWorkTree(dir);
+  #   builder.setMustExist(true);
+  #   Repository repo2 = builder.build();
+  #
+  #   assertEquals(repo1.getDirectory().getAbsolutePath(),
+  #       repo2.getDirectory().getAbsolutePath());
+  #   assertEquals(dir, repo2.getWorkTree());
+  # }
+  #
+  # @Test
+  # public void relativeGitDirRef() throws Exception {
+  #   Repository repo1 = createWorkRepository();
+  #   File dir = new File(repo1.getWorkTree(), "dir");
+  #   assertTrue(dir.mkdir());
+  #   File dotGit = new File(dir, Constants.DOT_GIT);
+  #   try (BufferedWriter writer = Files.newBufferedWriter(dotGit.toPath(),
+  #       UTF_8)) {
+  #     writer.append("gitdir: ../" + Constants.DOT_GIT);
+  #   }
+  #   FileRepositoryBuilder builder = new FileRepositoryBuilder();
+  #   builder.setWorkTree(dir);
+  #   builder.setMustExist(true);
+  #   Repository repo2 = builder.build();
+  #
+  #   // The tmp directory may be a symlink so the actual path
+  #   // may not
+  #   assertEquals(repo1.getDirectory().getCanonicalPath(),
+  #       repo2.getDirectory().getCanonicalPath());
+  #   assertEquals(dir, repo2.getWorkTree());
+  # }
+  #
+  # @Test
+  # public void scanWithGitDirRef() throws Exception {
+  #   Repository repo1 = createWorkRepository();
+  #   File dir = createTempDirectory("dir");
+  #   File dotGit = new File(dir, Constants.DOT_GIT);
+  #   try (BufferedWriter writer = Files.newBufferedWriter(dotGit.toPath(),
+  #       UTF_8)) {
+  #     writer.append(
+  #         "gitdir: " + repo1.getDirectory().getAbsolutePath());
+  #   }
+  #   FileRepositoryBuilder builder = new FileRepositoryBuilder();
+  #
+  #   builder.setWorkTree(dir);
+  #   builder.findGitDir(dir);
+  #   assertEquals(repo1.getDirectory().getAbsolutePath(),
+  #       builder.getGitDir().getAbsolutePath());
+  #   builder.setMustExist(true);
+  #   Repository repo2 = builder.build();
+  #
+  #   // The tmp directory may be a symlink
+  #   assertEquals(repo1.getDirectory().getCanonicalPath(),
+  #       repo2.getDirectory().getCanonicalPath());
+  #   assertEquals(dir, repo2.getWorkTree());
+  # }
 end
