@@ -28,6 +28,15 @@ LocalDiskRepositoryTestCase
   RepositoryCache TRACE
   WindowCacheConfig TRACE
 
+RefUpdate TRACE
+  PushCertificate TRACE / DEFER?
+  RevWalk TRACE / DEFER?
+
+  # RefUpdate head = updateRef(Constants.HEAD);
+  # head.disableRefLog();
+  # head.link(Constants.R_HEADS + Constants.MASTER);
+
+
 WorkingTreeIterator
   AbstractTreeIterator TRACE
   AttributesNode TRACE
