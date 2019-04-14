@@ -438,7 +438,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
 
   test "should automagically detect .git directory" do
     r = LocalDiskRepositoryTestCase.create_work_repository!()
-    d = Repository.git_dir!(r) |> Path.join("sub_dir")
+    d = r |> Repository.git_dir! |> Path.join("sub_dir")
     File.mkdir_p!(d)
 
     d2 =
