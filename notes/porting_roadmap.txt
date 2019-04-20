@@ -1,19 +1,12 @@
 jgit porting dependency tree for getting `git init` up and running:
 
 InitCommandTest
-  Git TRACE
-  InitCommand TRACE
-  RepositoryTestCase
+  InitCommand
 
-RepositoryTestCase
-  DirCacheBuilder TRACE
-  DirCacheCheckout TRACE
-  DirCacheEntry TRACE
-  JGitTestUtil TRACE (do we need this?)
-  ObjectInserter
-  RefUpdate TRACE
-  RevCommit TRACE
-  RevWalk TRACE
+InitCommand TRACE
+  Callable JAVA
+
+RepositoryTestCase PARTIALLY DONE
 
 LocalDiskRepositoryTestCase PARTIALLY DONE
 
