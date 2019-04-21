@@ -75,7 +75,7 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
   def start_link(opts) when is_list(opts),
     do: ObjectDatabase.start_link(__MODULE__, opts, opts)
 
-  @doc false
+  @impl true
   def init(opts) do
     config = Keyword.fetch!(opts, :config)
     objects = Keyword.fetch!(opts, :objects)
@@ -136,14 +136,11 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
   # public final File getPreservedDirectory() {
   # 	return preservedDirectory;
   # }
-  #
-  # /** {@inheritDoc} */
-  # @Override
-  # public boolean exists() {
-  # 	return fs.exists(objects);
-  # }
 
-  @doc false
+  @impl true
+  def handle_exists?(%{objects: objects} = state), do: {File.dir?(objects), state}
+
+  @impl true
   def handle_create(%{objects: objects, info_dir: info_dir, pack_dir: pack_dir} = state) do
     File.mkdir_p!(objects)
     File.mkdir_p!(info_dir)

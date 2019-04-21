@@ -18,6 +18,17 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectoryTest do
     {:ok, objects_dir: objects_dir}
   end
 
+  test "exists?/1", %{objects_dir: objects_dir} do
+    extra_dir = Path.join(objects_dir, "extra")
+
+    assert {:ok, pid} = ObjectDirectory.start_link(config: Config.new(), objects: extra_dir)
+    assert is_pid(pid)
+
+    assert ObjectDatabase.exists?(pid) == false
+    assert :ok = ObjectDatabase.create(pid)
+    assert ObjectDatabase.exists?(pid) == true
+  end
+
   describe "create/1" do
     test "creates appropriate subdirectories", %{objects_dir: objects_dir} do
       assert {:ok, pid} = ObjectDirectory.start_link(config: Config.new(), objects: objects_dir)
