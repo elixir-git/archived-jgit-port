@@ -1,11 +1,5 @@
 jgit porting dependency tree for getting `git init` up and running:
 
-InitCommandTest
-  InitCommand
-
-InitCommand TRACE
-  Callable JAVA
-
 RepositoryTestCase PARTIALLY DONE
 
 LocalDiskRepositoryTestCase PARTIALLY DONE
