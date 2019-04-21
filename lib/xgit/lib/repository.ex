@@ -73,6 +73,16 @@ defmodule Xgit.Lib.Repository do
     end
   end
 
+  @doc ~S"""
+  Returns `true` if the argument is a PID representing a valid `Repository` process.
+  """
+  def valid?(repository) when is_pid(repository),
+    do:
+      Process.alive?(repository) &&
+        GenServer.call(repository, :valid_repository?) == :valid_repository
+
+  def valid?(_), do: false
+
   # /**
   #  * Get listeners observing only events on this repository.
   #  *
@@ -1985,6 +1995,8 @@ defmodule Xgit.Lib.Repository do
   # public void autoGC(ProgressMonitor monitor) {
   #   // default does nothing
   # }
+
+  def handle_call(:valid_repository?, _from, state), do: {:reply, :valid_repository, state}
 
   def handle_call({:create, opts}, _from, {mod, mod_state}) when is_list(opts),
     do: GenServerUtils.delegate_call_to(mod, :handle_create, [mod_state, opts], mod_state)
