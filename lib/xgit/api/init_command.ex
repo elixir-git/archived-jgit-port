@@ -22,9 +22,9 @@ defmodule Xgit.Api.InitCommand do
   alias Xgit.Util.SystemReader
 
   @doc ~S"""
-  Performs the `init` command.
+  Performs the `init` command to create a file-based repository.
 
-  Returns an `Xgit.Lib.Repository` instance corresponding to the newly-created
+  Returns an `Xgit.Lib.Repository` process corresponding to the newly-created
   repository. The repository process will be linked to the calling process (`self()`).
 
   You may provide a list of options (`opts`) which will be passed through to the
@@ -40,48 +40,12 @@ defmodule Xgit.Api.InitCommand do
       |> set_bare?(bare?)
       |> FileRepositoryBuilder.read_environment()
       |> set_git_dir(git_dir)
-
-    # git_dir = git_dir || builder.git_dir
-
-    builder =
-      cond do
-        dir == nil ->
-          raise "46"
-
-        # if (bare)
-        #   builder.setGitDir(directory);
-        # else {
-        #   builder.setWorkTree(directory);
-        #   if (gitDir == null)
-        #     builder.setGitDir(new File(directory, Constants.DOT_GIT));
-        # }
-
-        builder.git_dir == nil ->
-          dir_str = SystemReader.get_env("user.dir") || "."
-
-          d = if bare?, do: dir_str, else: Path.join(dir_str, Constants.dot_git())
-          %{builder | git_dir: d}
-
-        bare? ->
-          builder
-
-        true ->
-          raise "69"
-          # directory was not set but gitDir was set
-          # String dStr = SystemReader.getInstance().getProperty(
-          #     "user.dir"); //$NON-NLS-1$
-          # if (dStr == null)
-          #   dStr = "."; //$NON-NLS-1$
-          # builder.setWorkTree(new File(dStr));
-      end
-
-    {:ok, repository} =
-      builder
+      |> populate_dirs(dir, bare?)
       |> FileRepositoryBuilder.setup!()
-      |> FileRepository.start_link(opts)
+
+    {:ok, repository} = FileRepository.start_link(builder, opts)
 
     object_database = Repository.object_database!(repository)
-
     unless ObjectDatabase.exists?(object_database), do: Repository.create!(repository, bare?)
 
     repository
@@ -116,4 +80,37 @@ defmodule Xgit.Api.InitCommand do
     do: %{builder | git_dir: git_dir}
 
   defp set_git_dir(builder, nil), do: builder
+
+  defp populate_dirs(builder, dir, bare?)
+
+  defp populate_dirs(_builder, nil, _bare?) do
+    raise "46"
+
+    # if (bare)
+    #   builder.setGitDir(directory);
+    # else {
+    #   builder.setWorkTree(directory);
+    #   if (builder.gitDir == null)
+    #     builder.setGitDir(new File(directory, Constants.DOT_GIT));
+    # }
+  end
+
+  defp populate_dirs(%{git_dir: nil} = builder, _dir, bare?) do
+    dir_str = SystemReader.get_env("user.dir") || "."
+
+    d = if bare?, do: dir_str, else: Path.join(dir_str, Constants.dot_git())
+    %{builder | git_dir: d}
+  end
+
+  defp populate_dirs(builder, _dir, true = _bare?), do: builder
+
+  defp populate_dirs(_builder, _dir, _bare?) do
+    raise "69"
+    # directory was not set but gitDir was set
+    # String dStr = SystemReader.getInstance().getProperty(
+    #     "user.dir"); //$NON-NLS-1$
+    # if (dStr == null)
+    #   dStr = "."; //$NON-NLS-1$
+    # builder.setWorkTree(new File(dStr));
+  end
 end
