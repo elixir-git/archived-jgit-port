@@ -46,7 +46,10 @@ defmodule Xgit.Api.InitCommand do
     {:ok, repository} = FileRepository.start_link(builder, opts)
 
     object_database = Repository.object_database!(repository)
-    unless ObjectDatabase.exists?(object_database), do: Repository.create!(repository, bare?)
+
+    unless ObjectDatabase.exists?(object_database) do
+      Repository.create!(repository, bare?)
+    end
 
     repository
   end
@@ -98,7 +101,13 @@ defmodule Xgit.Api.InitCommand do
   defp populate_dirs(%{git_dir: nil} = builder, _dir, bare?) do
     dir_str = SystemReader.get_env("user.dir") || "."
 
-    d = if bare?, do: dir_str, else: Path.join(dir_str, Constants.dot_git())
+    d =
+      if bare? do
+        dir_str
+      else
+        Path.join(dir_str, Constants.dot_git())
+      end
+
     %{builder | git_dir: d}
   end
 
