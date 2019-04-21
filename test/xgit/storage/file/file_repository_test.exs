@@ -102,4 +102,34 @@ defmodule Xgit.Storage.File.FileRepositoryTest do
 
     assert File.regular?(Path.join(git_dir, "config"))
   end
+
+  test "valid?/1", %{trash: trash} do
+    repo_parent = Path.join(trash, "r1")
+    git_dir = Path.join(repo_parent, Constants.dot_git())
+
+    {:ok, r1} =
+      %FileRepositoryBuilder{git_dir: git_dir}
+      |> FileRepositoryBuilder.setup!()
+      |> FileRepository.start_link()
+
+    assert ^r1 = Repository.create!(r1)
+
+    {:ok, not_repository_pid} = GenServer.start_link(__MODULE__.NotARepository, [:x])
+
+    assert Repository.valid?(r1) == true
+    assert Repository.valid?(not_repository_pid) == false
+
+    GenServer.stop(not_repository_pid)
+    assert Repository.valid?(not_repository_pid) == false
+
+    assert Repository.valid?(nil) == false
+    assert Repository.valid?("I'm a repository. Trust me!") == false
+  end
+
+  defmodule NotARepository do
+    use GenServer
+
+    def init(x), do: {:ok, x}
+    def handle_call(_, _, x), do: {:reply, :nope, x}
+  end
 end
