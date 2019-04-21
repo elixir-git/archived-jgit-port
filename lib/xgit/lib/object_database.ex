@@ -65,6 +65,19 @@ defmodule Xgit.Lib.ObjectDatabase do
   # public static final String ALL = "";//$NON-NLS-1$
 
   @doc ~S"""
+  Returns `true` if this database exists.
+  """
+  @spec exists?(database :: t) :: boolean
+  def exists?(database) when is_pid(database), do: GenServer.call(database, :exists?)
+
+  @doc ~S"""
+  Invoked when `exists?/1` is called on this database.
+
+  Should return `{true, mod_state}` if the database exists or `{false, mod_state}` if not.
+  """
+  @callback handle_exists?(state :: term) :: {exists? :: boolean, state :: term}
+
+  @doc ~S"""
   Initialize a new object database at this location.
 
   May raise `File.Error` or similar if the database could not be created.
@@ -81,9 +94,9 @@ defmodule Xgit.Lib.ObjectDatabase do
 
   May raise `File.Error` or similar if the database could not be created.
 
-  Should returns `:ok` for function chaining or (TBD) if not.
+  Should return `{:ok, mod_state}` for function chaining or (TBD) if not.
   """
-  @callback handle_create(state :: term) :: :ok
+  @callback handle_create(state :: term) :: {:ok, state :: term} | {:error, reason :: term}
 
   # /**
   #  * Close any resources held by this database.
@@ -540,6 +553,13 @@ defmodule Xgit.Lib.ObjectDatabase do
   #   return null;
   # }
 
+  def handle_call(:exists?, _from, {mod, mod_state}) do
+    case mod.handle_exists?(mod_state) do
+      {true, mod_state} -> {:reply, true, {mod, mod_state}}
+      {false, mod_state} -> {:reply, false, {mod, mod_state}}
+    end
+  end
+
   def handle_call(:create, _from, {mod, mod_state}) do
     case mod.handle_create(mod_state) do
       {:ok, mod_state} -> {:reply, :ok, {mod, mod_state}}
@@ -556,6 +576,8 @@ defmodule Xgit.Lib.ObjectDatabase do
     quote location: :keep, bind_quoted: [opts: opts] do
       use GenServer, opts
       alias Xgit.Lib.ObjectDatabase
+
+      @behaviour Xgit.Lib.ObjectDatabase
 
       def handle_extra_call(message, _from, state) do
         Logger.warn("ObjectDatabase received unrecognized call #{inspect(message)}")
