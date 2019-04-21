@@ -2,6 +2,7 @@ defmodule Xgit.Lib.FileModeTest do
   use ExUnit.Case, async: true
 
   alias Xgit.Lib.FileMode
+
   doctest Xgit.Lib.FileMode
 
   test "tree/0" do

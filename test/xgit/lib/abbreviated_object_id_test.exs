@@ -2,6 +2,7 @@ defmodule Xgit.Lib.AbbreviatedObjectIdTest do
   use ExUnit.Case, async: true
 
   alias Xgit.Lib.AbbreviatedObjectId
+
   doctest Xgit.Lib.AbbreviatedObjectId
 
   test "empty ID is not valid or complete" do

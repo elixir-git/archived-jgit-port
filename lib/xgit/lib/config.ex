@@ -20,10 +20,10 @@ defmodule Xgit.Lib.Config do
 
   @type t :: %__MODULE__{}
 
+  use GenServer
+
   alias Xgit.Errors.ConfigInvalidError
   alias Xgit.Lib.ConfigLine
-
-  use GenServer
 
   defmodule State do
     @moduledoc false

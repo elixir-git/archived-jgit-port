@@ -2,6 +2,7 @@ defmodule Xgit.Lib.ConfigLineTest do
   use ExUnit.Case, async: true
 
   alias Xgit.Lib.ConfigLine
+
   doctest Xgit.Lib.ConfigLine
 
   test "match_section?/3" do
