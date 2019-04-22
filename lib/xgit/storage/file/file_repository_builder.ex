@@ -126,7 +126,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   def find_git_dir(%__MODULE__{git_dir: dir} = builder, _current) when is_binary(dir),
     do: builder
 
-  def find_git_dir(%__MODULE__{git_dir: nil} = builder, nil) do
+  def find_git_dir(%__MODULE__{git_dir: nil} = _builder, nil) do
     raise "FileRepositoryBuilder: git_dir must be explicitly specified"
   end
 
