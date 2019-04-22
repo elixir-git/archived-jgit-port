@@ -19,9 +19,9 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
 
   # TO DO: See if CachedObjectDirectory can be folded into this implementation.
 
-  require Logger
-
   use Xgit.Lib.ObjectDatabase
+
+  require Logger
 
   # static enum InsertLooseObjectResult {
   # 	INSERTED, EXISTS_PACKED, EXISTS_LOOSE, FAILURE;

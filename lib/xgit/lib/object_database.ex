@@ -575,7 +575,10 @@ defmodule Xgit.Lib.ObjectDatabase do
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
       use GenServer, opts
+
       alias Xgit.Lib.ObjectDatabase
+
+      require Logger
 
       @behaviour Xgit.Lib.ObjectDatabase
 

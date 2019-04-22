@@ -2,6 +2,7 @@ defmodule Xgit.Lib.ConstantsTest do
   use ExUnit.Case, async: true
 
   alias Xgit.Lib.Constants
+
   doctest Xgit.Lib.Constants
 
   test "object_id_string_length/0" do

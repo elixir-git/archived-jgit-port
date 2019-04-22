@@ -2,14 +2,14 @@ defmodule Xgit.Test.MockSystemReader do
   @moduledoc false
   # Used for testing only.
 
-  alias Xgit.Lib.Config
-  alias Xgit.Test.MockConfigStorage
-
   defstruct hostname: "fake.host.example.com",
             env: %{},
             user_config: nil,
             system_config: nil,
             time_agent: nil
+
+  alias Xgit.Lib.Config
+  alias Xgit.Test.MockConfigStorage
 
   def new do
     {:ok, time_agent} = Agent.start_link(fn -> 1_250_379_778_668_000 end)
