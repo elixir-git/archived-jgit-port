@@ -18,21 +18,27 @@ defmodule Xgit.Api.InitCommandTest do
     assert Repository.valid?(repo)
   end
 
-  # @Test
-  # public void testInitNonEmptyRepository() throws IOException,
-  #     JGitInternalException, GitAPIException {
-  #   File directory = createTempDirectory("testInitRepository2");
-  #   File someFile = new File(directory, "someFile");
-  #   someFile.createNewFile();
-  #   assertTrue(someFile.exists());
-  #   assertTrue(directory.listFiles().length > 0);
-  #   InitCommand command = new InitCommand();
-  #   command.setDirectory(directory);
-  #   try (Git git = command.call()) {
-  #     assertNotNull(git.getRepository());
-  #   }
-  # }
-  #
+  test "non-empty repository" do
+    dir = Temp.mkdir!(prefix: "testInitRepository2")
+
+    some_file = Path.join(dir, "someFile")
+    File.touch!(some_file)
+
+    assert File.regular?(some_file)
+
+    repo = InitCommand.run(%InitCommand{dir: dir})
+    assert Repository.valid?(repo)
+  end
+
+  test "bare repository" do
+    dir = Temp.mkdir!(prefix: "testInitBareRepository")
+
+    repo = InitCommand.run(%InitCommand{dir: dir, bare?: true})
+
+    assert Repository.valid?(repo)
+    assert Repository.bare?(repo)
+  end
+
   # @Test
   # public void testInitBareRepository() throws IOException,
   #     JGitInternalException, GitAPIException {

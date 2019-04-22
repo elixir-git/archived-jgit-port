@@ -55,24 +55,20 @@ defmodule Xgit.Api.InitCommand do
 
   defp validate_dirs(nil = _dir, _git_dir, _bare?), do: :ok
 
+  defp validate_dirs(_dir, nil = _git_dir, _bare?), do: :ok
+
+  defp validate_dirs(dir, dir, true = _bare?), do: :ok
+
   defp validate_dirs(dir, git_dir, true = _bare?) do
-    if dir == git_dir do
-      :ok
-    else
-      raise ArgumentError,
-            "When initializing a bare repo with directory #{git_dir} and separate git-dir #{dir} specified both folders must point to the same location"
-    end
+    raise ArgumentError,
+          "When initializing a bare repo with directory #{git_dir} and separate git-dir #{dir} specified both folders must point to the same location"
   end
 
+  defp validate_dirs(dir, dir, _bare?), do: :ok
+
   defp validate_dirs(dir, git_dir, _bare?) do
-    if dir == git_dir do
-      raise ArgumentError,
-            "When initializing a non-bare repo with directory #{git_dir} and separate git-dir #{
-              dir
-            } specified both folders should not point to the same location"
-    else
-      :ok
-    end
+    raise ArgumentError,
+          "When initializing a non-bare repo with directory #{git_dir} and separate git-dir #{dir} specified both folders should not point to the same location"
   end
 
   defp set_bare?(%FileRepositoryBuilder{} = builder, true), do: %{builder | bare?: true}
@@ -99,6 +95,8 @@ defmodule Xgit.Api.InitCommand do
 
   defp populate_dirs(%{git_dir: nil} = builder, _dir, bare?) do
     dir_str = SystemReader.get_env("user.dir") || "."
+
+    IO.inspect(builder, label: "populate_dirs:99")
 
     d =
       if bare?,
