@@ -37,15 +37,10 @@ defmodule Xgit.Api.InitCommand do
     builder =
       %FileRepositoryBuilder{}
       |> set_bare?(bare?)
-      |> IO.inspect(label: "init run 41")
       |> FileRepositoryBuilder.read_environment()
-      |> IO.inspect(label: "init run 43")
       |> set_git_dir(git_dir)
-      |> IO.inspect(label: "init run 45")
       |> populate_dirs(dir, bare?)
-      |> IO.inspect(label: "init run 47")
       |> FileRepositoryBuilder.setup!()
-      |> IO.inspect(label: "init run 49")
 
     {:ok, repository} = FileRepository.start_link(builder, opts)
 
