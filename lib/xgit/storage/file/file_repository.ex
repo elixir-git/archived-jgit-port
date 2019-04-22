@@ -317,6 +317,8 @@ defmodule Xgit.Storage.File.FileRepository do
 
   def handle_git_dir(%{git_dir: git_dir} = state), do: {:ok, git_dir, state}
 
+  def handle_bare?(%{bare?: bare?} = state), do: {:ok, bare?, state}
+
   def handle_work_tree(%{work_tree: work_tree} = state), do: {:ok, work_tree, state}
 
   def handle_index_file(%{index_file: index_file} = state), do: {:ok, index_file, state}
