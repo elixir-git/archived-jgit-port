@@ -34,3 +34,7 @@ Elixir doesn't have an exact analogue for Java's [`java.time.Duration`](https://
 
 * `java.time.Duration` is ported as a tuple of `{count, time_unit}` where `time_unit` is as defined by the [`System.time_unit` type](https://hexdocs.pm/elixir/System.html#t:time_unit/0).
 * `java.time.Instant` is ported as an integer result of [`System.os_time(:microsecond)`](https://hexdocs.pm/elixir/System.html#os_time/1). We do not support nanosecond-level accuracy. (I could not find any call for nanosecond accuracy in jgit.)
+
+## OS current working directory not used
+
+Unlike jgit, xgit never defaults to the current working directory. (Any search of the source code for `File.cwd/0` or `File.cwd!/0` should return no results.) Given the primarily server-based focus of xgit, it seems better to require an explicit specification of where the repo is located.
