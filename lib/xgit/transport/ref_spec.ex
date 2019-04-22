@@ -67,7 +67,10 @@ defmodule Xgit.Transport.RefSpec do
         [src] -> {src, nil}
       end
 
-    src = if src == "", do: nil, else: src
+    src =
+      if src == "",
+        do: nil,
+        else: src
 
     unless allow_mismatched_wildcards? do
       if wildcard?(src) != wildcard?(dst) do

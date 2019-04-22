@@ -70,7 +70,11 @@ defmodule Xgit.Lib.Config do
     need_quote? = String.starts_with?(s, " ") || String.ends_with?(s, " ")
 
     {rr, need_quote?} = escape_charlist([], String.to_charlist(s), need_quote?)
-    maybe_quote = if need_quote?, do: "\"", else: ""
+
+    maybe_quote =
+      if need_quote?,
+        do: "\"",
+        else: ""
 
     "#{maybe_quote}#{rr |> Enum.reverse() |> to_string()}#{maybe_quote}"
   end

@@ -25,14 +25,28 @@ defmodule Xgit.Lib.PersonIdent do
   Formats a timezone offset.
   """
   def format_timezone(offset) when is_integer(offset) do
-    sign = if offset < 0, do: "-", else: "+"
-    offset = if offset < 0, do: -offset, else: offset
+    sign =
+      if offset < 0,
+        do: "-",
+        else: "+"
+
+    offset =
+      if offset < 0,
+        do: -offset,
+        else: offset
 
     offset_hours = div(offset, 60)
     offset_mins = rem(offset, 60)
 
-    hours_prefix = if offset_hours < 10, do: "0", else: ""
-    mins_prefix = if offset_mins < 10, do: "0", else: ""
+    hours_prefix =
+      if offset_hours < 10,
+        do: "0",
+        else: ""
+
+    mins_prefix =
+      if offset_mins < 10,
+        do: "0",
+        else: ""
 
     "#{sign}#{hours_prefix}#{offset_hours}#{mins_prefix}#{offset_mins}"
   end

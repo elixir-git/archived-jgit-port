@@ -440,9 +440,11 @@ defmodule Xgit.Lib.ObjectChecker do
     {name, data} = Enum.split_while(data, &(&1 != 0))
 
     Enum.each(name, fn c ->
-      if c == ?/, do: report(checker, :full_pathname, id, "name contains '/'")
+      if c == ?/,
+        do: report(checker, :full_pathname, id, "name contains '/'")
 
-      if windows? and invalid_on_windows?(c), do: raise_invalid_on_windows(c)
+      if windows? and invalid_on_windows?(c),
+        do: raise_invalid_on_windows(c)
     end)
 
     {name, data}
@@ -570,7 +572,8 @@ defmodule Xgit.Lib.ObjectChecker do
   Check tree path entry for validity.
   """
   def check_path_segment(%__MODULE__{} = checker, data) when is_list(data) do
-    if Enum.any?(data, &(&1 == 0)), do: raise(CorruptObjectError, why: "name contains byte 0x00")
+    if Enum.any?(data, &(&1 == 0)),
+      do: raise(CorruptObjectError, why: "name contains byte 0x00")
 
     {path, _remainder} = scan_path_segment(checker, data, nil)
 
