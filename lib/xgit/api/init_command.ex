@@ -47,9 +47,8 @@ defmodule Xgit.Api.InitCommand do
 
     object_database = Repository.object_database!(repository)
 
-    unless ObjectDatabase.exists?(object_database) do
-      Repository.create!(repository, bare?)
-    end
+    unless ObjectDatabase.exists?(object_database),
+      do: Repository.create!(repository, bare?)
 
     repository
   end
@@ -102,11 +101,9 @@ defmodule Xgit.Api.InitCommand do
     dir_str = SystemReader.get_env("user.dir") || "."
 
     d =
-      if bare? do
-        dir_str
-      else
-        Path.join(dir_str, Constants.dot_git())
-      end
+      if bare?,
+        do: dir_str,
+        else: Path.join(dir_str, Constants.dot_git())
 
     %{builder | git_dir: d}
   end
