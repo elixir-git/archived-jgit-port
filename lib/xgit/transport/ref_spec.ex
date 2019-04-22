@@ -19,12 +19,11 @@ defmodule Xgit.Transport.RefSpec do
   * `dst_name`: Name of the ref(s) we would copy into.
   """
 
-  defstruct src_name: Constants.head(),
+  defstruct src_name: Xgit.Lib.Constants.head(),
             dst_name: nil,
             allow_mismatched_wildcards?: true,
             force?: false
 
-  alias Xgit.Lib.Constants
   alias Xgit.Lib.Ref
 
   @doc ~S"""
