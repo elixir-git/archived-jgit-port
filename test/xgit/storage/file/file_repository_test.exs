@@ -57,6 +57,8 @@ defmodule Xgit.Storage.File.FileRepositoryTest do
       assert ^git_dir = Repository.git_dir!(r1)
       assert File.dir?(git_dir)
 
+      assert Repository.bare?(r1) == false
+
       assert ^repo_parent = Repository.work_tree!(r1)
       assert File.dir?(repo_parent)
 

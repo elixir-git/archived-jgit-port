@@ -1458,6 +1458,19 @@ defmodule Xgit.Lib.Repository do
   # }
 
   @doc ~S"""
+  Return `true` if this repository is bare (i.e. has no working directory).
+  """
+  def bare?(repository) when is_pid(repository),
+    do: GenServerUtils.call!(repository, :bare?)
+
+  @doc ~S"""
+  Invoked when `bare?/1` is called on this repository.
+
+  Should return `{bare?, state}` where `bare?` is a boolean response.
+  """
+  @callback handle_bare?(state :: term) :: {bare? :: boolean, state :: term}
+
+  @doc ~S"""
   Get the root directory of the working tree.
 
   This is where files are checked out for viewing and editing.
@@ -2004,6 +2017,9 @@ defmodule Xgit.Lib.Repository do
   def handle_call(:git_dir, _from, {mod, mod_state}),
     do: GenServerUtils.delegate_call_to(mod, :handle_git_dir, [mod_state], mod_state)
 
+  def handle_call(:bare?, _from, {mod, mod_state}),
+    do: GenServerUtils.delegate_call_to(mod, :handle_bare?, [mod_state], mod_state)
+
   def handle_call(:work_tree, _from, {mod, mod_state}),
     do: GenServerUtils.delegate_call_to(mod, :handle_work_tree, [mod_state], mod_state)
 
@@ -2029,13 +2045,15 @@ defmodule Xgit.Lib.Repository do
       alias Xgit.Lib.Repository
 
       def handle_git_dir(state), do: {:ok, nil, state}
+      def handle_bare?(state), do: {:ok, true, state}
       def handle_work_tree(state), do: {:ok, nil, state}
       def handle_index_file(state), do: raise(NoWorkTreeError, [])
       def handle_object_database(state), do: raise(NoWorkTreeError, [])
 
       defoverridable handle_git_dir: 1,
-                     handle_index_file: 1,
+                     handle_bare?: 1,
                      handle_work_tree: 1,
+                     handle_index_file: 1,
                      handle_object_database: 1
     end
   end
