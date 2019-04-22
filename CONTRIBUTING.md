@@ -32,14 +32,22 @@ end
 
 ```elixir
 # PREFERRED
+if mumble?,
+  do: :mumble,
+  else: :not_mumble
+
+# ALSO ACCEPTABLE
 if mumble? do
   :mumble
 else
   :not_mumble
 end
 
-# NOT PREFERRED
+# NOT PREFERRED (can't discern `do` case from `else` case)
 if mumble?, do: :mumble, else: :not_mumble
+
+# NOT PREFERRED (can't discern `do` case from `else` case)
+if mumble?, do: :mumble
 ```
 
 **Use `alias` to avoid writing full module names inside a module.**
