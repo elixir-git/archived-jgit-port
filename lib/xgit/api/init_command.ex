@@ -19,7 +19,6 @@ defmodule Xgit.Api.InitCommand do
   alias Xgit.Lib.Repository
   alias Xgit.Storage.File.FileRepository
   alias Xgit.Storage.File.FileRepositoryBuilder
-  alias Xgit.Util.SystemReader
 
   @doc ~S"""
   Performs the `init` command to create a file-based repository.
@@ -32,23 +31,28 @@ defmodule Xgit.Api.InitCommand do
   """
   def run(%__MODULE__{dir: dir, git_dir: git_dir, bare?: bare?}, opts \\ [])
       when (is_binary(dir) or is_nil(dir)) and (is_binary(git_dir) or is_nil(git_dir)) and
-             is_boolean(bare?) do
+             is_boolean(bare?) and is_list(opts) do
     validate_dirs(dir, git_dir, bare?)
 
     builder =
       %FileRepositoryBuilder{}
       |> set_bare?(bare?)
+      |> IO.inspect(label: "init run 41")
       |> FileRepositoryBuilder.read_environment()
+      |> IO.inspect(label: "init run 43")
       |> set_git_dir(git_dir)
+      |> IO.inspect(label: "init run 45")
       |> populate_dirs(dir, bare?)
+      |> IO.inspect(label: "init run 47")
       |> FileRepositoryBuilder.setup!()
+      |> IO.inspect(label: "init run 49")
 
     {:ok, repository} = FileRepository.start_link(builder, opts)
 
     object_database = Repository.object_database!(repository)
 
     unless ObjectDatabase.exists?(object_database),
-      do: Repository.create!(repository, bare?)
+      do: Repository.create!(repository, bare?: bare?)
 
     repository
   end
@@ -93,18 +97,10 @@ defmodule Xgit.Api.InitCommand do
     # }
   end
 
-  defp populate_dirs(%{git_dir: nil} = builder, _dir, bare?) do
-    dir_str = SystemReader.get_env("user.dir") || "."
+  defp populate_dirs(%{git_dir: nil} = builder, dir, true = _bare?), do: %{builder | git_dir: dir}
 
-    IO.inspect(builder, label: "populate_dirs:99")
-
-    d =
-      if bare?,
-        do: dir_str,
-        else: Path.join(dir_str, Constants.dot_git())
-
-    %{builder | git_dir: d}
-  end
+  defp populate_dirs(%{git_dir: nil} = builder, dir, false = _bare?),
+    do: %{builder | git_dir: Path.join(dir, Constants.dot_git())}
 
   defp populate_dirs(builder, _dir, true = _bare?), do: builder
 
