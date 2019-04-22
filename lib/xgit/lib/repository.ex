@@ -6,10 +6,10 @@ defmodule Xgit.Lib.Repository do
   be any type of file, but source code is what SCMs are typically used for.)
   """
 
-  require Logger
-
   alias Xgit.Errors.NoWorkTreeError
   alias Xgit.Util.GenServerUtils
+
+  require Logger
 
   @type t :: pid
 

@@ -8,9 +8,9 @@ defmodule Xgit.Lib.FileMode do
   @enforce_keys [:mode_bits, :object_type, :octal_bytes]
   defstruct [:mode_bits, :object_type, :octal_bytes]
 
-  alias Xgit.Lib.Constants
-
   use Bitwise, skip_operators: true
+
+  alias Xgit.Lib.Constants
 
   @doc "Mask to apply to a file mode to obtain its type bits."
   def type_mask, do: 0o170000

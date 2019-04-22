@@ -3,9 +3,9 @@ defmodule Xgit.Util.Paths do
   Utility functions for paths inside of a git repository.
   """
 
-  alias Xgit.Lib.FileMode
-
   use Bitwise
+
+  alias Xgit.Lib.FileMode
 
   @doc ~S"""
   Remove trailing `/` if present.
