@@ -43,6 +43,9 @@ else
   :not_mumble
 end
 
+# ACCEPTABLE (because function would not generate coverage unless arguments match)
+defp compare_charlists([c1 | _], [c2 | _]) when c1 < c2, do: :lt
+
 # NOT PREFERRED (can't discern `do` case from `else` case)
 if mumble?, do: :mumble, else: :not_mumble
 
