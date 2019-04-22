@@ -111,8 +111,9 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   @doc ~S"""
   Finds the git directory by searching up the file system.
 
-  Starts from the supplied directory path (or current working directory if `nil`)
-  and scans up through the parent directory tree until a git repository is found.
+  Starts from the supplied directory path and scans up through the parent directory
+  tree until a git repository is found. (Unlike jgit, this library requires an explicit
+  directory path to be specified. It will not default to current working directory.)
 
   The search can be limited to specific spaces of the local filesystem by adding
   entries to `ceiling_directories`, or inheriting the list through a prior call
@@ -125,8 +126,9 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   def find_git_dir(%__MODULE__{git_dir: dir} = builder, _current) when is_binary(dir),
     do: builder
 
-  def find_git_dir(%__MODULE__{git_dir: nil} = builder, nil),
-    do: find_git_dir(builder, File.cwd!())
+  def find_git_dir(%__MODULE__{git_dir: nil} = _builder, nil) do
+    raise "FileRepositoryBuilder: git_dir must be explicitly specified"
+  end
 
   def find_git_dir(
         %__MODULE__{git_dir: nil, ceiling_directories: ceiling_directories} = builder,

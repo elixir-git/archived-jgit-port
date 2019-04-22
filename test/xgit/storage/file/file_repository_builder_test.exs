@@ -102,11 +102,10 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
       assert FileRepositoryBuilder.find_git_dir(b, "blah") == b
     end
 
-    test "git_dir fallback to cwd" do
-      assert %FileRepositoryBuilder{git_dir: dir} =
-               FileRepositoryBuilder.find_git_dir(%FileRepositoryBuilder{})
-
-      assert is_binary(dir) || is_nil(dir)
+    test "git_dir fallback to cwd not allowed" do
+      assert_raise RuntimeError,
+                   "FileRepositoryBuilder: git_dir must be explicitly specified",
+                   fn -> FileRepositoryBuilder.find_git_dir(%FileRepositoryBuilder{}) end
     end
 
     test "git_dir miss (no .git dir)", %{trash: trash} do

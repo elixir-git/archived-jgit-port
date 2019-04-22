@@ -338,7 +338,7 @@ defmodule Xgit.Lib.RepositoryCache do
     #  * Searched paths are:
     #  * <ol>
     #  * <li>{@code directory} // assume exact match</li>
-    #  * <li>{@code directory} + "/.git" // assume working directory</li>
+    #  * <li>{@code directory} + "/.git" // XGIT: DON'T assume working directory</li>
     #  * <li>{@code directory} + ".git" // assume bare</li>
     #  * </ol>
     #  *
