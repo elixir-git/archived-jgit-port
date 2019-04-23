@@ -54,41 +54,24 @@ defmodule Xgit.Api.InitCommandTest do
     assert Repository.git_dir!(repo) == git_dir
   end
 
-  # // non-bare repos where only gitDir is set. Same as
-  # // "git init --separate-git-dir /tmp/a"
-  # @Test
-  # public void testInitWithOnlyExplicitGitDir() throws IOException,
-  #     JGitInternalException, GitAPIException {
-  #   MockSystemReader reader = (MockSystemReader) SystemReader.getInstance();
-  #   reader.setProperty(Constants.OS_USER_DIR, getTemporaryDirectory()
-  #       .getAbsolutePath());
-  #   File gitDir = createTempDirectory("testInitRepository/.git");
-  #   InitCommand command = new InitCommand();
-  #   command.setGitDir(gitDir);
-  #   try (Git git = command.call()) {
-  #     Repository repository = git.getRepository();
-  #     assertNotNull(repository);
-  #     assertEqualsFile(gitDir, repository.getDirectory());
-  #     assertEqualsFile(new File(reader.getProperty("user.dir")),
-  #         repository.getWorkTree());
-  #   }
-  # }
-  #
-  # // Bare repos where gitDir and directory is set will only work if gitDir and
-  # // directory is pointing to same dir. Same as
-  # // "git init --bare --separate-git-dir /tmp/a /tmp/b"
-  # // (works in native git but I guess that's more a bug)
-  # @Test(expected = IllegalStateException.class)
-  # public void testInitBare_DirAndGitDirMustBeEqual() throws IOException,
-  #     JGitInternalException, GitAPIException {
-  #   File gitDir = createTempDirectory("testInitRepository.git");
-  #   InitCommand command = new InitCommand();
-  #   command.setBare(true);
-  #   command.setDirectory(gitDir);
-  #   command.setGitDir(new File(gitDir, ".."));
-  #   command.call();
-  # }
-  #
+  test "non-bare repos where only git_dir is set" do
+    # Similar to `git init --separate-git-dir /tmp/a`
+    # NOTE: We are not porting this because (unlike jgit) xgit requires
+    # explicit configuration for directories. It will not fall back to
+    # user directory or current working directory.
+  end
+
+  test "bare repo: dir and git_dir must be the same" do
+    # Similar to `git init --bare --separate-git-dir /tmp/a /tmp/b`
+
+    dir = Temp.mkdir!(prefix: "testInitRepository.git")
+    git_dir = Path.dirname(dir)
+
+    assert_raise ArgumentError, fn ->
+      InitCommand.run(%InitCommand{dir: dir, git_dir: git_dir, bare?: true})
+    end
+  end
+
   # // If neither directory nor gitDir is set in a non-bare repo make sure
   # // worktree and gitDir are set correctly. Standard case. Same as
   # // "git init"
