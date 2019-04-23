@@ -38,3 +38,5 @@ Elixir doesn't have an exact analogue for Java's [`java.time.Duration`](https://
 ## OS current working directory not used
 
 Unlike jgit, xgit never defaults to the current working directory. (Any search of the source code for `File.cwd/0` or `File.cwd!/0` should return no results.) Given the primarily server-based focus of xgit, it seems better to require an explicit specification of where the repo is located.
+
+Similarly, xgit should not use the launch-point for the Elixir application as a default directory for git repositories. (Specifically, we do not port the Java property `user.dir` or the equivalent constant `Constants.OS_USER_DIR`.)

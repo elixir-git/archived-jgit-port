@@ -195,13 +195,11 @@ defmodule Xgit.Lib.Constants do
   @doc "Attributes-override-file."
   def info_attributes, do: "info/attributes"
 
-  # /**
-  #  * The system property that contains the system user name
-  #  *
-  #  * @since 3.6
-  #  */
-  # public static final String OS_USER_DIR = "user.dir";
-  #
+  # IMPORTANT: Per xgit policy, we do not use the current working directory
+  # nor the directory from which the Elixir app was started as a default.
+  # Therefore, the jgit constant OS_USER_DIR and the Java system property "user.dir"
+  # are not available in xgit.
+
   # /** The system property that contains the system user name */
   # public static final String OS_USER_NAME_KEY = "user.name";
 
