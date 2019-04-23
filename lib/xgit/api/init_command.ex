@@ -63,12 +63,12 @@ defmodule Xgit.Api.InitCommand do
           "When initializing a bare repo with directory #{git_dir} and separate git-dir #{dir} specified both folders must point to the same location"
   end
 
-  defp validate_dirs(dir, dir, _bare?), do: :ok
-
-  defp validate_dirs(dir, git_dir, _bare?) do
+  defp validate_dirs(dir, dir, _bare?) do
     raise ArgumentError,
-          "When initializing a non-bare repo with directory #{git_dir} and separate git-dir #{dir} specified both folders should not point to the same location"
+          "When initializing a non-bare repo with directory #{dir} and separate git-dir #{dir} specified both folders should not point to the same location"
   end
+
+  defp validate_dirs(_dir, _git_dir, _bare?), do: :ok
 
   defp set_bare?(%FileRepositoryBuilder{} = builder, true), do: %{builder | bare?: true}
   defp set_bare?(builder, _), do: builder
@@ -98,6 +98,9 @@ defmodule Xgit.Api.InitCommand do
     do: %{builder | git_dir: Path.join(dir, Constants.dot_git())}
 
   defp populate_dirs(builder, _dir, true = _bare?), do: builder
+
+  defp populate_dirs(builder, dir, _bare?) when is_binary(dir),
+    do: %{builder | work_tree: dir}
 
   defp populate_dirs(_builder, _dir, _bare?) do
     raise "69"

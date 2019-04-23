@@ -39,38 +39,21 @@ defmodule Xgit.Api.InitCommandTest do
     assert Repository.bare?(repo)
   end
 
-  # @Test
-  # public void testInitBareRepository() throws IOException,
-  #     JGitInternalException, GitAPIException {
-  #   File directory = createTempDirectory("testInitBareRepository");
-  #   InitCommand command = new InitCommand();
-  #   command.setDirectory(directory);
-  #   command.setBare(true);
-  #   try (Git git = command.call()) {
-  #     Repository repository = git.getRepository();
-  #     assertNotNull(repository);
-  #     assertTrue(repository.isBare());
-  #   }
-  # }
-  #
-  # // non-bare repos where gitDir and directory is set. Same as
-  # // "git init --separate-git-dir /tmp/a /tmp/b"
-  # @Test
-  # public void testInitWithExplicitGitDir() throws IOException,
-  #     JGitInternalException, GitAPIException {
-  #   File wt = createTempDirectory("testInitRepositoryWT");
-  #   File gitDir = createTempDirectory("testInitRepositoryGIT");
-  #   InitCommand command = new InitCommand();
-  #   command.setDirectory(wt);
-  #   command.setGitDir(gitDir);
-  #   try (Git git = command.call()) {
-  #     Repository repository = git.getRepository();
-  #     assertNotNull(repository);
-  #     assertEqualsFile(wt, repository.getWorkTree());
-  #     assertEqualsFile(gitDir, repository.getDirectory());
-  #   }
-  # }
-  #
+  test "non-bare repos where git_dir and dir are set" do
+    # Similar to `git init --separate-git-dir /tmp/a /tmp/b`
+
+    work_tree = Temp.mkdir!(prefix: "testInitRepositoryWT")
+    git_dir = Temp.mkdir!(prefix: "testInitRepositoryGIT")
+
+    repo = InitCommand.run(%InitCommand{dir: work_tree, git_dir: git_dir})
+
+    assert Repository.valid?(repo)
+    assert Repository.bare?(repo) == false
+
+    assert Repository.work_tree!(repo) == work_tree
+    assert Repository.git_dir!(repo) == git_dir
+  end
+
   # // non-bare repos where only gitDir is set. Same as
   # // "git init --separate-git-dir /tmp/a"
   # @Test
