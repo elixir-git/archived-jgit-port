@@ -80,15 +80,6 @@ defmodule Xgit.Api.InitCommand do
 
   defp populate_dirs(builder, dir, bare?)
 
-  defp populate_dirs(%{dir: dir, git_dir: nil} = builder, nil, true = _bare?) when is_binary(dir),
-    do: %{builder | git_dir: dir}
-
-  defp populate_dirs(%{dir: dir, git_dir: nil} = builder, nil, _bare?) when is_binary(dir),
-    do: %{builder | work_tree: dir, git_dir: Path.join(dir, Constants.dot_git())}
-
-  defp populate_dirs(%{dir: dir} = builder, nil, _bare?) when is_binary(dir),
-    do: %{builder | work_tree: dir}
-
   defp populate_dirs(%{git_dir: nil} = builder, dir, true = _bare?) when is_binary(dir),
     do: %{builder | git_dir: dir}
 
@@ -103,18 +94,5 @@ defmodule Xgit.Api.InitCommand do
   defp populate_dirs(%{git_dir: nil, work_tree: nil}, nil, _bare?) do
     raise ArgumentError, "InitCommand: either dir or git_dir must be specified"
     # Fallback to current working directory is not allowed.
-  end
-
-  defp populate_dirs(builder, dir, bare?) do
-    IO.inspect(builder, label: "builder @ fallback case")
-    IO.inspect(dir, label: "dir @ fallback case")
-    IO.inspect(bare?, label: "bare? @ fallback case")
-    raise "69"
-    # directory was not set but gitDir was set
-    # String dStr = SystemReader.getInstance().getProperty(
-    #     "user.dir"); //$NON-NLS-1$
-    # if (dStr == null)
-    #   dStr = "."; //$NON-NLS-1$
-    # builder.setWorkTree(new File(dStr));
   end
 end
