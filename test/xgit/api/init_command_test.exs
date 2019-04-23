@@ -72,59 +72,31 @@ defmodule Xgit.Api.InitCommandTest do
     end
   end
 
-  # // If neither directory nor gitDir is set in a non-bare repo make sure
-  # // worktree and gitDir are set correctly. Standard case. Same as
-  # // "git init"
-  # @Test
-  # public void testInitWithDefaultsNonBare() throws JGitInternalException,
-  #     GitAPIException, IOException {
-  #   MockSystemReader reader = (MockSystemReader) SystemReader.getInstance();
-  #   reader.setProperty(Constants.OS_USER_DIR, getTemporaryDirectory()
-  #       .getAbsolutePath());
-  #   InitCommand command = new InitCommand();
-  #   command.setBare(false);
-  #   try (Git git = command.call()) {
-  #     Repository repository = git.getRepository();
-  #     assertNotNull(repository);
-  #     assertEqualsFile(new File(reader.getProperty("user.dir"), ".git"),
-  #         repository.getDirectory());
-  #     assertEqualsFile(new File(reader.getProperty("user.dir")),
-  #         repository.getWorkTree());
-  #   }
-  # }
-  #
-  # // If neither directory nor gitDir is set in a bare repo make sure
-  # // worktree and gitDir are set correctly. Standard case. Same as
-  # // "git init --bare"
-  # @Test(expected = NoWorkTreeException.class)
-  # public void testInitWithDefaultsBare() throws JGitInternalException,
-  #     GitAPIException, IOException {
-  #   MockSystemReader reader = (MockSystemReader) SystemReader.getInstance();
-  #   reader.setProperty(Constants.OS_USER_DIR, getTemporaryDirectory()
-  #       .getAbsolutePath());
-  #   InitCommand command = new InitCommand();
-  #   command.setBare(true);
-  #   try (Git git = command.call()) {
-  #     Repository repository = git.getRepository();
-  #     assertNotNull(repository);
-  #     assertEqualsFile(new File(reader.getProperty("user.dir")),
-  #         repository.getDirectory());
-  #     assertNull(repository.getWorkTree());
-  #   }
-  # }
-  #
-  # // In a non-bare repo when directory and gitDir is set then they shouldn't
-  # // point to the same dir. Same as
-  # // "git init --separate-git-dir /tmp/a /tmp/a"
-  # // (works in native git but I guess that's more a bug)
-  # @Test(expected = IllegalStateException.class)
-  # public void testInitNonBare_GitdirAndDirShouldntBeSame()
-  #     throws JGitInternalException, GitAPIException, IOException {
-  #   File gitDir = createTempDirectory("testInitRepository.git");
-  #   InitCommand command = new InitCommand();
-  #   command.setBare(false);
-  #   command.setGitDir(gitDir);
-  #   command.setDirectory(gitDir);
-  #   command.call().getRepository();
-  # }
+  test "must set dir or git_dir (non-bare repo)" do
+    # Similar to `git init`. xgit doesn't allow fallback to current
+    # working directory, so this is an error case.
+
+    assert_raise ArgumentError, fn ->
+      InitCommand.run(%InitCommand{})
+    end
+  end
+
+  test "must set dir or git_dir (bare repo)" do
+    # Similar to `git init --bare`. xgit doesn't allow fallback to current
+    # working directory, so this is an error case.
+
+    assert_raise ArgumentError, fn ->
+      InitCommand.run(%InitCommand{bare?: true})
+    end
+  end
+
+  test "in a non-bare repo, dir and git_dir must not be set to same directory" do
+    # Similar to `git init --separate-git-dir /tmp/a /tmp/a`.
+
+    dir = Temp.mkdir!(prefix: "testInitBareRepository")
+
+    assert_raise ArgumentError, fn ->
+      InitCommand.run(%InitCommand{dir: dir, git_dir: dir})
+    end
+  end
 end
