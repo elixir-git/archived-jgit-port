@@ -22,6 +22,7 @@ defmodule Xgit.Lib.ObjectId do
   """
   def valid?(s) when is_binary(s), do: String.length(s) == 40 && String.match?(s, ~r/^[0-9a-f]+$/)
   def valid?(b) when is_list(b), do: Enum.count(b) == 40 && Enum.all?(b, &valid_hex_digit?/1)
+  def valid?(nil), do: false
 
   defp valid_hex_digit?(c), do: (c >= ?0 && c <= ?9) || (c >= ?a && c <= ?f)
 
