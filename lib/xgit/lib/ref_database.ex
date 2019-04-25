@@ -452,6 +452,30 @@ defmodule Xgit.Lib.RefDatabase do
   # }
   #
   # /**
+  #  * Returns all refs that resolve directly to the given {@link ObjectId}.
+  #  * Includes peeled {@linkObjectId}s. This is the inverse lookup of
+  #  * {@link #exactRef(String...)}.
+  #  *
+  #  * <p>
+  #  * The default implementation uses a linear scan. Implementors of
+  #  * {@link RefDatabase} should override this method directly if a better
+  #  * implementation is possible.
+  #  *
+  #  * @param id
+  #  *            {@link ObjectId} to resolve
+  #  * @return a {@link Set} of {@link Ref}s whose tips point to the provided
+  #  *         id.
+  #  * @throws java.io.IOException
+  #  *             the reference space cannot be accessed.
+  #  * @since 5.4
+  #  */
+  # @NonNull
+  # public Set<Ref> getTipsWithSha1(ObjectId id) throws IOException {
+  #   return getRefs().stream().filter(r -> id.equals(r.getObjectId())
+  #       || id.equals(r.getPeeledObjectId())).collect(toSet());
+  # }
+  #
+  # /**
   #  * Check if any refs exist in the ref database.
   #  * <p>
   #  * This uses the same definition of refs as {@link #getRefs()}. In

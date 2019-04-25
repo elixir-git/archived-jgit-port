@@ -458,10 +458,14 @@ defmodule Xgit.Lib.ObjectChecker do
   end
 
   defp raise_invalid_on_windows(c) when c > 31,
-    do: raise(CorruptObjectError, why: "name contains '#{List.to_string([c])}'")
+    do:
+      raise(CorruptObjectError,
+        why: "char '#{List.to_string([c])}' not allowed in Windows filename"
+      )
 
   defp raise_invalid_on_windows(c),
-    do: raise(CorruptObjectError, why: "name contains byte 0x'#{byte_to_hex(c)}'")
+    do:
+      raise(CorruptObjectError, why: "byte 0x'#{byte_to_hex(c)}' not allowed in Windows filename")
 
   # private ObjectId idFor(int objType, byte[] raw) {
   #   PORTING NOTE: This is available as ObjectId.id_for/2.
@@ -536,8 +540,8 @@ defmodule Xgit.Lib.ObjectChecker do
   #  * @since 3.6
   #  */
   # public void checkPath(String path) throws CorruptObjectException {
-  # 	byte[] buf = Constants.encode(path);
-  # 	checkPath(buf, 0, buf.length);
+  #   byte[] buf = Constants.encode(path);
+  #   checkPath(buf, 0, buf.length);
   # }
   #
   # /**
@@ -557,15 +561,15 @@ defmodule Xgit.Lib.ObjectChecker do
   #  * @since 3.6
   #  */
   # public void checkPath(byte[] raw, int ptr, int end)
-  # 		throws CorruptObjectException {
-  # 	int start = ptr;
-  # 	for (; ptr < end; ptr++) {
-  # 		if (raw[ptr] == '/') {
-  # 			checkPathSegment(raw, start, ptr);
-  # 			start = ptr + 1;
-  # 		}
-  # 	}
-  # 	checkPathSegment(raw, start, end);
+  #     throws CorruptObjectException {
+  #   int start = ptr;
+  #   for (; ptr < end; ptr++) {
+  #     if (raw[ptr] == '/') {
+  #       checkPathSegment(raw, start, ptr);
+  #       start = ptr + 1;
+  #     }
+  #   }
+  #   checkPathSegment(raw, start, end);
   # }
 
   @doc ~S"""
@@ -728,7 +732,7 @@ defmodule Xgit.Lib.ObjectChecker do
 
   # defp mac_hfs_gitmodules?(%__MODULE__{macosx?: true}, name, id) do
   #   TODO
-  # 	return isMacHFSPath(raw, ptr, end, dotGitmodules, id);
+  #   return isMacHFSPath(raw, ptr, end, dotGitmodules, id);
   # end
 
   defp mac_hfs_gitmodules?(_checker, _name, _id), do: false

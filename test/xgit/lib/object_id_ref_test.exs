@@ -99,6 +99,6 @@ defmodule Xgit.Lib.ObjectIdRefTest do
 
   test "to_string/1" do
     r = %ObjectIdRef{storage: :loose, name: @name, object_id: @object_id_1}
-    assert to_string(r) == "Ref[#{@name}=#{@object_id_1}(-1)]"
+    assert to_string(r) == "Ref[#{@name}=#{@object_id_1}(undefined)]"
   end
 end

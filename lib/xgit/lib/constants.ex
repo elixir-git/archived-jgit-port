@@ -1,6 +1,6 @@
 defmodule Xgit.Lib.Constants do
   @moduledoc ~S"""
-  Miscellaneous constants used throughout Xgit.
+  Miscellaneous constants and helpers used throughout Xgit.
   """
 
   @doc ~S"""
@@ -325,12 +325,12 @@ defmodule Xgit.Lib.Constants do
   #  *             that is in the Java reference specification.
   #  */
   # public static MessageDigest newMessageDigest() {
-  # 	try {
-  # 		return MessageDigest.getInstance(HASH_FUNCTION);
-  # 	} catch (NoSuchAlgorithmException nsae) {
-  # 		throw new RuntimeException(MessageFormat.format(
-  # 				JGitText.get().requiredHashFunctionNotAvailable, HASH_FUNCTION), nsae);
-  # 	}
+  #   try {
+  #     return MessageDigest.getInstance(HASH_FUNCTION);
+  #   } catch (NoSuchAlgorithmException nsae) {
+  #     throw new RuntimeException(MessageFormat.format(
+  #         JGitText.get().requiredHashFunctionNotAvailable, HASH_FUNCTION), nsae);
+  #   }
   # }
 
   @doc ~S"""

@@ -103,106 +103,106 @@ defmodule Xgit.Lib.ConfigTest do
 
   # @Test
   # public void test007_readUserConfig() {
-  # 	final MockSystemReader mockSystemReader = new MockSystemReader();
-  # 	SystemReader.setInstance(mockSystemReader);
-  # 	final String hostname = mockSystemReader.getHostname();
-  # 	final Config userGitConfig = mockSystemReader.openUserConfig(null,
-  # 			FS.DETECTED);
-  # 	final Config localConfig = new Config(userGitConfig);
-  # 	mockSystemReader.clearProperties();
+  #   final MockSystemReader mockSystemReader = new MockSystemReader();
+  #   SystemReader.setInstance(mockSystemReader);
+  #   final String hostname = mockSystemReader.getHostname();
+  #   final Config userGitConfig = mockSystemReader.openUserConfig(null,
+  #       FS.DETECTED);
+  #   final Config localConfig = new Config(userGitConfig);
+  #   mockSystemReader.clearProperties();
   #
-  # 	String authorName;
-  # 	String authorEmail;
+  #   String authorName;
+  #   String authorEmail;
   #
-  # 	// no values defined nowhere
-  # 	authorName = localConfig.get(UserConfig.KEY).getAuthorName();
-  # 	authorEmail = localConfig.get(UserConfig.KEY).getAuthorEmail();
-  # 	assertEquals(Constants.UNKNOWN_USER_DEFAULT, authorName);
-  # 	assertEquals(Constants.UNKNOWN_USER_DEFAULT + "@" + hostname, authorEmail);
-  # 	assertTrue(localConfig.get(UserConfig.KEY).isAuthorNameImplicit());
-  # 	assertTrue(localConfig.get(UserConfig.KEY).isAuthorEmailImplicit());
+  #   // no values defined nowhere
+  #   authorName = localConfig.get(UserConfig.KEY).getAuthorName();
+  #   authorEmail = localConfig.get(UserConfig.KEY).getAuthorEmail();
+  #   assertEquals(Constants.UNKNOWN_USER_DEFAULT, authorName);
+  #   assertEquals(Constants.UNKNOWN_USER_DEFAULT + "@" + hostname, authorEmail);
+  #   assertTrue(localConfig.get(UserConfig.KEY).isAuthorNameImplicit());
+  #   assertTrue(localConfig.get(UserConfig.KEY).isAuthorEmailImplicit());
   #
-  # 	// the system user name is defined
-  # 	mockSystemReader.setProperty(Constants.OS_USER_NAME_KEY, "os user name");
-  # 	localConfig.uncache(UserConfig.KEY);
-  # 	authorName = localConfig.get(UserConfig.KEY).getAuthorName();
-  # 	assertEquals("os user name", authorName);
-  # 	assertTrue(localConfig.get(UserConfig.KEY).isAuthorNameImplicit());
+  #   // the system user name is defined
+  #   mockSystemReader.setProperty(Constants.OS_USER_NAME_KEY, "os user name");
+  #   localConfig.uncache(UserConfig.KEY);
+  #   authorName = localConfig.get(UserConfig.KEY).getAuthorName();
+  #   assertEquals("os user name", authorName);
+  #   assertTrue(localConfig.get(UserConfig.KEY).isAuthorNameImplicit());
   #
-  # 	if (hostname != null && hostname.length() != 0) {
-  # 		authorEmail = localConfig.get(UserConfig.KEY).getAuthorEmail();
-  # 		assertEquals("os user name@" + hostname, authorEmail);
-  # 	}
-  # 	assertTrue(localConfig.get(UserConfig.KEY).isAuthorEmailImplicit());
+  #   if (hostname != null && hostname.length() != 0) {
+  #     authorEmail = localConfig.get(UserConfig.KEY).getAuthorEmail();
+  #     assertEquals("os user name@" + hostname, authorEmail);
+  #   }
+  #   assertTrue(localConfig.get(UserConfig.KEY).isAuthorEmailImplicit());
   #
-  # 	// the git environment variables are defined
-  # 	mockSystemReader.setProperty(Constants.GIT_AUTHOR_NAME_KEY, "git author name");
-  # 	mockSystemReader.setProperty(Constants.GIT_AUTHOR_EMAIL_KEY, "author@email");
-  # 	localConfig.uncache(UserConfig.KEY);
-  # 	authorName = localConfig.get(UserConfig.KEY).getAuthorName();
-  # 	authorEmail = localConfig.get(UserConfig.KEY).getAuthorEmail();
-  # 	assertEquals("git author name", authorName);
-  # 	assertEquals("author@email", authorEmail);
-  # 	assertFalse(localConfig.get(UserConfig.KEY).isAuthorNameImplicit());
-  # 	assertFalse(localConfig.get(UserConfig.KEY).isAuthorEmailImplicit());
+  #   // the git environment variables are defined
+  #   mockSystemReader.setProperty(Constants.GIT_AUTHOR_NAME_KEY, "git author name");
+  #   mockSystemReader.setProperty(Constants.GIT_AUTHOR_EMAIL_KEY, "author@email");
+  #   localConfig.uncache(UserConfig.KEY);
+  #   authorName = localConfig.get(UserConfig.KEY).getAuthorName();
+  #   authorEmail = localConfig.get(UserConfig.KEY).getAuthorEmail();
+  #   assertEquals("git author name", authorName);
+  #   assertEquals("author@email", authorEmail);
+  #   assertFalse(localConfig.get(UserConfig.KEY).isAuthorNameImplicit());
+  #   assertFalse(localConfig.get(UserConfig.KEY).isAuthorEmailImplicit());
   #
-  # 	// the values are defined in the global configuration
-  # 	// first clear environment variables since they would override
-  # 	// configuration files
-  # 	mockSystemReader.clearProperties();
-  # 	userGitConfig.setString("user", null, "name", "global username");
-  # 	userGitConfig.setString("user", null, "email", "author@globalemail");
-  # 	authorName = localConfig.get(UserConfig.KEY).getAuthorName();
-  # 	authorEmail = localConfig.get(UserConfig.KEY).getAuthorEmail();
-  # 	assertEquals("global username", authorName);
-  # 	assertEquals("author@globalemail", authorEmail);
-  # 	assertFalse(localConfig.get(UserConfig.KEY).isAuthorNameImplicit());
-  # 	assertFalse(localConfig.get(UserConfig.KEY).isAuthorEmailImplicit());
+  #   // the values are defined in the global configuration
+  #   // first clear environment variables since they would override
+  #   // configuration files
+  #   mockSystemReader.clearProperties();
+  #   userGitConfig.setString("user", null, "name", "global username");
+  #   userGitConfig.setString("user", null, "email", "author@globalemail");
+  #   authorName = localConfig.get(UserConfig.KEY).getAuthorName();
+  #   authorEmail = localConfig.get(UserConfig.KEY).getAuthorEmail();
+  #   assertEquals("global username", authorName);
+  #   assertEquals("author@globalemail", authorEmail);
+  #   assertFalse(localConfig.get(UserConfig.KEY).isAuthorNameImplicit());
+  #   assertFalse(localConfig.get(UserConfig.KEY).isAuthorEmailImplicit());
   #
-  # 	// the values are defined in the local configuration
-  # 	localConfig.setString("user", null, "name", "local username");
-  # 	localConfig.setString("user", null, "email", "author@localemail");
-  # 	authorName = localConfig.get(UserConfig.KEY).getAuthorName();
-  # 	authorEmail = localConfig.get(UserConfig.KEY).getAuthorEmail();
-  # 	assertEquals("local username", authorName);
-  # 	assertEquals("author@localemail", authorEmail);
-  # 	assertFalse(localConfig.get(UserConfig.KEY).isAuthorNameImplicit());
-  # 	assertFalse(localConfig.get(UserConfig.KEY).isAuthorEmailImplicit());
+  #   // the values are defined in the local configuration
+  #   localConfig.setString("user", null, "name", "local username");
+  #   localConfig.setString("user", null, "email", "author@localemail");
+  #   authorName = localConfig.get(UserConfig.KEY).getAuthorName();
+  #   authorEmail = localConfig.get(UserConfig.KEY).getAuthorEmail();
+  #   assertEquals("local username", authorName);
+  #   assertEquals("author@localemail", authorEmail);
+  #   assertFalse(localConfig.get(UserConfig.KEY).isAuthorNameImplicit());
+  #   assertFalse(localConfig.get(UserConfig.KEY).isAuthorEmailImplicit());
   #
-  # 	authorName = localConfig.get(UserConfig.KEY).getCommitterName();
-  # 	authorEmail = localConfig.get(UserConfig.KEY).getCommitterEmail();
-  # 	assertEquals("local username", authorName);
-  # 	assertEquals("author@localemail", authorEmail);
-  # 	assertFalse(localConfig.get(UserConfig.KEY).isCommitterNameImplicit());
-  # 	assertFalse(localConfig.get(UserConfig.KEY).isCommitterEmailImplicit());
+  #   authorName = localConfig.get(UserConfig.KEY).getCommitterName();
+  #   authorEmail = localConfig.get(UserConfig.KEY).getCommitterEmail();
+  #   assertEquals("local username", authorName);
+  #   assertEquals("author@localemail", authorEmail);
+  #   assertFalse(localConfig.get(UserConfig.KEY).isCommitterNameImplicit());
+  #   assertFalse(localConfig.get(UserConfig.KEY).isCommitterEmailImplicit());
   #
-  # 	// also git environment variables are defined
-  # 	mockSystemReader.setProperty(Constants.GIT_AUTHOR_NAME_KEY,
-  # 			"git author name");
-  # 	mockSystemReader.setProperty(Constants.GIT_AUTHOR_EMAIL_KEY,
-  # 			"author@email");
-  # 	localConfig.setString("user", null, "name", "local username");
-  # 	localConfig.setString("user", null, "email", "author@localemail");
-  # 	authorName = localConfig.get(UserConfig.KEY).getAuthorName();
-  # 	authorEmail = localConfig.get(UserConfig.KEY).getAuthorEmail();
-  # 	assertEquals("git author name", authorName);
-  # 	assertEquals("author@email", authorEmail);
-  # 	assertFalse(localConfig.get(UserConfig.KEY).isAuthorNameImplicit());
-  # 	assertFalse(localConfig.get(UserConfig.KEY).isAuthorEmailImplicit());
+  #   // also git environment variables are defined
+  #   mockSystemReader.setProperty(Constants.GIT_AUTHOR_NAME_KEY,
+  #       "git author name");
+  #   mockSystemReader.setProperty(Constants.GIT_AUTHOR_EMAIL_KEY,
+  #       "author@email");
+  #   localConfig.setString("user", null, "name", "local username");
+  #   localConfig.setString("user", null, "email", "author@localemail");
+  #   authorName = localConfig.get(UserConfig.KEY).getAuthorName();
+  #   authorEmail = localConfig.get(UserConfig.KEY).getAuthorEmail();
+  #   assertEquals("git author name", authorName);
+  #   assertEquals("author@email", authorEmail);
+  #   assertFalse(localConfig.get(UserConfig.KEY).isAuthorNameImplicit());
+  #   assertFalse(localConfig.get(UserConfig.KEY).isAuthorEmailImplicit());
   # }
   #
   # @Test
   # public void testReadUserConfigWithInvalidCharactersStripped() {
-  # 	final MockSystemReader mockSystemReader = new MockSystemReader();
-  # 	final Config localConfig = new Config(mockSystemReader.openUserConfig(
-  # 			null, FS.DETECTED));
+  #   final MockSystemReader mockSystemReader = new MockSystemReader();
+  #   final Config localConfig = new Config(mockSystemReader.openUserConfig(
+  #       null, FS.DETECTED));
   #
-  # 	localConfig.setString("user", null, "name", "foo<bar");
-  # 	localConfig.setString("user", null, "email", "baz>\nqux@example.com");
+  #   localConfig.setString("user", null, "name", "foo<bar");
+  #   localConfig.setString("user", null, "email", "baz>\nqux@example.com");
   #
-  # 	UserConfig userConfig = localConfig.get(UserConfig.KEY);
-  # 	assertEquals("foobar", userConfig.getAuthorName());
-  # 	assertEquals("bazqux@example.com", userConfig.getAuthorEmail());
+  #   UserConfig userConfig = localConfig.get(UserConfig.KEY);
+  #   assertEquals("foobar", userConfig.getAuthorName());
+  #   assertEquals("bazqux@example.com", userConfig.getAuthorEmail());
   # }
 
   describe "read boolean" do
@@ -537,451 +537,451 @@ defmodule Xgit.Lib.ConfigTest do
 
   # @Test
   # public void testIncludeInvalidName() throws ConfigInvalidException {
-  # 	expectedEx.expect(ConfigInvalidException.class);
-  # 	expectedEx.expectMessage(JGitText.get().invalidLineInConfigFile);
-  # 	parse("[include]\nbar\n");
+  #   expectedEx.expect(ConfigInvalidException.class);
+  #   expectedEx.expectMessage(JGitText.get().invalidLineInConfigFile);
+  #   parse("[include]\nbar\n");
   # }
   #
   # @Test
   # public void testIncludeNoValue() throws ConfigInvalidException {
-  # 	expectedEx.expect(ConfigInvalidException.class);
-  # 	expectedEx.expectMessage(JGitText.get().invalidLineInConfigFile);
-  # 	parse("[include]\npath\n");
+  #   expectedEx.expect(ConfigInvalidException.class);
+  #   expectedEx.expectMessage(JGitText.get().invalidLineInConfigFile);
+  #   parse("[include]\npath\n");
   # }
   #
   # @Test
   # public void testIncludeEmptyValue() throws ConfigInvalidException {
-  # 	expectedEx.expect(ConfigInvalidException.class);
-  # 	expectedEx.expectMessage(JGitText.get().invalidLineInConfigFile);
-  # 	parse("[include]\npath=\n");
+  #   expectedEx.expect(ConfigInvalidException.class);
+  #   expectedEx.expectMessage(JGitText.get().invalidLineInConfigFile);
+  #   parse("[include]\npath=\n");
   # }
   #
   # @Test
   # public void testIncludeValuePathNotFound() throws ConfigInvalidException {
-  # 	// we do not expect an exception, included path not found are ignored
-  # 	String notFound = "/not/found";
-  # 	Config parsed = parse("[include]\npath=" + notFound + "\n");
-  # 	assertEquals(1, parsed.getSections().size());
-  # 	assertEquals(notFound, parsed.getString("include", null, "path"));
+  #   // we do not expect an exception, included path not found are ignored
+  #   String notFound = "/not/found";
+  #   Config parsed = parse("[include]\npath=" + notFound + "\n");
+  #   assertEquals(1, parsed.getSections().size());
+  #   assertEquals(notFound, parsed.getString("include", null, "path"));
   # }
   #
   # @Test
   # public void testIncludeValuePathWithTilde() throws ConfigInvalidException {
-  # 	// we do not expect an exception, included path not supported are
-  # 	// ignored
-  # 	String notSupported = "~/someFile";
-  # 	Config parsed = parse("[include]\npath=" + notSupported + "\n");
-  # 	assertEquals(1, parsed.getSections().size());
-  # 	assertEquals(notSupported, parsed.getString("include", null, "path"));
+  #   // we do not expect an exception, included path not supported are
+  #   // ignored
+  #   String notSupported = "~/someFile";
+  #   Config parsed = parse("[include]\npath=" + notSupported + "\n");
+  #   assertEquals(1, parsed.getSections().size());
+  #   assertEquals(notSupported, parsed.getString("include", null, "path"));
   # }
   #
   # @Test
   # public void testIncludeValuePathRelative() throws ConfigInvalidException {
-  # 	// we do not expect an exception, included path not supported are
-  # 	// ignored
-  # 	String notSupported = "someRelativeFile";
-  # 	Config parsed = parse("[include]\npath=" + notSupported + "\n");
-  # 	assertEquals(1, parsed.getSections().size());
-  # 	assertEquals(notSupported, parsed.getString("include", null, "path"));
+  #   // we do not expect an exception, included path not supported are
+  #   // ignored
+  #   String notSupported = "someRelativeFile";
+  #   Config parsed = parse("[include]\npath=" + notSupported + "\n");
+  #   assertEquals(1, parsed.getSections().size());
+  #   assertEquals(notSupported, parsed.getString("include", null, "path"));
   # }
   #
   # @Test
   # public void testIncludeTooManyRecursions() throws IOException {
-  # 	File config = tmp.newFile("config");
-  # 	String include = "[include]\npath=" + pathToString(config) + "\n";
-  # 	Files.write(config.toPath(), include.getBytes(UTF_8));
-  # 	try {
-  # 		loadConfig(config);
-  # 		fail();
-  # 	} catch (ConfigInvalidException cie) {
-  # 		for (Throwable t = cie; t != null; t = t.getCause()) {
-  # 			if (t.getMessage()
-  # 					.equals(JGitText.get().tooManyIncludeRecursions)) {
-  # 				return;
-  # 			}
-  # 		}
-  # 		fail("Expected to find expected exception message: "
-  # 				+ JGitText.get().tooManyIncludeRecursions);
-  # 	}
+  #   File config = tmp.newFile("config");
+  #   String include = "[include]\npath=" + pathToString(config) + "\n";
+  #   Files.write(config.toPath(), include.getBytes(UTF_8));
+  #   try {
+  #     loadConfig(config);
+  #     fail();
+  #   } catch (ConfigInvalidException cie) {
+  #     for (Throwable t = cie; t != null; t = t.getCause()) {
+  #       if (t.getMessage()
+  #           .equals(JGitText.get().tooManyIncludeRecursions)) {
+  #         return;
+  #       }
+  #     }
+  #     fail("Expected to find expected exception message: "
+  #         + JGitText.get().tooManyIncludeRecursions);
+  #   }
   # }
   #
   # @Test
   # public void testIncludeIsNoop() throws IOException, ConfigInvalidException {
-  # 	File config = tmp.newFile("config");
+  #   File config = tmp.newFile("config");
   #
-  # 	String fooBar = "[foo]\nbar=true\n";
-  # 	Files.write(config.toPath(), fooBar.getBytes(UTF_8));
+  #   String fooBar = "[foo]\nbar=true\n";
+  #   Files.write(config.toPath(), fooBar.getBytes(UTF_8));
   #
-  # 	Config parsed = parse("[include]\npath=" + pathToString(config) + "\n");
-  # 	assertFalse(parsed.getBoolean("foo", "bar", false));
+  #   Config parsed = parse("[include]\npath=" + pathToString(config) + "\n");
+  #   assertFalse(parsed.getBoolean("foo", "bar", false));
   # }
   #
   # @Test
   # public void testIncludeCaseInsensitiveSection()
-  # 		throws IOException, ConfigInvalidException {
-  # 	File included = tmp.newFile("included");
-  # 	String content = "[foo]\nbar=true\n";
-  # 	Files.write(included.toPath(), content.getBytes(UTF_8));
+  #     throws IOException, ConfigInvalidException {
+  #   File included = tmp.newFile("included");
+  #   String content = "[foo]\nbar=true\n";
+  #   Files.write(included.toPath(), content.getBytes(UTF_8));
   #
-  # 	File config = tmp.newFile("config");
-  # 	content = "[Include]\npath=" + pathToString(included) + "\n";
-  # 	Files.write(config.toPath(), content.getBytes(UTF_8));
+  #   File config = tmp.newFile("config");
+  #   content = "[Include]\npath=" + pathToString(included) + "\n";
+  #   Files.write(config.toPath(), content.getBytes(UTF_8));
   #
-  # 	FileBasedConfig fbConfig = loadConfig(config);
-  # 	assertTrue(fbConfig.getBoolean("foo", "bar", false));
+  #   FileBasedConfig fbConfig = loadConfig(config);
+  #   assertTrue(fbConfig.getBoolean("foo", "bar", false));
   # }
   #
   # @Test
   # public void testIncludeCaseInsensitiveKey()
-  # 		throws IOException, ConfigInvalidException {
-  # 	File included = tmp.newFile("included");
-  # 	String content = "[foo]\nbar=true\n";
-  # 	Files.write(included.toPath(), content.getBytes(UTF_8));
+  #     throws IOException, ConfigInvalidException {
+  #   File included = tmp.newFile("included");
+  #   String content = "[foo]\nbar=true\n";
+  #   Files.write(included.toPath(), content.getBytes(UTF_8));
   #
-  # 	File config = tmp.newFile("config");
-  # 	content = "[include]\nPath=" + pathToString(included) + "\n";
-  # 	Files.write(config.toPath(), content.getBytes(UTF_8));
+  #   File config = tmp.newFile("config");
+  #   content = "[include]\nPath=" + pathToString(included) + "\n";
+  #   Files.write(config.toPath(), content.getBytes(UTF_8));
   #
-  # 	FileBasedConfig fbConfig = loadConfig(config);
-  # 	assertTrue(fbConfig.getBoolean("foo", "bar", false));
+  #   FileBasedConfig fbConfig = loadConfig(config);
+  #   assertTrue(fbConfig.getBoolean("foo", "bar", false));
   # }
   #
   # @Test
   # public void testIncludeExceptionContainsLine() {
-  # 	try {
-  # 		parse("[include]\npath=\n");
-  # 		fail("Expected ConfigInvalidException");
-  # 	} catch (ConfigInvalidException e) {
-  # 		assertTrue(
-  # 				"Expected to find the problem line in the exception message",
-  # 				e.getMessage().contains("include.path"));
-  # 	}
+  #   try {
+  #     parse("[include]\npath=\n");
+  #     fail("Expected ConfigInvalidException");
+  #   } catch (ConfigInvalidException e) {
+  #     assertTrue(
+  #         "Expected to find the problem line in the exception message",
+  #         e.getMessage().contains("include.path"));
+  #   }
   # }
   #
   # @Test
   # public void testIncludeExceptionContainsFile() throws IOException {
-  # 	File included = tmp.newFile("included");
-  # 	String includedPath = pathToString(included);
-  # 	String content = "[include]\npath=\n";
-  # 	Files.write(included.toPath(), content.getBytes(UTF_8));
+  #   File included = tmp.newFile("included");
+  #   String includedPath = pathToString(included);
+  #   String content = "[include]\npath=\n";
+  #   Files.write(included.toPath(), content.getBytes(UTF_8));
   #
-  # 	File config = tmp.newFile("config");
-  # 	String include = "[include]\npath=" + includedPath + "\n";
-  # 	Files.write(config.toPath(), include.getBytes(UTF_8));
-  # 	try {
-  # 		loadConfig(config);
-  # 		fail("Expected ConfigInvalidException");
-  # 	} catch (ConfigInvalidException e) {
-  # 		// Check that there is some exception in the chain that contains
-  # 		// includedPath
-  # 		for (Throwable t = e; t != null; t = t.getCause()) {
-  # 			if (t.getMessage().contains(includedPath)) {
-  # 				return;
-  # 			}
-  # 		}
-  # 		fail("Expected to find the path in the exception message: "
-  # 				+ includedPath);
-  # 	}
+  #   File config = tmp.newFile("config");
+  #   String include = "[include]\npath=" + includedPath + "\n";
+  #   Files.write(config.toPath(), include.getBytes(UTF_8));
+  #   try {
+  #     loadConfig(config);
+  #     fail("Expected ConfigInvalidException");
+  #   } catch (ConfigInvalidException e) {
+  #     // Check that there is some exception in the chain that contains
+  #     // includedPath
+  #     for (Throwable t = e; t != null; t = t.getCause()) {
+  #       if (t.getMessage().contains(includedPath)) {
+  #         return;
+  #       }
+  #     }
+  #     fail("Expected to find the path in the exception message: "
+  #         + includedPath);
+  #   }
   # }
   #
   # @Test
   # public void testIncludeSetValueMustNotTouchIncludedLines1()
-  # 		throws IOException, ConfigInvalidException {
-  # 	File includedFile = createAllTypesIncludedContent();
+  #     throws IOException, ConfigInvalidException {
+  #   File includedFile = createAllTypesIncludedContent();
   #
-  # 	File configFile = tmp.newFile("config");
-  # 	String content = createAllTypesSampleContent("Alice Parker", false, 11,
-  # 			21, 31, CoreConfig.AutoCRLF.FALSE,
-  # 			"+refs/heads/*:refs/remotes/origin/*") + "\n[include]\npath="
-  # 			+ pathToString(includedFile);
-  # 	Files.write(configFile.toPath(), content.getBytes(UTF_8));
+  #   File configFile = tmp.newFile("config");
+  #   String content = createAllTypesSampleContent("Alice Parker", false, 11,
+  #       21, 31, CoreConfig.AutoCRLF.FALSE,
+  #       "+refs/heads/*:refs/remotes/origin/*") + "\n[include]\npath="
+  #       + pathToString(includedFile);
+  #   Files.write(configFile.toPath(), content.getBytes(UTF_8));
   #
-  # 	FileBasedConfig fbConfig = loadConfig(configFile);
-  # 	assertValuesAsIncluded(fbConfig, REFS_ORIGIN, REFS_UPSTREAM);
-  # 	assertSections(fbConfig, "user", "core", "remote", "include");
+  #   FileBasedConfig fbConfig = loadConfig(configFile);
+  #   assertValuesAsIncluded(fbConfig, REFS_ORIGIN, REFS_UPSTREAM);
+  #   assertSections(fbConfig, "user", "core", "remote", "include");
   #
-  # 	setAllValuesNew(fbConfig);
-  # 	assertValuesAsIsSaveLoad(fbConfig, config -> {
-  # 		assertValuesAsIncluded(config, REFS_BACKUP, REFS_UPSTREAM);
-  # 		assertSections(fbConfig, "user", "core", "remote", "include");
-  # 	});
+  #   setAllValuesNew(fbConfig);
+  #   assertValuesAsIsSaveLoad(fbConfig, config -> {
+  #     assertValuesAsIncluded(config, REFS_BACKUP, REFS_UPSTREAM);
+  #     assertSections(fbConfig, "user", "core", "remote", "include");
+  #   });
   # }
   #
   # @Test
   # public void testIncludeSetValueMustNotTouchIncludedLines2()
-  # 		throws IOException, ConfigInvalidException {
-  # 	File includedFile = createAllTypesIncludedContent();
+  #     throws IOException, ConfigInvalidException {
+  #   File includedFile = createAllTypesIncludedContent();
   #
-  # 	File configFile = tmp.newFile("config");
-  # 	String content = "[include]\npath=" + pathToString(includedFile) + "\n"
-  # 			+ createAllTypesSampleContent("Alice Parker", false, 11, 21, 31,
-  # 					CoreConfig.AutoCRLF.FALSE,
-  # 					"+refs/heads/*:refs/remotes/origin/*");
-  # 	Files.write(configFile.toPath(), content.getBytes(UTF_8));
+  #   File configFile = tmp.newFile("config");
+  #   String content = "[include]\npath=" + pathToString(includedFile) + "\n"
+  #       + createAllTypesSampleContent("Alice Parker", false, 11, 21, 31,
+  #           CoreConfig.AutoCRLF.FALSE,
+  #           "+refs/heads/*:refs/remotes/origin/*");
+  #   Files.write(configFile.toPath(), content.getBytes(UTF_8));
   #
-  # 	FileBasedConfig fbConfig = loadConfig(configFile);
-  # 	assertValuesAsConfig(fbConfig, REFS_UPSTREAM, REFS_ORIGIN);
-  # 	assertSections(fbConfig, "include", "user", "core", "remote");
+  #   FileBasedConfig fbConfig = loadConfig(configFile);
+  #   assertValuesAsConfig(fbConfig, REFS_UPSTREAM, REFS_ORIGIN);
+  #   assertSections(fbConfig, "include", "user", "core", "remote");
   #
-  # 	setAllValuesNew(fbConfig);
-  # 	assertValuesAsIsSaveLoad(fbConfig, config -> {
-  # 		assertValuesAsNew(config, REFS_UPSTREAM, REFS_BACKUP);
-  # 		assertSections(fbConfig, "include", "user", "core", "remote");
-  # 	});
+  #   setAllValuesNew(fbConfig);
+  #   assertValuesAsIsSaveLoad(fbConfig, config -> {
+  #     assertValuesAsNew(config, REFS_UPSTREAM, REFS_BACKUP);
+  #     assertSections(fbConfig, "include", "user", "core", "remote");
+  #   });
   # }
   #
   # @Test
   # public void testIncludeSetValueOnFileWithJustContainsInclude()
-  # 		throws IOException, ConfigInvalidException {
-  # 	File includedFile = createAllTypesIncludedContent();
+  #     throws IOException, ConfigInvalidException {
+  #   File includedFile = createAllTypesIncludedContent();
   #
-  # 	File configFile = tmp.newFile("config");
-  # 	String content = "[include]\npath=" + pathToString(includedFile);
-  # 	Files.write(configFile.toPath(), content.getBytes(UTF_8));
+  #   File configFile = tmp.newFile("config");
+  #   String content = "[include]\npath=" + pathToString(includedFile);
+  #   Files.write(configFile.toPath(), content.getBytes(UTF_8));
   #
-  # 	FileBasedConfig fbConfig = loadConfig(configFile);
-  # 	assertValuesAsIncluded(fbConfig, REFS_UPSTREAM);
-  # 	assertSections(fbConfig, "include", "user", "core", "remote");
+  #   FileBasedConfig fbConfig = loadConfig(configFile);
+  #   assertValuesAsIncluded(fbConfig, REFS_UPSTREAM);
+  #   assertSections(fbConfig, "include", "user", "core", "remote");
   #
-  # 	setAllValuesNew(fbConfig);
-  # 	assertValuesAsIsSaveLoad(fbConfig, config -> {
-  # 		assertValuesAsNew(config, REFS_UPSTREAM, REFS_BACKUP);
-  # 		assertSections(fbConfig, "include", "user", "core", "remote");
-  # 	});
+  #   setAllValuesNew(fbConfig);
+  #   assertValuesAsIsSaveLoad(fbConfig, config -> {
+  #     assertValuesAsNew(config, REFS_UPSTREAM, REFS_BACKUP);
+  #     assertSections(fbConfig, "include", "user", "core", "remote");
+  #   });
   # }
   #
   # @Test
   # public void testIncludeSetValueOnFileWithJustEmptySection1()
-  # 		throws IOException, ConfigInvalidException {
-  # 	File includedFile = createAllTypesIncludedContent();
+  #     throws IOException, ConfigInvalidException {
+  #   File includedFile = createAllTypesIncludedContent();
   #
-  # 	File configFile = tmp.newFile("config");
-  # 	String content = "[user]\n[include]\npath="
-  # 			+ pathToString(includedFile);
-  # 	Files.write(configFile.toPath(), content.getBytes(UTF_8));
+  #   File configFile = tmp.newFile("config");
+  #   String content = "[user]\n[include]\npath="
+  #       + pathToString(includedFile);
+  #   Files.write(configFile.toPath(), content.getBytes(UTF_8));
   #
-  # 	FileBasedConfig fbConfig = loadConfig(configFile);
-  # 	assertValuesAsIncluded(fbConfig, REFS_UPSTREAM);
-  # 	assertSections(fbConfig, "user", "include", "core", "remote");
+  #   FileBasedConfig fbConfig = loadConfig(configFile);
+  #   assertValuesAsIncluded(fbConfig, REFS_UPSTREAM);
+  #   assertSections(fbConfig, "user", "include", "core", "remote");
   #
-  # 	setAllValuesNew(fbConfig);
-  # 	assertValuesAsIsSaveLoad(fbConfig, config -> {
-  # 		assertValuesAsNewWithName(config, "Alice Muller", REFS_UPSTREAM,
-  # 				REFS_BACKUP);
-  # 		assertSections(fbConfig, "user", "include", "core", "remote");
-  # 	});
+  #   setAllValuesNew(fbConfig);
+  #   assertValuesAsIsSaveLoad(fbConfig, config -> {
+  #     assertValuesAsNewWithName(config, "Alice Muller", REFS_UPSTREAM,
+  #         REFS_BACKUP);
+  #     assertSections(fbConfig, "user", "include", "core", "remote");
+  #   });
   # }
   #
   # @Test
   # public void testIncludeSetValueOnFileWithJustEmptySection2()
-  # 		throws IOException, ConfigInvalidException {
-  # 	File includedFile = createAllTypesIncludedContent();
+  #     throws IOException, ConfigInvalidException {
+  #   File includedFile = createAllTypesIncludedContent();
   #
-  # 	File configFile = tmp.newFile("config");
-  # 	String content = "[include]\npath=" + pathToString(includedFile)
-  # 			+ "\n[user]";
-  # 	Files.write(configFile.toPath(), content.getBytes(UTF_8));
+  #   File configFile = tmp.newFile("config");
+  #   String content = "[include]\npath=" + pathToString(includedFile)
+  #       + "\n[user]";
+  #   Files.write(configFile.toPath(), content.getBytes(UTF_8));
   #
-  # 	FileBasedConfig fbConfig = loadConfig(configFile);
-  # 	assertValuesAsIncluded(fbConfig, REFS_UPSTREAM);
-  # 	assertSections(fbConfig, "include", "user", "core", "remote");
+  #   FileBasedConfig fbConfig = loadConfig(configFile);
+  #   assertValuesAsIncluded(fbConfig, REFS_UPSTREAM);
+  #   assertSections(fbConfig, "include", "user", "core", "remote");
   #
-  # 	setAllValuesNew(fbConfig);
-  # 	assertValuesAsIsSaveLoad(fbConfig, config -> {
-  # 		assertValuesAsNew(config, REFS_UPSTREAM, REFS_BACKUP);
-  # 		assertSections(fbConfig, "include", "user", "core", "remote");
-  # 	});
+  #   setAllValuesNew(fbConfig);
+  #   assertValuesAsIsSaveLoad(fbConfig, config -> {
+  #     assertValuesAsNew(config, REFS_UPSTREAM, REFS_BACKUP);
+  #     assertSections(fbConfig, "include", "user", "core", "remote");
+  #   });
   # }
   #
   # @Test
   # public void testIncludeSetValueOnFileWithJustExistingSection1()
-  # 		throws IOException, ConfigInvalidException {
-  # 	File includedFile = createAllTypesIncludedContent();
+  #     throws IOException, ConfigInvalidException {
+  #   File includedFile = createAllTypesIncludedContent();
   #
-  # 	File configFile = tmp.newFile("config");
-  # 	String content = "[user]\nemail=alice@home\n[include]\npath="
-  # 			+ pathToString(includedFile);
-  # 	Files.write(configFile.toPath(), content.getBytes(UTF_8));
+  #   File configFile = tmp.newFile("config");
+  #   String content = "[user]\nemail=alice@home\n[include]\npath="
+  #       + pathToString(includedFile);
+  #   Files.write(configFile.toPath(), content.getBytes(UTF_8));
   #
-  # 	FileBasedConfig fbConfig = loadConfig(configFile);
-  # 	assertValuesAsIncluded(fbConfig, REFS_UPSTREAM);
-  # 	assertSections(fbConfig, "user", "include", "core", "remote");
+  #   FileBasedConfig fbConfig = loadConfig(configFile);
+  #   assertValuesAsIncluded(fbConfig, REFS_UPSTREAM);
+  #   assertSections(fbConfig, "user", "include", "core", "remote");
   #
-  # 	setAllValuesNew(fbConfig);
-  # 	assertValuesAsIsSaveLoad(fbConfig, config -> {
-  # 		assertValuesAsNewWithName(config, "Alice Muller", REFS_UPSTREAM,
-  # 				REFS_BACKUP);
-  # 		assertSections(fbConfig, "user", "include", "core", "remote");
-  # 	});
+  #   setAllValuesNew(fbConfig);
+  #   assertValuesAsIsSaveLoad(fbConfig, config -> {
+  #     assertValuesAsNewWithName(config, "Alice Muller", REFS_UPSTREAM,
+  #         REFS_BACKUP);
+  #     assertSections(fbConfig, "user", "include", "core", "remote");
+  #   });
   # }
   #
   # @Test
   # public void testIncludeSetValueOnFileWithJustExistingSection2()
-  # 		throws IOException, ConfigInvalidException {
-  # 	File includedFile = createAllTypesIncludedContent();
+  #     throws IOException, ConfigInvalidException {
+  #   File includedFile = createAllTypesIncludedContent();
   #
-  # 	File configFile = tmp.newFile("config");
-  # 	String content = "[include]\npath=" + pathToString(includedFile)
-  # 			+ "\n[user]\nemail=alice@home\n";
-  # 	Files.write(configFile.toPath(), content.getBytes(UTF_8));
+  #   File configFile = tmp.newFile("config");
+  #   String content = "[include]\npath=" + pathToString(includedFile)
+  #       + "\n[user]\nemail=alice@home\n";
+  #   Files.write(configFile.toPath(), content.getBytes(UTF_8));
   #
-  # 	FileBasedConfig fbConfig = loadConfig(configFile);
-  # 	assertValuesAsIncluded(fbConfig, REFS_UPSTREAM);
-  # 	assertSections(fbConfig, "include", "user", "core", "remote");
+  #   FileBasedConfig fbConfig = loadConfig(configFile);
+  #   assertValuesAsIncluded(fbConfig, REFS_UPSTREAM);
+  #   assertSections(fbConfig, "include", "user", "core", "remote");
   #
-  # 	setAllValuesNew(fbConfig);
-  # 	assertValuesAsIsSaveLoad(fbConfig, config -> {
-  # 		assertValuesAsNew(config, REFS_UPSTREAM, REFS_BACKUP);
-  # 		assertSections(fbConfig, "include", "user", "core", "remote");
-  # 	});
+  #   setAllValuesNew(fbConfig);
+  #   assertValuesAsIsSaveLoad(fbConfig, config -> {
+  #     assertValuesAsNew(config, REFS_UPSTREAM, REFS_BACKUP);
+  #     assertSections(fbConfig, "include", "user", "core", "remote");
+  #   });
   # }
   #
   # @Test
   # public void testIncludeUnsetSectionMustNotTouchIncludedLines()
-  # 		throws IOException, ConfigInvalidException {
-  # 	File includedFile = tmp.newFile("included");
-  # 	RefSpec includedRefSpec = new RefSpec(REFS_UPSTREAM);
-  # 	String includedContent = "[remote \"origin\"]\n" + "fetch="
-  # 			+ includedRefSpec;
-  # 	Files.write(includedFile.toPath(), includedContent.getBytes(UTF_8));
+  #     throws IOException, ConfigInvalidException {
+  #   File includedFile = tmp.newFile("included");
+  #   RefSpec includedRefSpec = new RefSpec(REFS_UPSTREAM);
+  #   String includedContent = "[remote \"origin\"]\n" + "fetch="
+  #       + includedRefSpec;
+  #   Files.write(includedFile.toPath(), includedContent.getBytes(UTF_8));
   #
-  # 	File configFile = tmp.newFile("config");
-  # 	RefSpec refSpec = new RefSpec(REFS_ORIGIN);
-  # 	String content = "[include]\npath=" + pathToString(includedFile) + "\n"
-  # 			+ "[remote \"origin\"]\n" + "fetch=" + refSpec;
-  # 	Files.write(configFile.toPath(), content.getBytes(UTF_8));
+  #   File configFile = tmp.newFile("config");
+  #   RefSpec refSpec = new RefSpec(REFS_ORIGIN);
+  #   String content = "[include]\npath=" + pathToString(includedFile) + "\n"
+  #       + "[remote \"origin\"]\n" + "fetch=" + refSpec;
+  #   Files.write(configFile.toPath(), content.getBytes(UTF_8));
   #
-  # 	FileBasedConfig fbConfig = loadConfig(configFile);
+  #   FileBasedConfig fbConfig = loadConfig(configFile);
   #
-  # 	Consumer<FileBasedConfig> assertion = config -> {
-  # 		assertEquals(Arrays.asList(includedRefSpec, refSpec),
-  # 				config.getRefSpecs("remote", "origin", "fetch"));
-  # 	};
-  # 	assertion.accept(fbConfig);
+  #   Consumer<FileBasedConfig> assertion = config -> {
+  #     assertEquals(Arrays.asList(includedRefSpec, refSpec),
+  #         config.getRefSpecs("remote", "origin", "fetch"));
+  #   };
+  #   assertion.accept(fbConfig);
   #
-  # 	fbConfig.unsetSection("remote", "origin");
-  # 	assertValuesAsIsSaveLoad(fbConfig, config -> {
-  # 		assertEquals(Collections.singletonList(includedRefSpec),
-  # 				config.getRefSpecs("remote", "origin", "fetch"));
-  # 	});
+  #   fbConfig.unsetSection("remote", "origin");
+  #   assertValuesAsIsSaveLoad(fbConfig, config -> {
+  #     assertEquals(Collections.singletonList(includedRefSpec),
+  #         config.getRefSpecs("remote", "origin", "fetch"));
+  #   });
   # }
   #
   # private File createAllTypesIncludedContent() throws IOException {
-  # 	File includedFile = tmp.newFile("included");
-  # 	String includedContent = createAllTypesSampleContent("Alice Muller",
-  # 			true, 10, 20, 30, CoreConfig.AutoCRLF.TRUE,
-  # 			"+refs/heads/*:refs/remotes/upstream/*");
-  # 	Files.write(includedFile.toPath(), includedContent.getBytes(UTF_8));
-  # 	return includedFile;
+  #   File includedFile = tmp.newFile("included");
+  #   String includedContent = createAllTypesSampleContent("Alice Muller",
+  #       true, 10, 20, 30, CoreConfig.AutoCRLF.TRUE,
+  #       "+refs/heads/*:refs/remotes/upstream/*");
+  #   Files.write(includedFile.toPath(), includedContent.getBytes(UTF_8));
+  #   return includedFile;
   # }
   #
   # private static void assertValuesAsIsSaveLoad(FileBasedConfig fbConfig,
-  # 		Consumer<FileBasedConfig> assertion)
-  # 		throws IOException, ConfigInvalidException {
-  # 	assertion.accept(fbConfig);
+  #     Consumer<FileBasedConfig> assertion)
+  #     throws IOException, ConfigInvalidException {
+  #   assertion.accept(fbConfig);
   #
-  # 	fbConfig.save();
-  # 	assertion.accept(fbConfig);
+  #   fbConfig.save();
+  #   assertion.accept(fbConfig);
   #
-  # 	fbConfig = loadConfig(fbConfig.getFile());
-  # 	assertion.accept(fbConfig);
+  #   fbConfig = loadConfig(fbConfig.getFile());
+  #   assertion.accept(fbConfig);
   # }
   #
   # private static void setAllValuesNew(Config config) {
-  # 	config.setString("user", null, "name", "Alice Bauer");
-  # 	config.setBoolean("core", null, "fileMode", false);
-  # 	config.setInt("core", null, "deltaBaseCacheLimit", 12);
-  # 	config.setLong("core", null, "packedGitLimit", 22);
-  # 	config.setLong("core", null, "repositoryCacheExpireAfter", 32);
-  # 	config.setEnum("core", null, "autocrlf", CoreConfig.AutoCRLF.FALSE);
-  # 	config.setString("remote", "origin", "fetch",
-  # 			"+refs/heads/*:refs/remotes/backup/*");
+  #   config.setString("user", null, "name", "Alice Bauer");
+  #   config.setBoolean("core", null, "fileMode", false);
+  #   config.setInt("core", null, "deltaBaseCacheLimit", 12);
+  #   config.setLong("core", null, "packedGitLimit", 22);
+  #   config.setLong("core", null, "repositoryCacheExpireAfter", 32);
+  #   config.setEnum("core", null, "autocrlf", CoreConfig.AutoCRLF.FALSE);
+  #   config.setString("remote", "origin", "fetch",
+  #       "+refs/heads/*:refs/remotes/backup/*");
   # }
   #
   # private static void assertValuesAsIncluded(Config config, String... refs) {
-  # 	assertAllTypesSampleContent("Alice Muller", true, 10, 20, 30,
-  # 			CoreConfig.AutoCRLF.TRUE, config, refs);
+  #   assertAllTypesSampleContent("Alice Muller", true, 10, 20, 30,
+  #       CoreConfig.AutoCRLF.TRUE, config, refs);
   # }
   #
   # private static void assertValuesAsConfig(Config config, String... refs) {
-  # 	assertAllTypesSampleContent("Alice Parker", false, 11, 21, 31,
-  # 			CoreConfig.AutoCRLF.FALSE, config, refs);
+  #   assertAllTypesSampleContent("Alice Parker", false, 11, 21, 31,
+  #       CoreConfig.AutoCRLF.FALSE, config, refs);
   # }
   #
   # private static void assertValuesAsNew(Config config, String... refs) {
-  # 	assertValuesAsNewWithName(config, "Alice Bauer", refs);
+  #   assertValuesAsNewWithName(config, "Alice Bauer", refs);
   # }
   #
   # private static void assertValuesAsNewWithName(Config config, String name,
-  # 		String... refs) {
-  # 	assertAllTypesSampleContent(name, false, 12, 22, 32,
-  # 			CoreConfig.AutoCRLF.FALSE, config, refs);
+  #     String... refs) {
+  #   assertAllTypesSampleContent(name, false, 12, 22, 32,
+  #       CoreConfig.AutoCRLF.FALSE, config, refs);
   # }
   #
   # private static void assertSections(Config config, String... sections) {
-  # 	assertEquals(Arrays.asList(sections),
-  # 			new ArrayList<>(config.getSections()));
+  #   assertEquals(Arrays.asList(sections),
+  #       new ArrayList<>(config.getSections()));
   # }
   #
   # private static String createAllTypesSampleContent(String name,
-  # 		boolean fileMode, int deltaBaseCacheLimit, long packedGitLimit,
-  # 		long repositoryCacheExpireAfter, CoreConfig.AutoCRLF autoCRLF,
-  # 		String fetchRefSpec) {
-  # 	final StringBuilder builder = new StringBuilder();
-  # 	builder.append("[user]\n");
-  # 	builder.append("name=");
-  # 	builder.append(name);
-  # 	builder.append("\n");
+  #     boolean fileMode, int deltaBaseCacheLimit, long packedGitLimit,
+  #     long repositoryCacheExpireAfter, CoreConfig.AutoCRLF autoCRLF,
+  #     String fetchRefSpec) {
+  #   final StringBuilder builder = new StringBuilder();
+  #   builder.append("[user]\n");
+  #   builder.append("name=");
+  #   builder.append(name);
+  #   builder.append("\n");
   #
-  # 	builder.append("[core]\n");
-  # 	builder.append("fileMode=");
-  # 	builder.append(fileMode);
-  # 	builder.append("\n");
+  #   builder.append("[core]\n");
+  #   builder.append("fileMode=");
+  #   builder.append(fileMode);
+  #   builder.append("\n");
   #
-  # 	builder.append("deltaBaseCacheLimit=");
-  # 	builder.append(deltaBaseCacheLimit);
-  # 	builder.append("\n");
+  #   builder.append("deltaBaseCacheLimit=");
+  #   builder.append(deltaBaseCacheLimit);
+  #   builder.append("\n");
   #
-  # 	builder.append("packedGitLimit=");
-  # 	builder.append(packedGitLimit);
-  # 	builder.append("\n");
+  #   builder.append("packedGitLimit=");
+  #   builder.append(packedGitLimit);
+  #   builder.append("\n");
   #
-  # 	builder.append("repositoryCacheExpireAfter=");
-  # 	builder.append(repositoryCacheExpireAfter);
-  # 	builder.append("\n");
+  #   builder.append("repositoryCacheExpireAfter=");
+  #   builder.append(repositoryCacheExpireAfter);
+  #   builder.append("\n");
   #
-  # 	builder.append("autocrlf=");
-  # 	builder.append(autoCRLF.name());
-  # 	builder.append("\n");
+  #   builder.append("autocrlf=");
+  #   builder.append(autoCRLF.name());
+  #   builder.append("\n");
   #
-  # 	builder.append("[remote \"origin\"]\n");
-  # 	builder.append("fetch=");
-  # 	builder.append(fetchRefSpec);
-  # 	builder.append("\n");
-  # 	return builder.toString();
+  #   builder.append("[remote \"origin\"]\n");
+  #   builder.append("fetch=");
+  #   builder.append(fetchRefSpec);
+  #   builder.append("\n");
+  #   return builder.toString();
   # }
   #
   # private static void assertAllTypesSampleContent(String name,
-  # 		boolean fileMode, int deltaBaseCacheLimit, long packedGitLimit,
-  # 		long repositoryCacheExpireAfter, CoreConfig.AutoCRLF autoCRLF,
-  # 		Config config, String... fetchRefSpecs) {
-  # 	assertEquals(name, config.getString("user", null, "name"));
-  # 	assertEquals(fileMode,
-  # 			config.getBoolean("core", "fileMode", !fileMode));
-  # 	assertEquals(deltaBaseCacheLimit,
-  # 			config.getInt("core", "deltaBaseCacheLimit", -1));
-  # 	assertEquals(packedGitLimit,
-  # 			config.getLong("core", "packedGitLimit", -1));
-  # 	assertEquals(repositoryCacheExpireAfter, config.getTimeUnit("core",
-  # 			null, "repositoryCacheExpireAfter", -1, MILLISECONDS));
-  # 	assertEquals(autoCRLF, config.getEnum("core", null, "autocrlf",
-  # 			CoreConfig.AutoCRLF.INPUT));
-  # 	final List<RefSpec> refspecs = new ArrayList<>();
-  # 	for (String fetchRefSpec : fetchRefSpecs) {
-  # 		refspecs.add(new RefSpec(fetchRefSpec));
-  # 	}
+  #     boolean fileMode, int deltaBaseCacheLimit, long packedGitLimit,
+  #     long repositoryCacheExpireAfter, CoreConfig.AutoCRLF autoCRLF,
+  #     Config config, String... fetchRefSpecs) {
+  #   assertEquals(name, config.getString("user", null, "name"));
+  #   assertEquals(fileMode,
+  #       config.getBoolean("core", "fileMode", !fileMode));
+  #   assertEquals(deltaBaseCacheLimit,
+  #       config.getInt("core", "deltaBaseCacheLimit", -1));
+  #   assertEquals(packedGitLimit,
+  #       config.getLong("core", "packedGitLimit", -1));
+  #   assertEquals(repositoryCacheExpireAfter, config.getTimeUnit("core",
+  #       null, "repositoryCacheExpireAfter", -1, MILLISECONDS));
+  #   assertEquals(autoCRLF, config.getEnum("core", null, "autocrlf",
+  #       CoreConfig.AutoCRLF.INPUT));
+  #   final List<RefSpec> refspecs = new ArrayList<>();
+  #   for (String fetchRefSpec : fetchRefSpecs) {
+  #     refspecs.add(new RefSpec(fetchRefSpec));
+  #   }
   #
-  # 	assertEquals(refspecs, config.getRefSpecs("remote", "origin", "fetch"));
+  #   assertEquals(refspecs, config.getRefSpecs("remote", "origin", "fetch"));
   # }
 
   defp assert_read_integer(n), do: assert_read_integer(n, to_string(n))
@@ -1004,91 +1004,91 @@ defmodule Xgit.Lib.ConfigTest do
 
   # @Test
   # public void testTimeUnit() throws ConfigInvalidException {
-  # 	assertEquals(0, parseTime("0", MILLISECONDS));
-  # 	assertEquals(2, parseTime("2ms", MILLISECONDS));
-  # 	assertEquals(200, parseTime("200 milliseconds", MILLISECONDS));
+  #   assertEquals(0, parseTime("0", MILLISECONDS));
+  #   assertEquals(2, parseTime("2ms", MILLISECONDS));
+  #   assertEquals(200, parseTime("200 milliseconds", MILLISECONDS));
   #
-  # 	assertEquals(0, parseTime("0s", SECONDS));
-  # 	assertEquals(2, parseTime("2s", SECONDS));
-  # 	assertEquals(231, parseTime("231sec", SECONDS));
-  # 	assertEquals(1, parseTime("1second", SECONDS));
-  # 	assertEquals(300, parseTime("300 seconds", SECONDS));
+  #   assertEquals(0, parseTime("0s", SECONDS));
+  #   assertEquals(2, parseTime("2s", SECONDS));
+  #   assertEquals(231, parseTime("231sec", SECONDS));
+  #   assertEquals(1, parseTime("1second", SECONDS));
+  #   assertEquals(300, parseTime("300 seconds", SECONDS));
   #
-  # 	assertEquals(2, parseTime("2m", MINUTES));
-  # 	assertEquals(2, parseTime("2min", MINUTES));
-  # 	assertEquals(1, parseTime("1 minute", MINUTES));
-  # 	assertEquals(10, parseTime("10 minutes", MINUTES));
+  #   assertEquals(2, parseTime("2m", MINUTES));
+  #   assertEquals(2, parseTime("2min", MINUTES));
+  #   assertEquals(1, parseTime("1 minute", MINUTES));
+  #   assertEquals(10, parseTime("10 minutes", MINUTES));
   #
-  # 	assertEquals(5, parseTime("5h", HOURS));
-  # 	assertEquals(5, parseTime("5hr", HOURS));
-  # 	assertEquals(1, parseTime("1hour", HOURS));
-  # 	assertEquals(48, parseTime("48hours", HOURS));
+  #   assertEquals(5, parseTime("5h", HOURS));
+  #   assertEquals(5, parseTime("5hr", HOURS));
+  #   assertEquals(1, parseTime("1hour", HOURS));
+  #   assertEquals(48, parseTime("48hours", HOURS));
   #
-  # 	assertEquals(5, parseTime("5 h", HOURS));
-  # 	assertEquals(5, parseTime("5 hr", HOURS));
-  # 	assertEquals(1, parseTime("1 hour", HOURS));
-  # 	assertEquals(48, parseTime("48 hours", HOURS));
-  # 	assertEquals(48, parseTime("48 \t \r hours", HOURS));
+  #   assertEquals(5, parseTime("5 h", HOURS));
+  #   assertEquals(5, parseTime("5 hr", HOURS));
+  #   assertEquals(1, parseTime("1 hour", HOURS));
+  #   assertEquals(48, parseTime("48 hours", HOURS));
+  #   assertEquals(48, parseTime("48 \t \r hours", HOURS));
   #
-  # 	assertEquals(4, parseTime("4d", DAYS));
-  # 	assertEquals(1, parseTime("1day", DAYS));
-  # 	assertEquals(14, parseTime("14days", DAYS));
+  #   assertEquals(4, parseTime("4d", DAYS));
+  #   assertEquals(1, parseTime("1day", DAYS));
+  #   assertEquals(14, parseTime("14days", DAYS));
   #
-  # 	assertEquals(7, parseTime("1w", DAYS));
-  # 	assertEquals(7, parseTime("1week", DAYS));
-  # 	assertEquals(14, parseTime("2w", DAYS));
-  # 	assertEquals(14, parseTime("2weeks", DAYS));
+  #   assertEquals(7, parseTime("1w", DAYS));
+  #   assertEquals(7, parseTime("1week", DAYS));
+  #   assertEquals(14, parseTime("2w", DAYS));
+  #   assertEquals(14, parseTime("2weeks", DAYS));
   #
-  # 	assertEquals(30, parseTime("1mon", DAYS));
-  # 	assertEquals(30, parseTime("1month", DAYS));
-  # 	assertEquals(60, parseTime("2mon", DAYS));
-  # 	assertEquals(60, parseTime("2months", DAYS));
+  #   assertEquals(30, parseTime("1mon", DAYS));
+  #   assertEquals(30, parseTime("1month", DAYS));
+  #   assertEquals(60, parseTime("2mon", DAYS));
+  #   assertEquals(60, parseTime("2months", DAYS));
   #
-  # 	assertEquals(365, parseTime("1y", DAYS));
-  # 	assertEquals(365, parseTime("1year", DAYS));
-  # 	assertEquals(365 * 2, parseTime("2years", DAYS));
+  #   assertEquals(365, parseTime("1y", DAYS));
+  #   assertEquals(365, parseTime("1year", DAYS));
+  #   assertEquals(365 * 2, parseTime("2years", DAYS));
   # }
   #
   # private long parseTime(String value, TimeUnit unit)
-  # 		throws ConfigInvalidException {
-  # 	Config c = parse("[a]\na=" + value + "\n");
-  # 	return c.getTimeUnit("a", null, "a", 0, unit);
+  #     throws ConfigInvalidException {
+  #   Config c = parse("[a]\na=" + value + "\n");
+  #   return c.getTimeUnit("a", null, "a", 0, unit);
   # }
   #
   # @Test
   # public void testTimeUnitDefaultValue() throws ConfigInvalidException {
-  # 	// value not present
-  # 	assertEquals(20, parse("[a]\na=0\n").getTimeUnit("a", null, "b", 20,
-  # 			MILLISECONDS));
-  # 	// value is empty
-  # 	assertEquals(20, parse("[a]\na=\" \"\n").getTimeUnit("a", null, "a", 20,
-  # 			MILLISECONDS));
+  #   // value not present
+  #   assertEquals(20, parse("[a]\na=0\n").getTimeUnit("a", null, "b", 20,
+  #       MILLISECONDS));
+  #   // value is empty
+  #   assertEquals(20, parse("[a]\na=\" \"\n").getTimeUnit("a", null, "a", 20,
+  #       MILLISECONDS));
   #
-  # 	// value is not numeric
-  # 	assertEquals(20, parse("[a]\na=test\n").getTimeUnit("a", null, "a", 20,
-  # 			MILLISECONDS));
+  #   // value is not numeric
+  #   assertEquals(20, parse("[a]\na=test\n").getTimeUnit("a", null, "a", 20,
+  #       MILLISECONDS));
   # }
   #
   # @Test
   # public void testTimeUnitInvalid() throws ConfigInvalidException {
-  # 	expectedEx.expect(IllegalArgumentException.class);
-  # 	expectedEx
-  # 			.expectMessage("Invalid time unit value: a.a=1 monttthhh");
-  # 	parseTime("1 monttthhh", DAYS);
+  #   expectedEx.expect(IllegalArgumentException.class);
+  #   expectedEx
+  #       .expectMessage("Invalid time unit value: a.a=1 monttthhh");
+  #   parseTime("1 monttthhh", DAYS);
   # }
   #
   # @Test
   # public void testTimeUnitInvalidWithSection() throws ConfigInvalidException {
-  # 	Config c = parse("[a \"b\"]\na=1 monttthhh\n");
-  # 	expectedEx.expect(IllegalArgumentException.class);
-  # 	expectedEx.expectMessage("Invalid time unit value: a.b.a=1 monttthhh");
-  # 	c.getTimeUnit("a", "b", "a", 0, DAYS);
+  #   Config c = parse("[a \"b\"]\na=1 monttthhh\n");
+  #   expectedEx.expect(IllegalArgumentException.class);
+  #   expectedEx.expectMessage("Invalid time unit value: a.b.a=1 monttthhh");
+  #   c.getTimeUnit("a", "b", "a", 0, DAYS);
   # }
   #
   # @Test
   # public void testTimeUnitNegative() throws ConfigInvalidException {
-  # 	expectedEx.expect(IllegalArgumentException.class);
-  # 	parseTime("-1", MILLISECONDS);
+  #   expectedEx.expect(IllegalArgumentException.class);
+  #   parseTime("-1", MILLISECONDS);
   # }
 
   describe "escape_value/1" do
@@ -1260,6 +1260,12 @@ defmodule Xgit.Lib.ConfigTest do
     assert parse_escaped_subsection("\"x\\t\"") == "xt"
   end
 
+  test "invalid group header" do
+    assert_raise ConfigInvalidError, "Bad group header", fn ->
+      parse("[foo \"bar\" ]\nfoo=bar\n")
+    end
+  end
+
   defp assert_value_round_trip(value), do: assert_value_round_trip(value, value)
 
   defp assert_value_round_trip(value, expected_escaped) do
@@ -1298,11 +1304,11 @@ defmodule Xgit.Lib.ConfigTest do
   end
 
   # private static FileBasedConfig loadConfig(File file)
-  # 		throws IOException, ConfigInvalidException {
-  # 	final FileBasedConfig config = new FileBasedConfig(null, file,
-  # 			FS.DETECTED);
-  # 	config.load();
-  # 	return config;
+  #     throws IOException, ConfigInvalidException {
+  #   final FileBasedConfig config = new FileBasedConfig(null, file,
+  #       FS.DETECTED);
+  #   config.load();
+  #   return config;
   # }
 
   test "process remains alive after sleep" do

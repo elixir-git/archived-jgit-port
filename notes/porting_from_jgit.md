@@ -40,3 +40,30 @@ Elixir doesn't have an exact analogue for Java's [`java.time.Duration`](https://
 Unlike jgit, xgit never defaults to the current working directory. (Any search of the source code for `File.cwd/0` or `File.cwd!/0` should return no results.) Given the primarily server-based focus of xgit, it seems better to require an explicit specification of where the repo is located.
 
 Similarly, xgit should not use the launch-point for the Elixir application as a default directory for git repositories. (Specifically, we do not port the Java property `user.dir` or the equivalent constant `Constants.OS_USER_DIR`.)
+
+## Tracking jgit `master` branch
+
+The xgit project tracks the `master` branch of jgit. In order to avoid missing changes as they are introduced to jgit, this project observes the following two policies:
+
+* We always port from a specific commit in the jgit repository. This commit ID and commit log are recorded below.
+
+* Periodically, we advance that commit to the latest commit in `master` branch. All changes in jgit between old and new commit are inspected and those changes are reapplied to xgit as appropriate. (Code that has not yet been ported remains ignored in this transition.)
+
+The current jgit tracking commit is:
+
+```
+commit 0a15cb3a2bc14feec11baa1977567179ce3094bc
+Author: Matthew DeVore <matvore@gmail.com>
+Date:   Wed Mar 27 14:35:51 2019 -0700
+
+    tree:<depth>: do not revisit tree during packing
+
+    If a tree is visited during pack and filtered out with tree:<depth>, we
+    may need to include it if it is visited again at a lower depth.
+
+    Until now we revisit it no matter what the depth is. Now, avoid
+    visiting it if it has been visited at a lower or equal depth.
+
+    Change-Id: I68cc1d08f1999a8336684a05fe16e7ae51898866
+    Signed-off-by: Matthew DeVore <matvore@gmail.com>
+```

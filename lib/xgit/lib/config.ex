@@ -1011,10 +1011,7 @@ defmodule Xgit.Lib.Config do
 
     subsection = maybe_string(subsection)
 
-    remainder =
-      remainder
-      |> skip_whitespace()
-      |> expect_close_brace(buffer)
+    remainder = expect_close_brace(remainder, buffer)
 
     {suffix, remainder} = Enum.split_while(remainder, &(&1 != ?\n))
 
@@ -1116,7 +1113,7 @@ defmodule Xgit.Lib.Config do
   defp maybe_string(map, key), do: map |> Map.get(key) |> maybe_string()
 
   defp expect_close_brace([?] | remainder], _buffer), do: remainder
-  defp expect_close_brace(_, buffer), do: raise_bad_section_entry(buffer)
+  defp expect_close_brace(_, _buffer), do: raise(ConfigInvalidError, "Bad group header")
 
   defp section_to_string({[] = _section, _remainder}, buffer), do: raise_bad_section_entry(buffer)
   defp section_to_string({section, remainder}, _buffer), do: {to_string(section), remainder}
