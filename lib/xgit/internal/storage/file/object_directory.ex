@@ -281,7 +281,9 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
   # 				// The hasObject call should have only touched the index,
   # 				// so any failure here indicates the index is unreadable
   # 				// by this process, and the pack is likewise not readable.
-  # 				LOG.warn("Unable to read packfile " + p.getPackFile(), e);
+  #                 LOG.warn(MessageFormat.format(
+  #                     JGitText.get().unableToReadPackfile,
+  #                     p.getPackFile().getAbsolutePath()), e);
   # 				removePack(p);
   # 			}
   # 		}
@@ -574,7 +576,8 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
   # 	if ((e instanceof CorruptObjectException)
   # 			|| (e instanceof PackInvalidException)) {
   # 		warnTmpl = JGitText.get().corruptPack;
-  # 		LOG.warn("Packfile " + p.getPackFile() + " is corrupted", e);
+  #         LOG.warn(MessageFormat.format(warnTmpl,
+  #             p.getPackFile().getAbsolutePath()), e);
   # 		// Assume the pack is corrupted, and remove it from the list.
   # 		removePack(p);
   # 	} else if (e instanceof FileNotFoundException) {
@@ -833,13 +836,13 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
   # 		}
   #
   # 		final String packName = base + PACK.getExtension();
+  #         final File packFile = new File(packDirectory, packName);
   # 		final PackFile oldPack = forReuse.remove(packName);
-  # 		if (oldPack != null) {
+  #         if (oldPack != null && oldPack.getFileSnapshot().isModified(packFile)) {
   # 			list.add(oldPack);
   # 			continue;
   # 		}
   #
-  # 		final File packFile = new File(packDirectory, packName);
   # 		list.add(new PackFile(packFile, extensions));
   # 		foundNew = true;
   # 	}
