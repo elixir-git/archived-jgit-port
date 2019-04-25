@@ -11,12 +11,20 @@ defmodule Xgit.Lib.ObjectIdRef do
   * `peeled_object_id`: current peeled value of the ref. If `nil`, indicates that
     the object ref hasn't been peeled yet.
   * `tag?`: `true` if the peeled value points to a tag
-  * `update_index`: number that increases with each ref update. Set to `-1` if the
+  * `update_index`: number that increases with each ref update. Set to `:undefined` if the
     storage doesn't support versioning.
   """
 
   @enforce_keys [:name, :storage]
-  defstruct [:name, :storage, :object_id, :peeled?, :peeled_object_id, :tag?, update_index: -1]
+  defstruct [
+    :name,
+    :storage,
+    :object_id,
+    :peeled?,
+    :peeled_object_id,
+    :tag?,
+    update_index: :undefined
+  ]
 end
 
 defimpl Xgit.Lib.Ref, for: Xgit.Lib.ObjectIdRef do
