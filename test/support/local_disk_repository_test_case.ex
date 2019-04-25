@@ -83,9 +83,12 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
 
     Config.save(user_git_config)
 
-    mock_system_reader = %MockSystemReader{
-      user_config: user_git_config,
-      env: %{"GIT_CEILING_DIRECTORIES" => tmp}
+    mock_system_reader = MockSystemReader.new()
+
+    mock_system_reader = %{
+      mock_system_reader
+      | user_config: user_git_config,
+        env: %{"GIT_CEILING_DIRECTORIES" => tmp}
     }
 
     time = SystemReader.current_time(mock_system_reader)

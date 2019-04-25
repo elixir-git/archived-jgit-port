@@ -12,7 +12,7 @@ defmodule Xgit.Test.MockSystemReader do
   alias Xgit.Test.MockConfigStorage
 
   def new do
-    {:ok, time_agent} = Agent.start_link(1_250_379_778_668_000)
+    {:ok, time_agent} = Agent.start_link(fn -> 1_250_379_778_668_000 end)
     # ^ time is Sat Aug 15 20:12:58 GMT-03:30 2009
 
     %__MODULE__{
