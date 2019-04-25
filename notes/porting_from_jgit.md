@@ -52,8 +52,6 @@ The xgit project tracks the `master` branch of jgit. In order to avoid missing c
 The current jgit tracking commit is:
 
 ```
-In order to avoid missing updates from jgit as they are
-
 commit 0a15cb3a2bc14feec11baa1977567179ce3094bc
 Author: Matthew DeVore <matvore@gmail.com>
 Date:   Wed Mar 27 14:35:51 2019 -0700
