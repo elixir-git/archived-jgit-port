@@ -1345,7 +1345,6 @@ defmodule Xgit.Lib.ObjectCheckerTest do
       reject_name(checker, ">")
       reject_name(checker, ":")
       reject_name(checker, "\"")
-      reject_name(checker, "/")
       reject_name(checker, "\\")
       reject_name(checker, "|")
       reject_name(checker, "?")
@@ -1375,14 +1374,16 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   end
 
   defp reject_name(checker, c) when is_binary(c) do
-    assert_raise CorruptObjectError, "Object (unknown) is corrupt: name contains '#{c}'", fn ->
-      check_one_name(checker, "te#{c}st")
-    end
+    assert_raise CorruptObjectError,
+                 "Object (unknown) is corrupt: char '#{c}' not allowed in Windows filename",
+                 fn ->
+                   check_one_name(checker, "te#{c}st")
+                 end
   end
 
   defp reject_name(checker, b) when is_integer(b) do
     assert_raise CorruptObjectError,
-                 "Object (unknown) is corrupt: name contains byte 0x'#{byte_to_hex(b)}'",
+                 "Object (unknown) is corrupt: byte 0x'#{byte_to_hex(b)}' not allowed in Windows filename",
                  fn ->
                    check_one_name(checker, "te#{<<b>>}st")
                  end
@@ -1392,6 +1393,16 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   defp byte_to_hex(b), do: integer_to_lc_hex_string(b)
 
   defp integer_to_lc_hex_string(b), do: b |> Integer.to_string(16) |> String.downcase()
+
+  test "reject invalid characters" do
+    checker = %ObjectChecker{windows?: true}
+
+    assert_raise CorruptObjectError,
+                 "Object (unknown) is corrupt: name contains '/'",
+                 fn ->
+                   check_one_name(checker, "te/st")
+                 end
+  end
 
   defp check_one_name(checker \\ %ObjectChecker{}, name) do
     data = entry("100644 #{name}")
