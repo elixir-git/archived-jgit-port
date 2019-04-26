@@ -67,3 +67,10 @@ Date:   Wed Mar 27 14:35:51 2019 -0700
     Change-Id: I68cc1d08f1999a8336684a05fe16e7ae51898866
     Signed-off-by: Matthew DeVore <matvore@gmail.com>
 ```
+
+## Tracking ported code
+
+Any code that is ported from jgit must:
+
+* Include, verbatim, the copyright notice at the top of the corresponding jgit file. (You may add yourself as an additional contributor.)
+* Include a note citing the path in the jgit repository of the file that has been ported.
