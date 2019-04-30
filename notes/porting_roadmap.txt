@@ -10,6 +10,15 @@ AddCommand
   ObjectInserter
   WorkingTreeIterator
 
+FileTreeIterator
+  AbstractTreeIterator
+  DirCache
+  DirCacheEditor
+  DirCacheIterator
+  EmptyTreeIterator
+  TreeWalk
+  WorkingTreeIterator
+
 WorkingTreeIterator ABSTRACT
   AbstractTreeIterator
   AutoLFInputStream
@@ -17,41 +26,74 @@ WorkingTreeIterator ABSTRACT
   DirCacheIterator
   Holder (not sure we need this)
   IgnoreNode
+  IMatcher
   LocalFile (part of TemporaryBuffer)
+  PathMatcher
   TemporaryBuffer
   WorkingTreeOptions
+
+PathMatcher
+  AbstractMatcher
+  LeadingAsteriskMatcher
+  NameMatcher
+  TrailingAsteriskMatcher
+  WildCardMatcher
+  WildMatcher
+  IMatcher
+
+LeadingAsteriskMatcher
+  NameMatcher
+
+TrailingAsteriskMatcher
+  NameMatcher
+
+WildCardMatcher
+  NameMatcher
+
+NameMatcher
+  AbstractMatcher
+
+WildMatcher
+  AbstractMatcher
+
+AbstractMatcher ABSTRACT
+  IMatcher
+
+IMatcher ABSTRACT (consider rolling these back into one module)
 
 IgnoreNode
   BufferedReader (Java)
   FastIgnoreRule
   FileTreeIterator
-  TreeWalk TRACE
-  WorkingTreeIterator TRACE
-
-FileTreeIterator
-  AbstractTreeIterator TRACE
-  DirCache TRACE
-  DirCacheEditor TRACE
-  DirCacheIterator TRACE
-  EmptyTreeIterator TRACE
-  TreeWalk TRACE
-  WorkingTreeIterator TRACE
-
-FastIgnoreRule
-  IMatcher TRACE
-  PathMatcher TRACE
+  TreeWalk
+  WorkingTreeIterator (dependency CYCLE)
 
 DirCacheIterator
   AbstractTreeIterator
-  AttributesNode TRACE
+  AttributesNode
   DirCache
   DirCacheBuilder
   DirCacheEntry
-  DirCacheTree TRACE
-  TreeWalk TRACE
+  DirCacheTree
+  TreeWalk
 
-AbstractTreeIterator
-  TreeWalk TRACE
+DirCacheTree
+  DirCache
+  DirCacheBuilder
+  DirCacheEntry
+  TreeFormatter TRACE
+
+AttributesNode
+  Attribute TRACE
+  Attributes TRACE
+  AttributesRule TRACE
+  BufferedReader TRACE
+  DirCacheIterator (CYCLE via test)
+  TreeWalk
+  WorkingTreeIterator (CYCLE via test)
+
+EmptyTreeIterator
+  AbstractTreeIterator
 
 ObjectInserter
   PackParser
@@ -75,29 +117,36 @@ NameConflictTreeWalk
   TreeWalk
 
 FileTreeIterator DO PARTIAL
-  AbstractTreeIterator TRACE
+  AbstractTreeIterator
   PathEdit DEFER?
-  TreeWalk TRACE
+  TreeWalk
 
 DirCacheBuildIterator
-  AbstractTreeIterator TRACE
+  AbstractTreeIterator
   DirCacheBuilder
   DirCacheIterator
 
 DirCacheBuilder
-  BaseDirCacheEditor TRACE
+  BaseDirCacheEditor
   CanonicalTreeParser TRACE
   DirCache
   DirCacheEntry
   IndexChangedListener TRACE
 
+DirCacheEditor
+  BaseDirCacheEditor
+
+BaseDirCacheEditor
+  DirCache CYCLE
+  DirCacheEntry TRACE
+
 DirCache
   DigestOutputStream TRACE
   DirCacheCGitCompatabilityTest DEFER?
   DirCacheCheckoutMaliciousPathTest
-  DirCacheEditor DEFER?
+  DirCacheEditor CYCLE
   DirCacheEntry
-  DirCacheTree TRACE
+  DirCacheTree CYCLE
   IndexChangedListener DEFER?
   LockFile TRACE
   MessageDigest TRACE (system?)
@@ -105,6 +154,22 @@ DirCache
   SilentFileInputStream TRACE
   TemporaryBuffer TRACE
   TreeWalk TRACE
+
+TreeWalk
+  AbstractTreeIterator CYCLE
+  Attributes TRACE
+  AttributesHandler TRACE
+  AttributesNodeProvider TRACE
+  AttributesProvider TRACE
+  CanonicalTreeParser TRACE
+  DirCacheIterator (CYCLE, used in test only, defer?)
+  FileTreeIterator (CYCLE, used in test only, defer?)
+  FilterCommandRegistry TRACE (DEFER?)
+  PathFilter TRACE
+  TreeFormatter TRACE
+
+AbstractTreeIterator
+  TreeWalk CYCLE
 
 DirCacheEntry
   ByteArrayOutputStream
