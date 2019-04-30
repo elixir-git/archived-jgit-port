@@ -1,33 +1,79 @@
-jgit porting dependency tree for getting `git init` up and running:
+jgit porting dependency tree for getting `git add` up and running:
 
-RepositoryTestCase PARTIALLY DONE
+AddCommand
+  DirCache
+  DirCacheBuilder
+  DirCacheBuildIterator
+  DirCacheEntry
+  FileTreeIterator
+  NameConflictTreeWalk
+  ObjectInserter
+  WorkingTreeIterator
 
-LocalDiskRepositoryTestCase PARTIALLY DONE
-
-WorkingTreeIterator DEFER
+WorkingTreeIterator ABSTRACT
   AbstractTreeIterator TRACE
-  AttributesNode TRACE
   AutoLFInputStream TRACE
-  DirCacheEntry TRACE
+  DirCacheEntry
   DirCacheIterator TRACE
-  Entry TRACE
+  Holder TRACE
   IgnoreNode TRACE
-  MetadataDiff TRACE
-  OperationType TRACE
-  Repository TRACE
-  TreeWalk TRACE
+  LocalFile TRACE
+  TemporaryBuffer TRACE
   WorkingTreeOptions TRACE
 
-FileRepository PARTIALLY DONE
+ObjectInserter
+  PackParser
 
-Repository PARTIALLY DONE
+PackParser
+  BatchingProgressMonitor TRACE
+  BlockList TRACE
+  Deflater DEFER?
+  ObjectDirectoryPackParser TRACE
+  ObjectIdOwnerMap TRACE
+  ObjectIdSubclassMap TRACE
+  PackedObjectInfo TRACE
+  ProgressMonitor TRACE
+  TemporaryBuffer TRACE
+  TestRepository TRACE
 
-ObjectDatabase + FileObjectDatabase + ObjectDirectory PARTIALLY DONE
+NameConflictTreeWalk
+  AbstractTreeIterator
+  DirCache
+  DirCacheBuilder
+  TreeWalk
 
-RefDirectory + RefDatabase PARTIALLY DONE
+FileTreeIterator DO PARTIAL
+  AbstractTreeIterator TRACE
+  PathEdit DEFER?
+  TreeWalk TRACE
 
-ObjectInserter DEFER
+DirCacheBuildIterator
+  AbstractTreeIterator TRACE
+  DirCacheBuilder
+  DirCacheIterator
 
-BitmapIndex DEFER PROTOCOL (plus descendants)
+DirCacheBuilder
+  BaseDirCacheEditor TRACE
+  CanonicalTreeParser TRACE
+  DirCache
+  DirCacheEntry
+  IndexChangedListener TRACE
 
-ObjectStream -> Enumerable
+DirCache
+  DigestOutputStream TRACE
+  DirCacheCGitCompatabilityTest DEFER?
+  DirCacheCheckoutMaliciousPathTest
+  DirCacheEditor DEFER?
+  DirCacheEntry
+  DirCacheTree TRACE
+  IndexChangedListener DEFER?
+  LockFile TRACE
+  MessageDigest TRACE (system?)
+  ObjectReader PARTIALLY DONE
+  SilentFileInputStream TRACE
+  TemporaryBuffer TRACE
+  TreeWalk TRACE
+
+DirCacheEntry
+  ByteArrayOutputStream
+  NB
