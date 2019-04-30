@@ -11,15 +11,47 @@ AddCommand
   WorkingTreeIterator
 
 WorkingTreeIterator ABSTRACT
-  AbstractTreeIterator TRACE
-  AutoLFInputStream TRACE
+  AbstractTreeIterator
+  AutoLFInputStream
   DirCacheEntry
+  DirCacheIterator
+  Holder (not sure we need this)
+  IgnoreNode
+  LocalFile (part of TemporaryBuffer)
+  TemporaryBuffer
+  WorkingTreeOptions
+
+IgnoreNode
+  BufferedReader (Java)
+  FastIgnoreRule
+  FileTreeIterator
+  TreeWalk TRACE
+  WorkingTreeIterator TRACE
+
+FileTreeIterator
+  AbstractTreeIterator TRACE
+  DirCache TRACE
+  DirCacheEditor TRACE
   DirCacheIterator TRACE
-  Holder TRACE
-  IgnoreNode TRACE
-  LocalFile TRACE
-  TemporaryBuffer TRACE
-  WorkingTreeOptions TRACE
+  EmptyTreeIterator TRACE
+  TreeWalk TRACE
+  WorkingTreeIterator TRACE
+
+FastIgnoreRule
+  IMatcher TRACE
+  PathMatcher TRACE
+
+DirCacheIterator
+  AbstractTreeIterator
+  AttributesNode TRACE
+  DirCache
+  DirCacheBuilder
+  DirCacheEntry
+  DirCacheTree TRACE
+  TreeWalk TRACE
+
+AbstractTreeIterator
+  TreeWalk TRACE
 
 ObjectInserter
   PackParser
@@ -77,3 +109,10 @@ DirCache
 DirCacheEntry
   ByteArrayOutputStream
   NB
+
+AutoLFInputStream
+  (none)
+
+TemporaryBuffer (includes LocalFile)
+
+WorkingTreeOptions
