@@ -81,16 +81,18 @@ DirCacheTree
   DirCache
   DirCacheBuilder
   DirCacheEntry
-  TreeFormatter TRACE
+  TreeFormatter
 
 AttributesNode
-  Attribute TRACE
-  Attributes TRACE
-  AttributesRule TRACE
-  BufferedReader TRACE
+  Attribute
+  Attributes
+  AttributesRule
+  BufferedReader
   DirCacheIterator (CYCLE via test)
   TreeWalk
   WorkingTreeIterator (CYCLE via test)
+
+BufferedReader (Java built-in, check for Elixir equivalent)
 
 EmptyTreeIterator
   AbstractTreeIterator
@@ -98,17 +100,179 @@ EmptyTreeIterator
 ObjectInserter
   PackParser
 
+ObjectDirectoryPackParser
+  CRC32 SYSTEM
+  Deflater
+  NB
+  PackedObjectInfo
+  PackFile
+  PackIndexWriter
+  PackLock
+  PackParser CYCLE
+  RandomAccessFile SYSTEM
+
+PackLock
+  (none)
+
+PackIndexWriterV2
+  NB
+  PackedObjectInfo
+  PackIndexWriter
+
+PackIndexWriterV1
+  NB
+  PackedObjectInfo
+  PackIndexWriter
+
+PackIndexWriter ABSTRACT
+  BufferedOutputStream SYSTEM
+  DigestOutputStream SYSTEM
+  PackedObjectInfo
+  PackIndexWriter
+  PackIndexWriterV1
+  PackIndexWriterV2
+
 PackParser
-  BatchingProgressMonitor TRACE
-  BlockList TRACE
-  Deflater DEFER?
-  ObjectDirectoryPackParser TRACE
-  ObjectIdOwnerMap TRACE
-  ObjectIdSubclassMap TRACE
-  PackedObjectInfo TRACE
+  BatchingProgressMonitor
+  BlockList
+  Deflater
+  ObjectDirectoryPackParser
+  ObjectIdOwnerMap
+  ObjectIdSubclassMap
+  PackedObjectInfo
+  ProgressMonitor
+  TemporaryBuffer
+  TestRepository
+
+ObjectIdSubclassMap
+  (none, may devolve to system map)
+
+PackFile
+  BinaryDelta
+  ByteArrayOutputStream
+  ByteArrayWindow
+  CRC32 SYSTEM
+  Deflater
+  DeltaBaseCache CYCLE
+  DeltaEncoder
+  LargePackedWholeObject
+  LocalObjectRepresentation
+  LocalObjectToPack
+  MessageDigest SYSTEM
+  ObjectInserter CYCLE (via test)
+  PackBitmapIndex
+  PackedObjectInfo
+  PackIndex
+  PackOutputStream
+  PackParser CYCLE via test
+  PackReverseIndex
+  RevBlob
+  TemporaryBuffer
+  TestRepository
+  TestRng
+  WindowCache
+  WindowCacheConfig TRACE
+  WindowCursor TRACE
+
+WindowCache
+  ByteWindow TRACE
+  PackFile TRACE
+  ReferenceQueue TRACE
+  WindowCacheConfig TRACE
+
+RevBlob
+  RevObject TRACE
+  RevWalk TRACE
+
+PackReverseIndex
+  MutableEntry TRACE
+  PackIndex
+
+PackOutputStream
+  MessageDigest SYSTEM
+  ObjectToPack
+  PackWriter TRACE
   ProgressMonitor TRACE
-  TemporaryBuffer TRACE
-  TestRepository TRACE
+
+PackIndex ABSTRACT
+  NB
+  PackIndexV1 TRACE
+  PackIndexV2 TRACE
+  SilentFileInputStream TRACE
+
+PackBitmapIndex ABSTRACT
+  EWAHCompressedBitmap DEFER?
+  PackBitmapIndexV1 TRACE
+  PackIndex
+  PackReverseIndex
+  SilentFileInputStream TRACE
+
+LocalObjectToPack
+  ObjectToPack TRACE
+  PackFile CYCLE
+
+LocalObjectRepresentation
+  StoredObjectRepresentation TRACE
+
+LargePackedWholeObject
+  FileObjectDatabase TRACE
+  InflaterInputStream TRACE
+  PackFile CYCLE
+  PackInputStream TRACE
+  WindowCursor TRACE
+
+DeltaEncoder
+  (none)
+
+DeltaBaseCache
+  PackFile CYCLE
+
+ByteArrayWindow
+  ByteWindow TRACE
+  Inflater TRACE
+  PackOutputStream
+
+BinaryDelta
+  (none)
+
+TestRepository
+  (plan to do this as a partial?)
+  CommitBuilder DEFER?
+  DirCache TRACE
+  DirCacheBuilder TRACE
+  DirCacheEntry TRACE
+  InMemoryRepository DEFER?
+  ObjectInserter TRACE
+  ObjectWalk DEFER?
+  PathEdit TRACE
+  RefUpdate TRACE
+  RefWriter TRACE
+  RevBlob TRACE
+  RevCommit TRACE
+  RevObject TRACE
+  RevTag DEFER?
+  RevWalk TRACE
+  TagBuilder DEFER?
+  ThreeWayMerger DEFER?
+  TreeWalk TRACE
+
+PackedObjectInfo
+  ObjectIdOwnerMap
+
+ObjectIdOwnerMap
+  (none, possibly devolves to system map)
+
+Deflater (Java built-in)
+
+BlockList
+  (none)
+
+BatchingProgressMonitor
+  ProgressMonitor TRACE
+  TimeUnit TRACE
+
+ProgressMonitor INTERFACE
+  (none)
 
 NameConflictTreeWalk
   AbstractTreeIterator
@@ -152,7 +316,7 @@ DirCache
   MessageDigest TRACE (system?)
   ObjectReader PARTIALLY DONE
   SilentFileInputStream TRACE
-  TemporaryBuffer TRACE
+  TemporaryBuffer
   TreeWalk TRACE
 
 TreeWalk
@@ -166,7 +330,28 @@ TreeWalk
   FileTreeIterator (CYCLE, used in test only, defer?)
   FilterCommandRegistry TRACE (DEFER?)
   PathFilter TRACE
-  TreeFormatter TRACE
+  TreeFormatter
+
+TreeFormatter
+  CanonicalTreeParser TRACE
+  ObjectInserter TRACE
+  TemporaryBuffer
+
+CanonicalTreeParser
+  AbstractTreeIterator
+  AttributesNode TRACE
+  AttributesRule
+  TreeFormatter CYCLE
+
+AttributesRule
+  Attribute
+  IMatcher
+
+Attributes
+  Attribute
+
+Attribute STRUCT
+  (none)
 
 AbstractTreeIterator
   TreeWalk CYCLE
@@ -181,3 +366,9 @@ AutoLFInputStream
 TemporaryBuffer (includes LocalFile)
 
 WorkingTreeOptions
+
+NB
+  (none)
+
+TestRng
+  (none)
