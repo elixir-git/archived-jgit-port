@@ -223,7 +223,7 @@ BitmapIndexImpl
   PackBitmapIndex
 
 InflatingBitSet
-  EWAHCompressedBitmap EXTERNAL
+  EWAHCompressedBitmap
 
 BitSet
   (none)
@@ -271,23 +271,27 @@ PackWriter
   PackConfig
   PackIndexWriter
   PackStatistics
-  ProgressMonitor TRACE
+  ProgressMonitor
   RevObject
 
 PackStatistics
-  CachedPack TRACE
+  CachedPack
 
 PackBitmapIndexWriterV1
-  DataOutput TRACE
-  DigestOutputStream TRACE
-  EWAHCompressedBitmap TRACE
+  DataOutput SYSTEM
+  DigestOutputStream SYSTEM
+  EWAHCompressedBitmap
   PackBitmapIndexBuilder
-  SimpleDataOutput TRACE
+  SimpleDataOutput
+
+SimpleDataOutput
+  DataOutput SYSTEM
+  NB
 
 PackBitmapIndexBuilder
   BasePackBitmapIndex TRACE
   BlockList TRACE
-  EWAHCompressedBitmap TRACE
+  EWAHCompressedBitmap
   ObjectIdOwnerMap TRACE
   ObjectToPack TRACE
   StoredBitmap TRACE
@@ -308,11 +312,13 @@ PackIndex ABSTRACT
   SilentFileInputStream TRACE
 
 PackBitmapIndex ABSTRACT
-  EWAHCompressedBitmap DEFER?
+  EWAHCompressedBitmap
   PackBitmapIndexV1 TRACE
   PackIndex
   PackReverseIndex
   SilentFileInputStream TRACE
+
+EWAHCompressedBitmap EXTERNAL (GoogleCode)
 
 LocalObjectToPack
   ObjectToPack TRACE
@@ -456,7 +462,7 @@ BaseDirCacheEditor
   DirCacheEntry TRACE
 
 DirCache
-  DigestOutputStream TRACE
+  DigestOutputStream SYSTEM
   DirCacheCGitCompatabilityTest DEFER?
   DirCacheCheckoutMaliciousPathTest
   DirCacheEditor CYCLE
