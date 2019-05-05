@@ -98,7 +98,10 @@ EmptyTreeIterator
   AbstractTreeIterator
 
 ObjectInserter
+  CommitBuilder DEFER?
   PackParser
+  TagBuilder DEFER?
+  TreeFormatter
 
 ObjectDirectoryPackParser
   CRC32 SYSTEM
@@ -171,28 +174,132 @@ PackFile
   TestRepository
   TestRng
   WindowCache
-  WindowCacheConfig TRACE
-  WindowCursor TRACE
+  WindowCacheConfig
+  WindowCursor
+
+WindowCursor
+  BitmapIndex
+  ByteArrayWindow
+  ByteWindow
+  CachedPack
+  DeltaBaseCache
+  FileObjectDatabase
+  Inflater SYSTEM
+  InflaterCache
+  LocalCachedPack
+  LocalObjectToPack
+  ObjectInserter
+  ObjectReuseAsIs
+  PackBitmapIndex
+  ProgressMonitor
+
+ObjectReuseAsIs INTERFACE
+  BitmapBuilder
+  CachedPack
+  ObjectToPack
+  PackOutputStream
+  PackWriter
+  ProgressMonitor
+
+LocalCachedPack
+  CachedPack
+  ObjectDirectory
+
+ObjectDirectory PARTIALLY DONE
+
+InflaterCache
+  Inflater SYSTEM
+
+CachedPack ABSTRACT
+  ObjectToPack
+  StoredObjectRepresentation
+
+BitmapIndexImpl
+  BitmapBuilder
+  BitmapIndex
+  BitmapObject
+  BitSet
+  InflatingBitSet
+  PackBitmapIndex
+
+InflatingBitSet
+  EWAHCompressedBitmap EXTERNAL
+
+BitSet
+  (none)
+
+BitmapIndex
+  Bitmap (internal)
+  BitmapBuilder (internal)
+  BitmapObject
+
+BitmapObject ABSTRACT
+  (none)
+
+WindowCacheConfig
+  PackConfig
+  WindowCache
 
 WindowCache
-  ByteWindow TRACE
-  PackFile TRACE
-  ReferenceQueue TRACE
-  WindowCacheConfig TRACE
+  ByteWindow
+  PackFile
+  WindowCacheConfig
 
 RevBlob
-  RevObject TRACE
-  RevWalk TRACE
+  RevObject
+  RevWalk
 
 PackReverseIndex
-  MutableEntry TRACE
   PackIndex
 
 PackOutputStream
   MessageDigest SYSTEM
   ObjectToPack
-  PackWriter TRACE
+  PackWriter
+  ProgressMonitor
+
+PackWriter
+  BitmapBuilder
+  BlockList
+  Deflater SYSTEM
+  FilterSpec
+  ObjectCountCallback
+  ObjectIdOwnerMap
+  ObjectToPack
+  PackBitmapIndexBuilder
+  PackBitmapIndexWriterV1
+  PackConfig
+  PackIndexWriter
+  PackStatistics
   ProgressMonitor TRACE
+  RevObject
+
+PackStatistics
+  CachedPack TRACE
+
+PackBitmapIndexWriterV1
+  DataOutput TRACE
+  DigestOutputStream TRACE
+  EWAHCompressedBitmap TRACE
+  PackBitmapIndexBuilder
+  SimpleDataOutput TRACE
+
+PackBitmapIndexBuilder
+  BasePackBitmapIndex TRACE
+  BlockList TRACE
+  EWAHCompressedBitmap TRACE
+  ObjectIdOwnerMap TRACE
+  ObjectToPack TRACE
+  StoredBitmap TRACE
+
+ObjectCountCallback ABSTRACT
+  (none)
+
+FilterSpec
+  (none)
+
+PackConfig
+  (none)
 
 PackIndex ABSTRACT
   NB
@@ -211,15 +318,28 @@ LocalObjectToPack
   ObjectToPack TRACE
   PackFile CYCLE
 
+ObjectToPack
+  DeltaCache TRACE
+  PackedObjectInfo TRACE
+  StoredObjectRepresentation
+
 LocalObjectRepresentation
-  StoredObjectRepresentation TRACE
+  StoredObjectRepresentation
+
+StoredObjectRepresentation
+  (none)
 
 LargePackedWholeObject
-  FileObjectDatabase TRACE
+  FileObjectDatabase
   InflaterInputStream TRACE
   PackFile CYCLE
   PackInputStream TRACE
-  WindowCursor TRACE
+  WindowCursor
+
+FileObjectDatabase ABSTRACT
+  InsertLooseObjectResult TRACE
+  ObjectDirectoryInserter TRACE
+  PackFile CYCLE
 
 DeltaEncoder
   (none)
@@ -228,8 +348,14 @@ DeltaBaseCache
   PackFile CYCLE
 
 ByteArrayWindow
-  ByteWindow TRACE
-  Inflater TRACE
+  ByteWindow
+  Inflater SYSTEM
+  PackFile
+  PackOutputStream
+
+ByteWindow ABSTRACT
+  Inflater SYSTEM
+  PackFile
   PackOutputStream
 
 BinaryDelta
@@ -242,19 +368,44 @@ TestRepository
   DirCacheBuilder TRACE
   DirCacheEntry TRACE
   InMemoryRepository DEFER?
-  ObjectInserter TRACE
-  ObjectWalk DEFER?
+  ObjectInserter
   PathEdit TRACE
   RefUpdate TRACE
   RefWriter TRACE
   RevBlob TRACE
-  RevCommit TRACE
-  RevObject TRACE
+  RevObject
   RevTag DEFER?
-  RevWalk TRACE
+  RevWalk
   TagBuilder DEFER?
   ThreeWayMerger DEFER?
   TreeWalk TRACE
+
+RevObject ABSTRACT
+  RevFlag TRACE
+  RevFlagSet TRACE
+  RevWalk
+
+RevWalk
+  (watch for multiple test case files, including RevWalkTestCase)
+  AbstractRevQueue TRACE
+  CommitBuilder DEFER?
+  DateRevQueue TRACE
+  DirCacheEntry
+  FIFORevQueue TRACE
+  ObjectIdOwnerMap
+  ObjectWalk TRACE
+  RevBlob
+  RevCommit TRACE
+  RevFilter TRACE
+  RevFlag TRACE
+  RevFlagSet TRACE
+  RevObject
+  RevSort DEFER?
+  RevTag DEFER?
+  RevTree
+  StartGenerator TRACE
+  TestRepository
+  TreeFilter TRACE
 
 PackedObjectInfo
   ObjectIdOwnerMap
@@ -268,7 +419,7 @@ BlockList
   (none)
 
 BatchingProgressMonitor
-  ProgressMonitor TRACE
+  ProgressMonitor
   TimeUnit TRACE
 
 ProgressMonitor INTERFACE
@@ -334,7 +485,7 @@ TreeWalk
 
 TreeFormatter
   CanonicalTreeParser TRACE
-  ObjectInserter TRACE
+  ObjectInserter
   TemporaryBuffer
 
 CanonicalTreeParser
