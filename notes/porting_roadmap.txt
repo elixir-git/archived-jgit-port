@@ -703,24 +703,34 @@ TreeWalk
   AbstractTreeIterator CYCLE
   Attributes
   AttributesHandler
-  AttributesNodeProvider TRACE
-  AttributesProvider TRACE
+  AttributesNodeProvider
+  AttributesProvider
   CanonicalTreeParser
   DirCacheIterator (CYCLE, used in test only, defer?)
   FileTreeIterator (CYCLE, used in test only, defer?)
-  FilterCommandRegistry TRACE (DEFER?)
-  PathFilter TRACE
+  FilterCommandRegistry DEFER?
+  PathFilter
   TreeFormatter
+
+PathFilter
+  TreeFilter
+  TreeWalk
 
 AttributesHandler
   Attribute
   AttributesNode
-  AttributesNodeProvider TRACE
-  AttributesRule TRACE
-  CanonicalTreeParser TRACE
-  DirCacheIterator TRACE
+  AttributesNodeProvider
+  AttributesRule
+  CanonicalTreeParser
+  DirCacheIterator
   TreeWalk
-  WorkingTreeIterator TRACE
+  WorkingTreeIterator
+
+AttributesNodeProvider INTERFACE
+  AttributesNode
+
+AttributesProvider INTERFACE
+  Attributes
 
 TreeFormatter
   CanonicalTreeParser
