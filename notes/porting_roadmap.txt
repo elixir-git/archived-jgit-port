@@ -289,12 +289,19 @@ SimpleDataOutput
   NB
 
 PackBitmapIndexBuilder
-  BasePackBitmapIndex TRACE
-  BlockList TRACE
+  BasePackBitmapIndex
+  BlockList
   EWAHCompressedBitmap
-  ObjectIdOwnerMap TRACE
-  ObjectToPack TRACE
-  StoredBitmap TRACE
+  ObjectIdOwnerMap
+  ObjectToPack
+  StoredBitmap
+
+BasePackBitmapIndex ABSTRACT
+  EWAHCompressedBitmap
+  ObjectIdOwnerMap
+  PackBitmapIndex
+  StoredBitmap (part of BasePackBitmapIndex)
+
 
 ObjectCountCallback ABSTRACT
   (none)
@@ -307,27 +314,58 @@ PackConfig
 
 PackIndex ABSTRACT
   NB
-  PackIndexV1 TRACE
-  PackIndexV2 TRACE
-  SilentFileInputStream TRACE
+  PackIndexV1
+  PackIndexV2
+  SilentFileInputStream
+
+SilentFileInputStream (may not need this)
+
+PackIndexV2
+  NB
+  PackIndexTestCase
+
+PackIndexV1
+  NB
+  PackIndexTestCase
+
+PackIndexTestCase
+  PackIndex
 
 PackBitmapIndex ABSTRACT
   EWAHCompressedBitmap
-  PackBitmapIndexV1 TRACE
+  PackBitmapIndexV1
   PackIndex
   PackReverseIndex
-  SilentFileInputStream TRACE
+  SilentFileInputStream
+
+PackBitmapIndexV1
+  BasePackBitmapIndex
+  EWAHCompressedBitmap
+  NB
+  ObjectIdOwnerMap
+  PackIndex
+  PackReverseIndex
+  SimpleDataInput
+  StoredBitmap
+
+SimpleDataInput
+  DataInput SYSTEM
 
 EWAHCompressedBitmap EXTERNAL (GoogleCode)
 
 LocalObjectToPack
-  ObjectToPack TRACE
+  ObjectToPack
   PackFile CYCLE
 
 ObjectToPack
-  DeltaCache TRACE
+  DeltaCache
   PackedObjectInfo TRACE
   StoredObjectRepresentation
+
+DeltaCache
+  ObjectToPack
+  PackConfig TRACE
+  ReferenceQueue TRACE
 
 LocalObjectRepresentation
   StoredObjectRepresentation
