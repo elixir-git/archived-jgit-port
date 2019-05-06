@@ -1,4 +1,4 @@
-jgit porting dependency tree for getting `git add` up and running:
+TRAjgit porting dependency tree for getting `git add` up and running:
 
 AddCommand
   DirCache
@@ -359,13 +359,13 @@ LocalObjectToPack
 
 ObjectToPack
   DeltaCache
-  PackedObjectInfo TRACE
+  PackedObjectInfo
   StoredObjectRepresentation
 
 DeltaCache
   ObjectToPack
-  PackConfig TRACE
-  ReferenceQueue TRACE
+  PackConfig
+  ReferenceQueue SYSTEM
 
 LocalObjectRepresentation
   StoredObjectRepresentation
@@ -375,15 +375,36 @@ StoredObjectRepresentation
 
 LargePackedWholeObject
   FileObjectDatabase
-  InflaterInputStream TRACE
+  InflaterInputStream SYSTEM
   PackFile CYCLE
-  PackInputStream TRACE
+  PackInputStream
+  WindowCursor
+
+PackInputStream
+  PackFile
   WindowCursor
 
 FileObjectDatabase ABSTRACT
-  InsertLooseObjectResult TRACE
-  ObjectDirectoryInserter TRACE
+  ObjectDirectoryInserter
   PackFile CYCLE
+
+ObjectDirectoryInserter
+  Deflater SYSTEM
+  DeflaterOutputStream SYSTEM
+  FileObjectDatabase
+  FileOutputStream SYSTEM
+  FileUtils
+  PackParser
+  WriteConfig
+
+WriteConfig
+  (none)
+
+FileUtils
+  JGitTestUtil
+
+JGitTestUtil
+  (none)
 
 DeltaEncoder
   (none)
@@ -408,41 +429,104 @@ BinaryDelta
 TestRepository
   (plan to do this as a partial?)
   CommitBuilder DEFER?
-  DirCache TRACE
-  DirCacheBuilder TRACE
-  DirCacheEntry TRACE
+  DirCache
+  DirCacheBuilder
+  DirCacheEntry
   InMemoryRepository DEFER?
   ObjectInserter
-  PathEdit TRACE
-  RefUpdate TRACE
-  RefWriter TRACE
-  RevBlob TRACE
+  PathEdit (part of DirCacheEditor)
+  RefUpdate
+  RefWriter
+  RevBlob
   RevObject
   RevTag DEFER?
   RevWalk
   TagBuilder DEFER?
   ThreeWayMerger DEFER?
-  TreeWalk TRACE
+  TreeWalk
+
+RefWriter ABSTRACT
+  (none)
+
+RefUpdate ABSTRACT
+  LockFile
+  ObjectInserter
+  PushCertificate
+  RefDirectory
+  RefDirectoryUpdate DEFER?
+  ReflogEntry
+  ReflogReader
+  RefRename
+  RevCommit
+  RevObject
+  RevWalk
+  SampleDataRepositoryTestCase
+
+RefRename ABSTRACT
+  RefUpdate CYCLE
+
+ReflogReader INTERFACE + ReflogReaderImpl
+  CheckoutEntry
+  ReflogEntry
+  SampleDataRepositoryTestCase
+
+CheckoutEntry INTERFACE
+  (none)
+
+SampleDataRepositoryTestCase
+  (none)
+
+ReflogEntry INTERFACE
+  CheckoutEntry
+
+RefDirectory PARTIALLY DONE
+  LooseRef DEFER?
+  PackedBatchRefUpdate DEFER?
+  PackedRefList DEFER?
+  RefDirectoryRename DEFER?
+  RefDirectoryUpdate DEFER?
+  RefList
+  RefMap
+  RevCommit
+  RevTag
+  TestRepository
+
+RefMap
+  RefList
+
+RefList
+  (none)
+
+PushCertificate
+  PushCertificateIdent
+  ReceiveCommand
+
+ReceiveCommand
+  RefUpdate
+  RevObject
+
+PushCertificateIdent
+  (none)
 
 RevObject ABSTRACT
-  RevFlag TRACE
-  RevFlagSet TRACE
+  RevFlag
+  RevFlagSet
   RevWalk
 
 RevWalk
   (watch for multiple test case files, including RevWalkTestCase)
-  AbstractRevQueue TRACE
+  AbstractRevQueue
   CommitBuilder DEFER?
-  DateRevQueue TRACE
+  DateRevQueue
   DirCacheEntry
-  FIFORevQueue TRACE
+  FIFORevQueue
   ObjectIdOwnerMap
   ObjectWalk TRACE
   RevBlob
   RevCommit TRACE
   RevFilter TRACE
-  RevFlag TRACE
-  RevFlagSet TRACE
+  RevFlag
+  RevFlagSet
   RevObject
   RevSort DEFER?
   RevTag DEFER?
@@ -450,6 +534,27 @@ RevWalk
   StartGenerator TRACE
   TestRepository
   TreeFilter TRACE
+
+FIFORevQueue
+  Block TRACE
+  BlockRevQueue TRACE
+  RevCommit TRACE
+  RevQueueTestCase TRACE
+
+DateRevQueue
+  RevCommit TRACE
+  RevQueueTestCase TRACE
+
+AbstractRevQueue
+  RevCommit TRACE
+  RevFlag
+
+RevFlagSet
+  RevFlag
+  RevWalkTestCase TRACE
+
+RevFlag
+  RevWalk TRACE
 
 PackedObjectInfo
   ObjectIdOwnerMap
@@ -477,7 +582,7 @@ NameConflictTreeWalk
 
 FileTreeIterator DO PARTIAL
   AbstractTreeIterator
-  PathEdit DEFER?
+  PathEdit (part of DirCacheEditor)
   TreeWalk
 
 DirCacheBuildIterator
@@ -492,12 +597,12 @@ DirCacheBuilder
   DirCacheEntry
   IndexChangedListener TRACE
 
-DirCacheEditor
+DirCacheEditor (part of DirCacheEditor)
   BaseDirCacheEditor
 
 BaseDirCacheEditor
   DirCache CYCLE
-  DirCacheEntry TRACE
+  DirCacheEntry
 
 DirCache
   DigestOutputStream SYSTEM
@@ -507,12 +612,15 @@ DirCache
   DirCacheEntry
   DirCacheTree CYCLE
   IndexChangedListener DEFER?
-  LockFile TRACE
+  LockFile
   MessageDigest TRACE (system?)
   ObjectReader PARTIALLY DONE
   SilentFileInputStream TRACE
   TemporaryBuffer
-  TreeWalk TRACE
+  TreeWalk
+
+LockFile
+  FileUtils
 
 TreeWalk
   AbstractTreeIterator CYCLE
