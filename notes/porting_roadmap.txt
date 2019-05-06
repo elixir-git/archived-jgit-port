@@ -1,4 +1,4 @@
-TRAjgit porting dependency tree for getting `git add` up and running:
+jgit porting dependency tree for getting `git add` up and running:
 
 AddCommand
   DirCache
@@ -521,46 +521,114 @@ RevWalk
   DirCacheEntry
   FIFORevQueue
   ObjectIdOwnerMap
-  ObjectWalk TRACE
+  ObjectWalk
   RevBlob
-  RevCommit TRACE
-  RevFilter TRACE
+  RevCommit
+  RevFilter
   RevFlag
   RevFlagSet
   RevObject
-  RevSort DEFER?
   RevTag DEFER?
   RevTree
-  StartGenerator TRACE
+  StartGenerator
   TestRepository
-  TreeFilter TRACE
+  TreeFilter
 
-ObjectWalk (partially traced)
-  RevBlob TRACE
-  RevCommit TRACE
-  RevTree TRACE
-  RevWalkTestCase TRACE
+TreeFilter
+  EmptyTreeIterator
+  NotTreeFilter
+  TreeWalk
+
+NotTreeFilter
+  TreeFilter
+  TreeWalk
+
+EmptyTreeIterator
+  AbstractTreeIterator
+
+AbstractTreeIterator
+  AttributesNode
+  EmptyTreeIterator
+  WorkingTreeIterator
+
+StartGenerator DEFER?
+
+RevFilter ABSTRACT
+  RevCommit
+  RevWalk
+
+
+ObjectWalk
+  BlockObjQueue
+  Commit
+  ObjectFilter
+  ObjectInserter
+  RevBlob
+  RevCommit
+  RevFlag
+  RevObject
+  RevTree
+  RevWalk
+  RevWalkTestCase
+  TreeFormatter
+
+ObjectFilter ABSTRACT
+  (none)
+
+BlockObjQueue
+  RevObject
 
 FIFORevQueue
-  Block TRACE
-  BlockRevQueue TRACE
-  RevCommit TRACE
-  RevQueueTestCase TRACE
+  BlockRevQueue
+  RevCommit
+  RevQueueTestCase
+
+BlockRevQueue
+  AbstractRevQueue
+  RevCommit
 
 DateRevQueue
-  RevCommit TRACE
-  RevQueueTestCase TRACE
+  RevCommit
+  RevQueueTestCase
+
+RevQueueTestCase
+  RevCommit
+  RevWalkTestCase
 
 AbstractRevQueue
-  RevCommit TRACE
+  RevCommit
   RevFlag
+
+RevCommit
+  FIFORevQueue
+  FooterKey
+  FooterLine
+  RevCommitParseTest
+  RevObject
+  RevTree
+  RevWalk
+
+RevTree
+  RevObject
+  RevWalk
+
+FooterLine
+  FooterKey
+  RevCommit
+
+FooterKey
+  (none)
+
+RevCommitParseTest
+  RevCommit
+  RevWalk
 
 RevFlagSet
   RevFlag
-  RevWalkTestCase TRACE
+  RevWalkTestCase
 
 RevFlag
-  RevWalk TRACE
+  RevWalk
 
 PackedObjectInfo
   ObjectIdOwnerMap
@@ -575,7 +643,7 @@ BlockList
 
 BatchingProgressMonitor
   ProgressMonitor
-  TimeUnit TRACE
+  TimeUnit SYSTEM
 
 ProgressMonitor INTERFACE
   (none)
@@ -598,10 +666,10 @@ DirCacheBuildIterator
 
 DirCacheBuilder
   BaseDirCacheEditor
-  CanonicalTreeParser TRACE
+  CanonicalTreeParser
   DirCache
   DirCacheEntry
-  IndexChangedListener TRACE
+  IndexChangedListener
 
 DirCacheEditor (part of DirCacheEditor)
   BaseDirCacheEditor
@@ -617,38 +685,51 @@ DirCache
   DirCacheEditor CYCLE
   DirCacheEntry
   DirCacheTree CYCLE
-  IndexChangedListener DEFER?
+  IndexChangedListener
   LockFile
-  MessageDigest TRACE (system?)
+  MessageDigest SYSTEM
   ObjectReader PARTIALLY DONE
-  SilentFileInputStream TRACE
+  SilentFileInputStream
   TemporaryBuffer
   TreeWalk
+
+IndexChangedListener
+  (need to think through internal eventing strategy)
 
 LockFile
   FileUtils
 
 TreeWalk
   AbstractTreeIterator CYCLE
-  Attributes TRACE
-  AttributesHandler TRACE
+  Attributes
+  AttributesHandler
   AttributesNodeProvider TRACE
   AttributesProvider TRACE
-  CanonicalTreeParser TRACE
+  CanonicalTreeParser
   DirCacheIterator (CYCLE, used in test only, defer?)
   FileTreeIterator (CYCLE, used in test only, defer?)
   FilterCommandRegistry TRACE (DEFER?)
   PathFilter TRACE
   TreeFormatter
 
-TreeFormatter
+AttributesHandler
+  Attribute
+  AttributesNode
+  AttributesNodeProvider TRACE
+  AttributesRule TRACE
   CanonicalTreeParser TRACE
+  DirCacheIterator TRACE
+  TreeWalk
+  WorkingTreeIterator TRACE
+
+TreeFormatter
+  CanonicalTreeParser
   ObjectInserter
   TemporaryBuffer
 
 CanonicalTreeParser
   AbstractTreeIterator
-  AttributesNode TRACE
+  AttributesNode
   AttributesRule
   TreeFormatter CYCLE
 
