@@ -535,6 +535,12 @@ RevWalk
   TestRepository
   TreeFilter TRACE
 
+ObjectWalk (partially traced)
+  RevBlob TRACE
+  RevCommit TRACE
+  RevTree TRACE
+  RevWalkTestCase TRACE
+
 FIFORevQueue
   Block TRACE
   BlockRevQueue TRACE
