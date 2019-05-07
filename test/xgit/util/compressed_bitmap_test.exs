@@ -122,6 +122,36 @@ defmodule Xgit.Util.CompressedBitmapTest do
     end
   end
 
+  describe "delete/2" do
+    test "valid case" do
+      cb =
+        [1, 2, 3, 5]
+        |> CompressedBitmap.new()
+        |> CompressedBitmap.delete(3)
+
+      assert Enum.to_list(cb) == [1, 2, 5]
+    end
+
+    test "no-op case (value doesn't exist)" do
+      cb =
+        [1, 2, 3, 5]
+        |> CompressedBitmap.new()
+        |> CompressedBitmap.delete(4)
+
+      assert Enum.to_list(cb) == [1, 2, 3, 5]
+    end
+
+    test "rejects illegal values" do
+      cb = CompressedBitmap.new([1, 2, 3, 5])
+
+      for value <- @illegal_values do
+        assert_raise FunctionClauseError, fn ->
+          CompressedBitmap.delete(cb, value)
+        end
+      end
+    end
+  end
+
   describe "equality tests" do
     test "happy path after equivalent puts" do
       cb1 = CompressedBitmap.new([100, 101])

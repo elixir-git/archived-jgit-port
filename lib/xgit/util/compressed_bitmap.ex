@@ -80,6 +80,12 @@ defmodule Xgit.Util.CompressedBitmap do
     do: %{bitmap | mapset: MapSet.put(mapset, value)}
 
   @doc """
+  Removes `value` from `bitmap` if `bitmap` already contains it. (No-op otherwise.)
+  """
+  def delete(%__MODULE__{mapset: mapset} = bitmap, value) when is_integer(value) and value >= 0,
+    do: %{bitmap | mapset: MapSet.delete(mapset, value)}
+
+  @doc """
   Returns the bitwise OR of the two bitmaps.
   """
   def union(%__MODULE__{mapset: mapset1}, %__MODULE__{mapset: mapset2}),
