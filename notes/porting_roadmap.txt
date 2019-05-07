@@ -1,33 +1,774 @@
-jgit porting dependency tree for getting `git init` up and running:
+jgit porting dependency tree for getting `git add` up and running:
 
-RepositoryTestCase PARTIALLY DONE
+AddCommand
+  DirCache
+  DirCacheBuilder
+  DirCacheBuildIterator
+  DirCacheEntry
+  FileTreeIterator
+  NameConflictTreeWalk
+  ObjectInserter
+  WorkingTreeIterator
 
-LocalDiskRepositoryTestCase PARTIALLY DONE
+FileTreeIterator
+  AbstractTreeIterator
+  DirCache
+  DirCacheEditor
+  DirCacheIterator
+  EmptyTreeIterator
+  TreeWalk
+  WorkingTreeIterator
 
-WorkingTreeIterator DEFER
-  AbstractTreeIterator TRACE
-  AttributesNode TRACE
-  AutoLFInputStream TRACE
-  DirCacheEntry TRACE
-  DirCacheIterator TRACE
-  Entry TRACE
-  IgnoreNode TRACE
-  MetadataDiff TRACE
-  OperationType TRACE
-  Repository TRACE
-  TreeWalk TRACE
-  WorkingTreeOptions TRACE
+WorkingTreeIterator ABSTRACT
+  AbstractTreeIterator
+  AutoLFInputStream
+  DirCacheEntry
+  DirCacheIterator
+  Holder (not sure we need this)
+  IgnoreNode
+  IMatcher
+  LocalFile (part of TemporaryBuffer)
+  PathMatcher
+  TemporaryBuffer
+  WorkingTreeOptions
 
-FileRepository PARTIALLY DONE
+PathMatcher
+  AbstractMatcher
+  LeadingAsteriskMatcher
+  NameMatcher
+  TrailingAsteriskMatcher
+  WildCardMatcher
+  WildMatcher
+  IMatcher
 
-Repository PARTIALLY DONE
+LeadingAsteriskMatcher
+  NameMatcher
 
-ObjectDatabase + FileObjectDatabase + ObjectDirectory PARTIALLY DONE
+TrailingAsteriskMatcher
+  NameMatcher
 
-RefDirectory + RefDatabase PARTIALLY DONE
+WildCardMatcher
+  NameMatcher
 
-ObjectInserter DEFER
+NameMatcher
+  AbstractMatcher
 
-BitmapIndex DEFER PROTOCOL (plus descendants)
+WildMatcher
+  AbstractMatcher
 
-ObjectStream -> Enumerable
+AbstractMatcher ABSTRACT
+  IMatcher
+
+IMatcher ABSTRACT (consider rolling these back into one module)
+
+IgnoreNode
+  BufferedReader (Java)
+  FastIgnoreRule
+  FileTreeIterator
+  TreeWalk
+  WorkingTreeIterator (dependency CYCLE)
+
+DirCacheIterator
+  AbstractTreeIterator
+  AttributesNode
+  DirCache
+  DirCacheBuilder
+  DirCacheEntry
+  DirCacheTree
+  TreeWalk
+
+DirCacheTree
+  DirCache
+  DirCacheBuilder
+  DirCacheEntry
+  TreeFormatter
+
+AttributesNode
+  Attribute
+  Attributes
+  AttributesRule
+  BufferedReader
+  DirCacheIterator (CYCLE via test)
+  TreeWalk
+  WorkingTreeIterator (CYCLE via test)
+
+BufferedReader (Java built-in, check for Elixir equivalent)
+
+EmptyTreeIterator
+  AbstractTreeIterator
+
+ObjectInserter
+  CommitBuilder DEFER?
+  PackParser
+  TagBuilder DEFER?
+  TreeFormatter
+
+ObjectDirectoryPackParser
+  CRC32 SYSTEM
+  Deflater
+  NB
+  PackedObjectInfo
+  PackFile
+  PackIndexWriter
+  PackLock
+  PackParser CYCLE
+  RandomAccessFile SYSTEM
+
+PackLock
+  (none)
+
+PackIndexWriterV2
+  NB
+  PackedObjectInfo
+  PackIndexWriter
+
+PackIndexWriterV1
+  NB
+  PackedObjectInfo
+  PackIndexWriter
+
+PackIndexWriter ABSTRACT
+  BufferedOutputStream SYSTEM
+  DigestOutputStream SYSTEM
+  PackedObjectInfo
+  PackIndexWriter
+  PackIndexWriterV1
+  PackIndexWriterV2
+
+PackParser
+  BatchingProgressMonitor
+  BlockList
+  Deflater
+  ObjectDirectoryPackParser
+  ObjectIdOwnerMap
+  ObjectIdSubclassMap
+  PackedObjectInfo
+  ProgressMonitor
+  TemporaryBuffer
+  TestRepository
+
+ObjectIdSubclassMap
+  (none, may devolve to system map)
+
+PackFile
+  BinaryDelta
+  ByteArrayOutputStream
+  ByteArrayWindow
+  CRC32 SYSTEM
+  Deflater
+  DeltaBaseCache CYCLE
+  DeltaEncoder
+  LargePackedWholeObject
+  LocalObjectRepresentation
+  LocalObjectToPack
+  MessageDigest SYSTEM
+  ObjectInserter CYCLE (via test)
+  PackBitmapIndex
+  PackedObjectInfo
+  PackIndex
+  PackOutputStream
+  PackParser CYCLE via test
+  PackReverseIndex
+  RevBlob
+  TemporaryBuffer
+  TestRepository
+  TestRng
+  WindowCache
+  WindowCacheConfig
+  WindowCursor
+
+WindowCursor
+  BitmapIndex
+  ByteArrayWindow
+  ByteWindow
+  CachedPack
+  DeltaBaseCache
+  FileObjectDatabase
+  Inflater SYSTEM
+  InflaterCache
+  LocalCachedPack
+  LocalObjectToPack
+  ObjectInserter
+  ObjectReuseAsIs
+  PackBitmapIndex
+  ProgressMonitor
+
+ObjectReuseAsIs INTERFACE
+  BitmapBuilder
+  CachedPack
+  ObjectToPack
+  PackOutputStream
+  PackWriter
+  ProgressMonitor
+
+LocalCachedPack
+  CachedPack
+  ObjectDirectory
+
+ObjectDirectory PARTIALLY DONE
+
+InflaterCache
+  Inflater SYSTEM
+
+CachedPack ABSTRACT
+  ObjectToPack
+  StoredObjectRepresentation
+
+BitmapIndexImpl
+  BitmapBuilder
+  BitmapIndex
+  BitmapObject
+  BitSet
+  InflatingBitSet
+  PackBitmapIndex
+
+InflatingBitSet
+  EWAHCompressedBitmap
+
+BitSet
+  (none)
+
+BitmapIndex
+  Bitmap (internal)
+  BitmapBuilder (internal)
+  BitmapObject
+
+BitmapObject ABSTRACT
+  (none)
+
+WindowCacheConfig
+  PackConfig
+  WindowCache
+
+WindowCache
+  ByteWindow
+  PackFile
+  WindowCacheConfig
+
+RevBlob
+  RevObject
+  RevWalk
+
+PackReverseIndex
+  PackIndex
+
+PackOutputStream
+  MessageDigest SYSTEM
+  ObjectToPack
+  PackWriter
+  ProgressMonitor
+
+PackWriter
+  BitmapBuilder
+  BlockList
+  Deflater SYSTEM
+  FilterSpec
+  ObjectCountCallback
+  ObjectIdOwnerMap
+  ObjectToPack
+  PackBitmapIndexBuilder
+  PackBitmapIndexWriterV1
+  PackConfig
+  PackIndexWriter
+  PackStatistics
+  ProgressMonitor
+  RevObject
+
+PackStatistics
+  CachedPack
+
+PackBitmapIndexWriterV1
+  DataOutput SYSTEM
+  DigestOutputStream SYSTEM
+  EWAHCompressedBitmap
+  PackBitmapIndexBuilder
+  SimpleDataOutput
+
+SimpleDataOutput
+  DataOutput SYSTEM
+  NB
+
+PackBitmapIndexBuilder
+  BasePackBitmapIndex
+  BlockList
+  EWAHCompressedBitmap
+  ObjectIdOwnerMap
+  ObjectToPack
+  StoredBitmap
+
+BasePackBitmapIndex ABSTRACT
+  EWAHCompressedBitmap
+  ObjectIdOwnerMap
+  PackBitmapIndex
+  StoredBitmap (part of BasePackBitmapIndex)
+
+
+ObjectCountCallback ABSTRACT
+  (none)
+
+FilterSpec
+  (none)
+
+PackConfig
+  (none)
+
+PackIndex ABSTRACT
+  NB
+  PackIndexV1
+  PackIndexV2
+  SilentFileInputStream
+
+SilentFileInputStream (may not need this)
+
+PackIndexV2
+  NB
+  PackIndexTestCase
+
+PackIndexV1
+  NB
+  PackIndexTestCase
+
+PackIndexTestCase
+  PackIndex
+
+PackBitmapIndex ABSTRACT
+  EWAHCompressedBitmap
+  PackBitmapIndexV1
+  PackIndex
+  PackReverseIndex
+  SilentFileInputStream
+
+PackBitmapIndexV1
+  BasePackBitmapIndex
+  EWAHCompressedBitmap
+  NB
+  ObjectIdOwnerMap
+  PackIndex
+  PackReverseIndex
+  SimpleDataInput
+  StoredBitmap
+
+SimpleDataInput
+  DataInput SYSTEM
+
+EWAHCompressedBitmap EXTERNAL (GoogleCode)
+
+LocalObjectToPack
+  ObjectToPack
+  PackFile CYCLE
+
+ObjectToPack
+  DeltaCache
+  PackedObjectInfo
+  StoredObjectRepresentation
+
+DeltaCache
+  ObjectToPack
+  PackConfig
+  ReferenceQueue SYSTEM
+
+LocalObjectRepresentation
+  StoredObjectRepresentation
+
+StoredObjectRepresentation
+  (none)
+
+LargePackedWholeObject
+  FileObjectDatabase
+  InflaterInputStream SYSTEM
+  PackFile CYCLE
+  PackInputStream
+  WindowCursor
+
+PackInputStream
+  PackFile
+  WindowCursor
+
+FileObjectDatabase ABSTRACT
+  ObjectDirectoryInserter
+  PackFile CYCLE
+
+ObjectDirectoryInserter
+  Deflater SYSTEM
+  DeflaterOutputStream SYSTEM
+  FileObjectDatabase
+  FileOutputStream SYSTEM
+  FileUtils
+  PackParser
+  WriteConfig
+
+WriteConfig
+  (none)
+
+FileUtils
+  JGitTestUtil
+
+JGitTestUtil
+  (none)
+
+DeltaEncoder
+  (none)
+
+DeltaBaseCache
+  PackFile CYCLE
+
+ByteArrayWindow
+  ByteWindow
+  Inflater SYSTEM
+  PackFile
+  PackOutputStream
+
+ByteWindow ABSTRACT
+  Inflater SYSTEM
+  PackFile
+  PackOutputStream
+
+BinaryDelta
+  (none)
+
+TestRepository
+  (plan to do this as a partial?)
+  CommitBuilder DEFER?
+  DirCache
+  DirCacheBuilder
+  DirCacheEntry
+  InMemoryRepository DEFER?
+  ObjectInserter
+  PathEdit (part of DirCacheEditor)
+  RefUpdate
+  RefWriter
+  RevBlob
+  RevObject
+  RevTag DEFER?
+  RevWalk
+  TagBuilder DEFER?
+  ThreeWayMerger DEFER?
+  TreeWalk
+
+RefWriter ABSTRACT
+  (none)
+
+RefUpdate ABSTRACT
+  LockFile
+  ObjectInserter
+  PushCertificate
+  RefDirectory
+  RefDirectoryUpdate DEFER?
+  ReflogEntry
+  ReflogReader
+  RefRename
+  RevCommit
+  RevObject
+  RevWalk
+  SampleDataRepositoryTestCase
+
+RefRename ABSTRACT
+  RefUpdate CYCLE
+
+ReflogReader INTERFACE + ReflogReaderImpl
+  CheckoutEntry
+  ReflogEntry
+  SampleDataRepositoryTestCase
+
+CheckoutEntry INTERFACE
+  (none)
+
+SampleDataRepositoryTestCase
+  (none)
+
+ReflogEntry INTERFACE
+  CheckoutEntry
+
+RefDirectory PARTIALLY DONE
+  LooseRef DEFER?
+  PackedBatchRefUpdate DEFER?
+  PackedRefList DEFER?
+  RefDirectoryRename DEFER?
+  RefDirectoryUpdate DEFER?
+  RefList
+  RefMap
+  RevCommit
+  RevTag
+  TestRepository
+
+RefMap
+  RefList
+
+RefList
+  (none)
+
+PushCertificate
+  PushCertificateIdent
+  ReceiveCommand
+
+ReceiveCommand
+  RefUpdate
+  RevObject
+
+PushCertificateIdent
+  (none)
+
+RevObject ABSTRACT
+  RevFlag
+  RevFlagSet
+  RevWalk
+
+RevWalk
+  (watch for multiple test case files, including RevWalkTestCase)
+  AbstractRevQueue
+  CommitBuilder DEFER?
+  DateRevQueue
+  DirCacheEntry
+  FIFORevQueue
+  ObjectIdOwnerMap
+  ObjectWalk
+  RevBlob
+  RevCommit
+  RevFilter
+  RevFlag
+  RevFlagSet
+  RevObject
+  RevTag DEFER?
+  RevTree
+  StartGenerator
+  TestRepository
+  TreeFilter
+
+TreeFilter
+  EmptyTreeIterator
+  NotTreeFilter
+  TreeWalk
+
+NotTreeFilter
+  TreeFilter
+  TreeWalk
+
+EmptyTreeIterator
+  AbstractTreeIterator
+
+AbstractTreeIterator
+  AttributesNode
+  EmptyTreeIterator
+  WorkingTreeIterator
+
+StartGenerator DEFER?
+
+RevFilter ABSTRACT
+  RevCommit
+  RevWalk
+
+
+ObjectWalk
+  BlockObjQueue
+  Commit
+  ObjectFilter
+  ObjectInserter
+  RevBlob
+  RevCommit
+  RevFlag
+  RevObject
+  RevTree
+  RevWalk
+  RevWalkTestCase
+  TreeFormatter
+
+ObjectFilter ABSTRACT
+  (none)
+
+BlockObjQueue
+  RevObject
+
+FIFORevQueue
+  BlockRevQueue
+  RevCommit
+  RevQueueTestCase
+
+BlockRevQueue
+  AbstractRevQueue
+  RevCommit
+
+DateRevQueue
+  RevCommit
+  RevQueueTestCase
+
+RevQueueTestCase
+  RevCommit
+  RevWalkTestCase
+
+AbstractRevQueue
+  RevCommit
+  RevFlag
+
+RevCommit
+  FIFORevQueue
+  FooterKey
+  FooterLine
+  RevCommitParseTest
+  RevObject
+  RevTree
+  RevWalk
+
+RevTree
+  RevObject
+  RevWalk
+
+FooterLine
+  FooterKey
+  RevCommit
+
+FooterKey
+  (none)
+
+RevCommitParseTest
+  RevCommit
+  RevWalk
+
+RevFlagSet
+  RevFlag
+  RevWalkTestCase
+
+RevFlag
+  RevWalk
+
+PackedObjectInfo
+  ObjectIdOwnerMap
+
+ObjectIdOwnerMap
+  (none, possibly devolves to system map)
+
+Deflater (Java built-in)
+
+BlockList
+  (none)
+
+BatchingProgressMonitor
+  ProgressMonitor
+  TimeUnit SYSTEM
+
+ProgressMonitor INTERFACE
+  (none)
+
+NameConflictTreeWalk
+  AbstractTreeIterator
+  DirCache
+  DirCacheBuilder
+  TreeWalk
+
+FileTreeIterator DO PARTIAL
+  AbstractTreeIterator
+  PathEdit (part of DirCacheEditor)
+  TreeWalk
+
+DirCacheBuildIterator
+  AbstractTreeIterator
+  DirCacheBuilder
+  DirCacheIterator
+
+DirCacheBuilder
+  BaseDirCacheEditor
+  CanonicalTreeParser
+  DirCache
+  DirCacheEntry
+  IndexChangedListener
+
+DirCacheEditor (part of DirCacheEditor)
+  BaseDirCacheEditor
+
+BaseDirCacheEditor
+  DirCache CYCLE
+  DirCacheEntry
+
+DirCache
+  DigestOutputStream SYSTEM
+  DirCacheCGitCompatabilityTest DEFER?
+  DirCacheCheckoutMaliciousPathTest
+  DirCacheEditor CYCLE
+  DirCacheEntry
+  DirCacheTree CYCLE
+  IndexChangedListener
+  LockFile
+  MessageDigest SYSTEM
+  ObjectReader PARTIALLY DONE
+  SilentFileInputStream
+  TemporaryBuffer
+  TreeWalk
+
+IndexChangedListener
+  (need to think through internal eventing strategy)
+
+LockFile
+  FileUtils
+
+TreeWalk
+  AbstractTreeIterator CYCLE
+  Attributes
+  AttributesHandler
+  AttributesNodeProvider
+  AttributesProvider
+  CanonicalTreeParser
+  DirCacheIterator (CYCLE, used in test only, defer?)
+  FileTreeIterator (CYCLE, used in test only, defer?)
+  FilterCommandRegistry DEFER?
+  PathFilter
+  TreeFormatter
+
+PathFilter
+  TreeFilter
+  TreeWalk
+
+AttributesHandler
+  Attribute
+  AttributesNode
+  AttributesNodeProvider
+  AttributesRule
+  CanonicalTreeParser
+  DirCacheIterator
+  TreeWalk
+  WorkingTreeIterator
+
+AttributesNodeProvider INTERFACE
+  AttributesNode
+
+AttributesProvider INTERFACE
+  Attributes
+
+TreeFormatter
+  CanonicalTreeParser
+  ObjectInserter
+  TemporaryBuffer
+
+CanonicalTreeParser
+  AbstractTreeIterator
+  AttributesNode
+  AttributesRule
+  TreeFormatter CYCLE
+
+AttributesRule
+  Attribute
+  IMatcher
+
+Attributes
+  Attribute
+
+Attribute STRUCT
+  (none)
+
+AbstractTreeIterator
+  TreeWalk CYCLE
+
+DirCacheEntry
+  ByteArrayOutputStream
+  NB
+
+AutoLFInputStream
+  (none)
+
+TemporaryBuffer (includes LocalFile)
+
+WorkingTreeOptions
+
+NB
+  (none)
+
+TestRng
+  (none)
