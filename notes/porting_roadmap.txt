@@ -223,7 +223,6 @@ BitmapIndexImpl
   PackBitmapIndex
 
 InflatingBitSet
-  EWAHCompressedBitmap
 
 BitSet
   (none)
@@ -280,7 +279,6 @@ PackStatistics
 PackBitmapIndexWriterV1
   DataOutput SYSTEM
   DigestOutputStream SYSTEM
-  EWAHCompressedBitmap
   PackBitmapIndexBuilder
   SimpleDataOutput
 
@@ -291,13 +289,11 @@ SimpleDataOutput
 PackBitmapIndexBuilder
   BasePackBitmapIndex
   BlockList
-  EWAHCompressedBitmap
   ObjectIdOwnerMap
   ObjectToPack
   StoredBitmap
 
 BasePackBitmapIndex ABSTRACT
-  EWAHCompressedBitmap
   ObjectIdOwnerMap
   PackBitmapIndex
   StoredBitmap (part of BasePackBitmapIndex)
@@ -332,7 +328,6 @@ PackIndexTestCase
   PackIndex
 
 PackBitmapIndex ABSTRACT
-  EWAHCompressedBitmap
   PackBitmapIndexV1
   PackIndex
   PackReverseIndex
@@ -340,7 +335,6 @@ PackBitmapIndex ABSTRACT
 
 PackBitmapIndexV1
   BasePackBitmapIndex
-  EWAHCompressedBitmap
   NB
   ObjectIdOwnerMap
   PackIndex
@@ -350,8 +344,6 @@ PackBitmapIndexV1
 
 SimpleDataInput
   DataInput SYSTEM
-
-EWAHCompressedBitmap EXTERNAL (GoogleCode)
 
 LocalObjectToPack
   ObjectToPack
@@ -772,3 +764,5 @@ NB
 
 TestRng
   (none)
+
+EWAHCompressedBitmap -> Xgit.Util.CompressedBitmap
