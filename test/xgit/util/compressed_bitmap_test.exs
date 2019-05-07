@@ -86,7 +86,6 @@ defmodule Xgit.Util.CompressedBitmapTest do
     cb = CompressedBitmap.new()
 
     assert Enum.empty?(cb)
-    assert Enum.count(cb) == 0
     assert Enum.to_list(cb) == []
 
     refute Enum.member?(cb, 0)
