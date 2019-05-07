@@ -105,7 +105,7 @@ defmodule Xgit.Util.CompressedBitmap do
   @doc """
   Returns the bitwise NOT of the bitmap.
   """
-  def not (%__MODULE__{max: max} = mapset) do
+  def not(%__MODULE__{max: max} = mapset) do
     # TO DO: Replace with a more efficient implementation.
 
     0..max
