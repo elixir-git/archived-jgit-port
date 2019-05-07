@@ -93,6 +93,15 @@ defmodule Xgit.Util.CompressedBitmap do
     do: %__MODULE__{max: max(max1, max2), mapset: MapSet.union(mapset1, mapset2)}
 
   @doc """
+  Returns the bitwise AND of the two bitmaps.
+  """
+  def intersection(%__MODULE__{max: max1, mapset: mapset1}, %__MODULE__{
+        max: max2,
+        mapset: mapset2
+      }),
+      do: %__MODULE__{max: max(max1, max2), mapset: MapSet.intersection(mapset1, mapset2)}
+
+  @doc """
   Returns the bitwise XOR of the two bitmaps.
   """
   def xor(%__MODULE__{max: max1, mapset: mapset1}, %__MODULE__{max: max2, mapset: mapset2}) do
@@ -105,7 +114,7 @@ defmodule Xgit.Util.CompressedBitmap do
   @doc """
   Returns the bitwise NOT of the bitmap.
   """
-  def not(%__MODULE__{max: max} = mapset) do
+  def not (%__MODULE__{max: max} = mapset) do
     # TO DO: Replace with a more efficient implementation.
 
     0..max
