@@ -80,12 +80,15 @@ defmodule Xgit.Util.CompressedBitmap do
     do: %{bitmap | mapset: MapSet.put(mapset, value)}
 
   @doc """
+  Returns the bitwise OR of the two bitmaps.
+  """
+  def union(%__MODULE__{mapset: mapset1}, %__MODULE__{mapset: mapset2}),
+    do: %__MODULE__{mapset: MapSet.union(mapset1, mapset2)}
+
+  @doc """
   Returns the bitwise XOR of the two bitmaps.
   """
   def xor(%__MODULE__{mapset: mapset1}, %__MODULE__{mapset: mapset2}) do
-    # TO DO: This is obviously an inefficient implementation.
-    # Used for now to prove correctness.
-
     union = MapSet.union(mapset1, mapset2)
     intersection = MapSet.intersection(mapset1, mapset2)
 
