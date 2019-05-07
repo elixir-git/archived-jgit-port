@@ -48,6 +48,11 @@ defmodule Xgit.Util.CompressedBitmap do
   as com.googlecode.javaewah.EWAHCompressedBitmap.
 
   Unlike traditional `MapSet`, values must be non-negative integers.
+
+  Consider replacing with:
+
+  * https://github.com/zambal/rb_sets
+  * https://github.com/gausby/bit_field_set
   """
   defstruct mapset: nil, max: 0
 
