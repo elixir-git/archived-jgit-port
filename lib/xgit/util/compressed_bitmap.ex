@@ -122,6 +122,15 @@ defmodule Xgit.Util.CompressedBitmap do
     |> xor(mapset)
   end
 
+  @doc """
+  Returns the bitwise AND NOT of the two bitmaps.
+  """
+  def and_not(%__MODULE__{} = bitmap1, %__MODULE__{} = bitmap2) do
+    bitmap2
+    |> __MODULE__.not()
+    |> __MODULE__.intersection(bitmap1)
+  end
+
   defimpl Enumerable do
     alias Xgit.Util.CompressedBitmap
 

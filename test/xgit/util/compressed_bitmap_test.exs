@@ -270,4 +270,29 @@ defmodule Xgit.Util.CompressedBitmapTest do
       assert Enum.to_list(cb) == [0]
     end
   end
+
+  describe "and_not/2" do
+    test "some overlap" do
+      cb1 = CompressedBitmap.new([1, 2, 3, 5])
+      cb2 = CompressedBitmap.new([3, 4, 5, 8])
+
+      and_not = CompressedBitmap.and_not(cb1, cb2)
+      assert Enum.to_list(and_not) == [1, 2]
+    end
+
+    test "no overlap" do
+      cb1 = CompressedBitmap.new([1, 2, 3, 4])
+      cb2 = CompressedBitmap.new([5, 6, 7, 8])
+
+      and_not = CompressedBitmap.and_not(cb1, cb2)
+      assert Enum.to_list(and_not) == [1, 2, 3, 4]
+    end
+
+    test "all overlap" do
+      cb = CompressedBitmap.new([1, 2, 3, 4])
+      and_not = CompressedBitmap.and_not(cb, cb)
+
+      assert Enum.to_list(and_not) == []
+    end
+  end
 end
