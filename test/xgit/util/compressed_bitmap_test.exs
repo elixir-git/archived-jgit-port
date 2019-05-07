@@ -227,4 +227,23 @@ defmodule Xgit.Util.CompressedBitmapTest do
       assert Enum.to_list(xor) == []
     end
   end
+
+  describe "not/1" do
+    test "typical case" do
+      cb =
+        [1, 2, 3, 5, 18]
+        |> CompressedBitmap.new()
+        |> CompressedBitmap.not()
+
+      assert Enum.to_list(cb) == [0, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+    end
+
+    test "empty case" do
+      cb =
+        CompressedBitmap.new()
+        |> CompressedBitmap.not()
+
+      assert Enum.to_list(cb) == [0]
+    end
+  end
 end

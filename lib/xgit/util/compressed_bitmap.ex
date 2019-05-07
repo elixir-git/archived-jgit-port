@@ -49,7 +49,7 @@ defmodule Xgit.Util.CompressedBitmap do
 
   Unlike traditional `MapSet`, values must be non-negative integers.
   """
-  defstruct mapset: nil
+  defstruct mapset: nil, max: 0
 
   @doc """
   Returns a new set.
@@ -68,7 +68,7 @@ defmodule Xgit.Util.CompressedBitmap do
       raise ArgumentError, "All values must be non-negative integers"
     end
 
-    %__MODULE__{mapset: MapSet.new(enumerable)}
+    %__MODULE__{max: Enum.max(enumerable), mapset: MapSet.new(enumerable)}
   end
 
   defp valid?(value), do: is_integer(value) and value >= 0
@@ -76,8 +76,9 @@ defmodule Xgit.Util.CompressedBitmap do
   @doc """
   Inserts `value` into `bitmap` if `bitmap` doesn't already contain it.
   """
-  def put(%__MODULE__{mapset: mapset} = bitmap, value) when is_integer(value) and value >= 0,
-    do: %{bitmap | mapset: MapSet.put(mapset, value)}
+  def put(%__MODULE__{max: max_v, mapset: mapset} = bitmap, value)
+      when is_integer(value) and value >= 0,
+      do: %{bitmap | max: max(max_v, value), mapset: MapSet.put(mapset, value)}
 
   @doc """
   Removes `value` from `bitmap` if `bitmap` already contains it. (No-op otherwise.)
@@ -88,17 +89,28 @@ defmodule Xgit.Util.CompressedBitmap do
   @doc """
   Returns the bitwise OR of the two bitmaps.
   """
-  def union(%__MODULE__{mapset: mapset1}, %__MODULE__{mapset: mapset2}),
-    do: %__MODULE__{mapset: MapSet.union(mapset1, mapset2)}
+  def union(%__MODULE__{max: max1, mapset: mapset1}, %__MODULE__{max: max2, mapset: mapset2}),
+    do: %__MODULE__{max: max(max1, max2), mapset: MapSet.union(mapset1, mapset2)}
 
   @doc """
   Returns the bitwise XOR of the two bitmaps.
   """
-  def xor(%__MODULE__{mapset: mapset1}, %__MODULE__{mapset: mapset2}) do
+  def xor(%__MODULE__{max: max1, mapset: mapset1}, %__MODULE__{max: max2, mapset: mapset2}) do
     union = MapSet.union(mapset1, mapset2)
     intersection = MapSet.intersection(mapset1, mapset2)
 
-    %__MODULE__{mapset: MapSet.difference(union, intersection)}
+    %__MODULE__{max: max(max1, max2), mapset: MapSet.difference(union, intersection)}
+  end
+
+  @doc """
+  Returns the bitwise NOT of the bitmap.
+  """
+  def not (%__MODULE__{max: max} = mapset) do
+    # TO DO: Replace with a more efficient implementation.
+
+    0..max
+    |> new()
+    |> xor(mapset)
   end
 
   defimpl Enumerable do
