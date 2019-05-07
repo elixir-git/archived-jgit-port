@@ -131,6 +131,8 @@ defmodule Xgit.Util.CompressedBitmap do
     |> __MODULE__.intersection(bitmap1)
   end
 
+  # TO DO: Serialize / deserialize.
+
   defimpl Enumerable do
     alias Xgit.Util.CompressedBitmap
 
