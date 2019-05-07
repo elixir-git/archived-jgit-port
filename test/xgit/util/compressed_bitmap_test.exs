@@ -145,4 +145,31 @@ defmodule Xgit.Util.CompressedBitmapTest do
       refute cb1 == cb2
     end
   end
+
+  describe "xor/2" do
+    test "some overlap" do
+      cb1 = CompressedBitmap.new([1, 2, 3, 5])
+      cb2 = CompressedBitmap.new([3, 4, 5, 8])
+
+      xor = CompressedBitmap.xor(cb1, cb2)
+
+      assert Enum.to_list(xor) == [1, 2, 4, 8]
+    end
+
+    test "no overlap" do
+      cb1 = CompressedBitmap.new([1, 2, 3, 4])
+      cb2 = CompressedBitmap.new([5, 6, 7, 8])
+
+      xor = CompressedBitmap.xor(cb1, cb2)
+
+      assert Enum.to_list(xor) == [1, 2, 3, 4, 5, 6, 7, 8]
+    end
+
+    test "all overlap" do
+      cb = CompressedBitmap.new([1, 2, 3, 4])
+      xor = CompressedBitmap.xor(cb, cb)
+
+      assert Enum.to_list(xor) == []
+    end
+  end
 end

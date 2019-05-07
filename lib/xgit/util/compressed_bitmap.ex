@@ -79,6 +79,19 @@ defmodule Xgit.Util.CompressedBitmap do
   def put(%__MODULE__{mapset: mapset} = bitmap, value) when is_integer(value) and value >= 0,
     do: %{bitmap | mapset: MapSet.put(mapset, value)}
 
+  @doc """
+  Returns the bitwise XOR of the two bitmaps.
+  """
+  def xor(%__MODULE__{mapset: mapset1}, %__MODULE__{mapset: mapset2}) do
+    # TO DO: This is obviously an inefficient implementation.
+    # Used for now to prove correctness.
+
+    union = MapSet.union(mapset1, mapset2)
+    intersection = MapSet.intersection(mapset1, mapset2)
+
+    %__MODULE__{mapset: MapSet.difference(union, intersection)}
+  end
+
   defimpl Enumerable do
     alias Xgit.Util.CompressedBitmap
 
