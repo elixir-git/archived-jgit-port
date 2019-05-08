@@ -131,12 +131,6 @@ defmodule Xgit.Util.NBTest do
         NB.decode_int32([1, 2, 3])
       end
     end
-
-    test "rejects if non-bytes in list" do
-      assert_raise FunctionClauseError, fn ->
-        NB.decode_int32([0, 1, 2, true])
-      end
-    end
   end
 
   # @Test
