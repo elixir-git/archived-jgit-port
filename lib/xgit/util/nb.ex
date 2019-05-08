@@ -141,11 +141,11 @@ defmodule Xgit.Util.NB do
   where value is the integer value from the first four bytes at `intbuf`
   and `buf` is the remainder of the byte array after those bytes.
   """
-  def decode_int32([b1, b2, b3, b4 | tail]) when b1 >= 128, do:
-    {b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100 + b4 - 0x100000000, tail}
+  def decode_int32([b1, b2, b3, b4 | tail]) when b1 >= 128,
+    do: {b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100 + b4 - 0x100000000, tail}
 
-  def decode_int32([b1, b2, b3, b4 | tail]), do:
-    {b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100 + b4, tail}
+  def decode_int32([b1, b2, b3, b4 | tail]),
+    do: {b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100 + b4, tail}
 
   # /**
   #  * Convert sequence of 8 bytes (network byte order) into signed value.
