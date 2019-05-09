@@ -106,7 +106,6 @@ ObjectInserter
 ObjectDirectoryPackParser
   CRC32 SYSTEM
   Deflater
-  NB
   PackedObjectInfo
   PackFile
   PackIndexWriter
@@ -118,12 +117,10 @@ PackLock
   (none)
 
 PackIndexWriterV2
-  NB
   PackedObjectInfo
   PackIndexWriter
 
 PackIndexWriterV1
-  NB
   PackedObjectInfo
   PackIndexWriter
 
@@ -283,7 +280,6 @@ PackBitmapIndexWriterV1
 
 SimpleDataOutput
   DataOutput SYSTEM
-  NB
 
 PackBitmapIndexBuilder
   BasePackBitmapIndex
@@ -308,7 +304,6 @@ PackConfig
   (none)
 
 PackIndex ABSTRACT
-  NB
   PackIndexV1
   PackIndexV2
   SilentFileInputStream
@@ -316,11 +311,9 @@ PackIndex ABSTRACT
 SilentFileInputStream (may not need this)
 
 PackIndexV2
-  NB
   PackIndexTestCase
 
 PackIndexV1
-  NB
   PackIndexTestCase
 
 PackIndexTestCase
@@ -334,7 +327,6 @@ PackBitmapIndex ABSTRACT
 
 PackBitmapIndexV1
   BasePackBitmapIndex
-  NB
   ObjectIdOwnerMap
   PackIndex
   PackReverseIndex
@@ -749,7 +741,6 @@ AbstractTreeIterator
 
 DirCacheEntry
   ByteArrayOutputStream
-  NB
 
 AutoLFInputStream
   (none)
@@ -757,9 +748,6 @@ AutoLFInputStream
 TemporaryBuffer (includes LocalFile)
 
 WorkingTreeOptions
-
-NB
-  (none)
 
 TestRng -> :crypto.strong_rand_bytes
 
