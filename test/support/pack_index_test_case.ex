@@ -82,33 +82,24 @@ defmodule Xgit.Test.PackIndexTestCase do
   #     // expected
   #   }
   # }
-  #
-  # /**
-  #  * Test results of iterator comparing to content of well-known (prepared)
-  #  * small index.
-  #  */
-  # @Test
-  # public void testIteratorReturnedValues1() {
-  #   Iterator<PackIndex.MutableEntry> iter = smallIdx.iterator();
-  #   assertEquals("4b825dc642cb6eb9a060e54bf8d69288fbee4904", iter.next()
-  #       .name());
-  #   assertEquals("540a36d136cf413e4b064c2b0e0a4db60f77feab", iter.next()
-  #       .name());
-  #   assertEquals("5b6e7c66c276e7610d4a73c70ec1a1f7c1003259", iter.next()
-  #       .name());
-  #   assertEquals("6ff87c4664981e4397625791c8ea3bbb5f2279a3", iter.next()
-  #       .name());
-  #   assertEquals("82c6b885ff600be425b4ea96dee75dca255b69e7", iter.next()
-  #       .name());
-  #   assertEquals("902d5476fa249b7abc9d84c611577a81381f0327", iter.next()
-  #       .name());
-  #   assertEquals("aabf2ffaec9b497f0950352b3e582d73035c2035", iter.next()
-  #       .name());
-  #   assertEquals("c59759f143fb1fe21c197981df75a7ee00290799", iter.next()
-  #       .name());
-  #   assertFalse(iter.hasNext());
-  # }
-  #
+
+  @doc ~S"""
+  Test results of iterator comparing to content of well-known (prepared)
+  small index.
+  """
+  def assert_results_for_pack_34be9032_are_expected(pack_index) do
+    assert Enum.to_list(pack_index) == [
+             "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+             "540a36d136cf413e4b064c2b0e0a4db60f77feab",
+             "5b6e7c66c276e7610d4a73c70ec1a1f7c1003259",
+             "6ff87c4664981e4397625791c8ea3bbb5f2279a3",
+             "82c6b885ff600be425b4ea96dee75dca255b69e7",
+             "902d5476fa249b7abc9d84c611577a81381f0327",
+             "aabf2ffaec9b497f0950352b3e582d73035c2035",
+             "c59759f143fb1fe21c197981df75a7ee00290799"
+           ]
+  end
+
   # /**
   #  * Compare offset from iterator entries with output of findOffset() method.
   #  */
