@@ -183,17 +183,17 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
 
   defp record_time_for_ref(ref, time \\ :os.system_time(:second)) when is_reference(ref),
     do: ConCache.put(:xgit_file_snapshot, ref, time)
-end
 
-defimpl String.Chars, for: Xgit.Internal.Storage.File.FileSnapshot do
-  alias Xgit.Internal.Storage.File.FileSnapshot
+  defimpl String.Chars do
+    alias Xgit.Internal.Storage.File.FileSnapshot
 
-  def to_string(%FileSnapshot{last_modified: :dirty}), do: "DIRTY"
+    def to_string(%FileSnapshot{last_modified: :dirty}), do: "DIRTY"
 
-  def to_string(%FileSnapshot{last_modified: :missing}), do: "MISSING_FILE"
+    def to_string(%FileSnapshot{last_modified: :missing}), do: "MISSING_FILE"
 
-  def to_string(%FileSnapshot{last_modified: last_modified, ref: ref}) do
-    last_read_time = ConCache.get(:xgit_file_snapshot, ref)
-    "FileSnapshot[modified: #{last_modified}, read: #{last_read_time}]"
+    def to_string(%FileSnapshot{last_modified: last_modified, ref: ref}) do
+      last_read_time = ConCache.get(:xgit_file_snapshot, ref)
+      "FileSnapshot[modified: #{last_modified}, read: #{last_read_time}]"
+    end
   end
 end
