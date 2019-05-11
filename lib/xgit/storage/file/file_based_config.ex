@@ -131,43 +131,43 @@ defmodule Xgit.Storage.File.FileBasedConfig do
   #         .format(JGitText.get().cannotReadFile, relPath), ioe);
   #   }
   # }
-end
 
-defimpl Xgit.Lib.Config.Storage, for: Xgit.Storage.File.FileBasedConfig do
-  alias Xgit.Lib.Config
+  defimpl Xgit.Lib.Config.Storage do
+    alias Xgit.Lib.Config
 
-  @doc ~S"""
-  Load the configuration as a git text-style configuration file.
+    @doc ~S"""
+    Load the configuration as a git text-style configuration file.
 
-  If the file does not exist, this configuration is cleared, and thus
-  behaves the same as though the file exists, but is empty.
-  """
-  def load(%Xgit.Storage.File.FileBasedConfig{path: path}, config) do
-    # PORTING NOTE: jgit's implementation contains a lot of logic to handle
-    # cases where the file has moved, becomes stale, retrying in the event
-    # of failure, etc. For now, I am not porting those cases. Consider revisiting
-    # this later.
+    If the file does not exist, this configuration is cleared, and thus
+    behaves the same as though the file exists, but is empty.
+    """
+    def load(%Xgit.Storage.File.FileBasedConfig{path: path}, config) do
+      # PORTING NOTE: jgit's implementation contains a lot of logic to handle
+      # cases where the file has moved, becomes stale, retrying in the event
+      # of failure, etc. For now, I am not porting those cases. Consider revisiting
+      # this later.
 
-    if File.exists?(path) do
-      contents = File.read!(path)
-      Config.from_text(config, contents)
-    else
-      Config.clear(config)
+      if File.exists?(path) do
+        contents = File.read!(path)
+        Config.from_text(config, contents)
+      else
+        Config.clear(config)
+      end
+
+      :ok
     end
 
-    :ok
-  end
+    @doc ~S"""
+    Save the configuration as a git text-style configuration file.
+    """
+    def save(%Xgit.Storage.File.FileBasedConfig{path: path}, config) do
+      # PORTING NOTE: jgit's implementation contains logic to ensure that there
+      # aren't multiple simultaneous writers to the file and that the UTF-8 BOM
+      # is written only if a BOM was present in the original file. For now, I am
+      # not porting those cases. Consider revisiting this later.
 
-  @doc ~S"""
-  Save the configuration as a git text-style configuration file.
-  """
-  def save(%Xgit.Storage.File.FileBasedConfig{path: path}, config) do
-    # PORTING NOTE: jgit's implementation contains logic to ensure that there
-    # aren't multiple simultaneous writers to the file and that the UTF-8 BOM
-    # is written only if a BOM was present in the original file. For now, I am
-    # not porting those cases. Consider revisiting this later.
-
-    File.write!(path, Config.to_text(config))
-    :ok
+      File.write!(path, Config.to_text(config))
+      :ok
+    end
   end
 end

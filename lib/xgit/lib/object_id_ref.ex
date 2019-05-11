@@ -72,40 +72,40 @@ defmodule Xgit.Lib.ObjectIdRef do
     :tag?,
     update_index: :undefined
   ]
-end
 
-defimpl Xgit.Lib.Ref, for: Xgit.Lib.ObjectIdRef do
-  alias Xgit.Lib.ObjectIdRef
+  defimpl Xgit.Lib.Ref do
+    alias Xgit.Lib.ObjectIdRef
 
-  def name(%ObjectIdRef{name: name}), do: name
-  def symbolic?(_), do: false
-  def leaf(ref), do: ref
-  def target(ref), do: ref
-  def object_id(%ObjectIdRef{object_id: object_id}), do: object_id
+    def name(%ObjectIdRef{name: name}), do: name
+    def symbolic?(_), do: false
+    def leaf(ref), do: ref
+    def target(ref), do: ref
+    def object_id(%ObjectIdRef{object_id: object_id}), do: object_id
 
-  def peeled_object_id(%ObjectIdRef{tag?: true, peeled_object_id: peeled_object_id}),
-    do: peeled_object_id
+    def peeled_object_id(%ObjectIdRef{tag?: true, peeled_object_id: peeled_object_id}),
+      do: peeled_object_id
 
-  def peeled_object_id(_), do: nil
+    def peeled_object_id(_), do: nil
 
-  def peeled?(%ObjectIdRef{peeled?: true}), do: true
-  def peeled?(%ObjectIdRef{peeled_object_id: nil}), do: false
-  def peeled?(_), do: true
+    def peeled?(%ObjectIdRef{peeled?: true}), do: true
+    def peeled?(%ObjectIdRef{peeled_object_id: nil}), do: false
+    def peeled?(_), do: true
 
-  def storage(%ObjectIdRef{storage: storage}), do: storage
+    def storage(%ObjectIdRef{storage: storage}), do: storage
 
-  def update_index(%ObjectIdRef{update_index: update_index})
-      when is_integer(update_index) and update_index > 0,
-      do: update_index
+    def update_index(%ObjectIdRef{update_index: update_index})
+        when is_integer(update_index) and update_index > 0,
+        do: update_index
 
-  def update_index(_), do: raise(RuntimeError, "update_index is invalid")
-end
+    def update_index(_), do: raise(RuntimeError, "update_index is invalid")
+  end
 
-defimpl String.Chars, for: Xgit.Lib.ObjectIdRef do
-  def to_string(%Xgit.Lib.ObjectIdRef{
-        name: name,
-        object_id: object_id,
-        update_index: update_index
-      }),
-      do: "Ref[#{name}=#{object_id}(#{update_index})]"
+  defimpl String.Chars do
+    def to_string(%Xgit.Lib.ObjectIdRef{
+          name: name,
+          object_id: object_id,
+          update_index: update_index
+        }),
+        do: "Ref[#{name}=#{object_id}(#{update_index})]"
+  end
 end

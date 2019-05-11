@@ -58,14 +58,14 @@ defmodule Xgit.Lib.SmallObjectLoader do
 
   @enforce_keys [:type, :data]
   defstruct [:type, :data]
-end
 
-defimpl Xgit.Lib.ObjectLoader, for: Xgit.Lib.SmallObjectLoader do
-  alias Xgit.Lib.SmallObjectLoader
+  defimpl Xgit.Lib.ObjectLoader do
+    alias Xgit.Lib.SmallObjectLoader
 
-  def type(%SmallObjectLoader{type: type}), do: type
-  def size(%SmallObjectLoader{data: data}), do: Enum.count(data)
-  def large?(_), do: false
-  def cached_bytes(%SmallObjectLoader{data: data}), do: data
-  def stream(%SmallObjectLoader{data: data}), do: data
+    def type(%SmallObjectLoader{type: type}), do: type
+    def size(%SmallObjectLoader{data: data}), do: Enum.count(data)
+    def large?(_), do: false
+    def cached_bytes(%SmallObjectLoader{data: data}), do: data
+    def stream(%SmallObjectLoader{data: data}), do: data
+  end
 end
