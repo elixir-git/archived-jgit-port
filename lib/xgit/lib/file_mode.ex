@@ -140,8 +140,8 @@ defmodule Xgit.Lib.FileMode do
 
   defp octal_bytes_from_mode(mode, bytes),
     do: octal_bytes_from_mode(bsr(mode, 3), [band(mode, 0x7) + ?0 | bytes])
-end
 
-defimpl String.Chars, for: Xgit.Lib.FileMode do
-  def to_string(%Xgit.Lib.FileMode{octal_bytes: octal_bytes}), do: Kernel.to_string(octal_bytes)
+  defimpl String.Chars do
+    def to_string(%Xgit.Lib.FileMode{octal_bytes: octal_bytes}), do: Kernel.to_string(octal_bytes)
+  end
 end
