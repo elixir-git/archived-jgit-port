@@ -49,9 +49,9 @@
 defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
   use ExUnit.Case, async: true
 
+  alias Xgit.Errors.UnsupportedOperationError
   alias Xgit.Internal.Storage.File.PackIndex
   alias Xgit.Internal.Storage.File.PackIndex.Entry
-  # alias Xgit.Internal.Storage.File.PackIndexV1
 
   defp path_for_pack_34be9032 do
     Path.expand("../../../../fixtures/pack-34be9032ac282b11fa9babdc2b2a93ca996c9c2f.idx", __DIR__)
@@ -80,22 +80,20 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
   #   return JGitTestUtil.getTestResourceFile(
   #                   "pack-df2982f284bbabb6bdb59ee3fcc6eb0983e20371.idx");
   # }
-  #
-  # /**
-  #  * Verify CRC32 - V1 should not index anything.
-  #  *
-  #  * @throws MissingObjectException
-  #  */
-  # @Override
-  # @Test
-  # public void testCRC32() throws MissingObjectException {
-  #   assertFalse(smallIdx.hasCRC32Support());
-  #   try {
-  #     smallIdx.findCRC32(ObjectId
-  #         .fromString("4b825dc642cb6eb9a060e54bf8d69288fbee4904"));
-  #     fail("index V1 shouldn't support CRC");
-  #   } catch (UnsupportedOperationException x) {
-  #     // expected
-  #   }
-  # }
+
+  test "CRC32 operations not supported by pack index V1" do
+    index =
+      path_for_pack_34be9032()
+      |> PackIndex.open()
+
+    assert PackIndex.has_crc32_support?(index) == false
+
+    assert_raise UnsupportedOperationError,
+                 fn ->
+                   PackIndex.crc32_checksum_for_object(
+                     index,
+                     "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+                   )
+                 end
+  end
 end

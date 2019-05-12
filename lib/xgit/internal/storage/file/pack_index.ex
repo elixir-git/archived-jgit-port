@@ -58,6 +58,27 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
 
   alias Xgit.Internal.Storage.File.PackIndexV1
 
+  defprotocol Reader do
+    @moduledoc ~S"""
+    Provides access to data in the index for different index format versions.
+    """
+
+    @doc ~S"""
+    Retrieve stored CRC32 checksum of the requested object raw-data (including header).
+
+    Returns CRC32 checksum of specified object (at 32 less significant bits) or
+    raises `MissingObjectError` if the requested object ID was not found in this index.
+
+    Raises `???` if this index doesn't support CRC32 checksum.
+    """
+    def crc32_checksum_for_object(index, object_id)
+
+    @doc ~S"""
+    Returns `true` if this index supports (has) CRC32 checksums for objects.
+    """
+    def has_crc32_support?(index)
+  end
+
   @doc ~S"""
   Open an existing pack `.idx` file for reading.
 
@@ -230,29 +251,22 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   #  *         associated pack.
   #  */
   # public abstract long findOffset(AnyObjectId objId);
-  #
-  # /**
-  #  * Retrieve stored CRC32 checksum of the requested object raw-data
-  #  * (including header).
-  #  *
-  #  * @param objId
-  #  *            id of object to look for
-  #  * @return CRC32 checksum of specified object (at 32 less significant bits)
-  #  * @throws org.eclipse.jgit.errors.MissingObjectException
-  #  *             when requested ObjectId was not found in this index
-  #  * @throws java.lang.UnsupportedOperationException
-  #  *             when this index doesn't support CRC32 checksum
-  #  */
-  # public abstract long findCRC32(AnyObjectId objId)
-  #     throws MissingObjectException, UnsupportedOperationException;
-  #
-  # /**
-  #  * Check whether this index supports (has) CRC32 checksums for objects.
-  #  *
-  #  * @return true if CRC32 is stored, false otherwise
-  #  */
-  # public abstract boolean hasCRC32Support();
-  #
+
+  @doc ~S"""
+  Retrieve stored CRC32 checksum of the requested object raw-data (including header).
+
+  Returns CRC32 checksum of specified object (at 32 less significant bits) or
+  raises `MissingObjectError` if the requested object ID was not found in this index.
+
+  Raises `???` if this index doesn't support CRC32 checksum.
+  """
+  defdelegate crc32_checksum_for_object(index, object_id), to: __MODULE__.Reader
+
+  @doc ~S"""
+  Returns `true` if this index supports (has) CRC32 checksums for objects.
+  """
+  defdelegate has_crc32_support?(index), to: __MODULE__.Reader
+
   # /**
   #  * Find objects matching the prefix abbreviation.
   #  *

@@ -53,6 +53,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   @enforce_keys [:idx_header, :idx_data, :object_count, :pack_checksum]
   defstruct [:idx_header, :idx_data, :object_count, :pack_checksum]
 
+  alias Xgit.Internal.Storage.File.PackIndex.Reader
   alias Xgit.Lib.Constants
   alias Xgit.Util.NB
 
@@ -170,24 +171,6 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   #
   # /** {@inheritDoc} */
   # @Override
-  # public long findCRC32(AnyObjectId objId) {
-  #   throw new UnsupportedOperationException();
-  # }
-  #
-  # /** {@inheritDoc} */
-  # @Override
-  # public boolean hasCRC32Support() {
-  #   return false;
-  # }
-  #
-  # /** {@inheritDoc} */
-  # @Override
-  # public Iterator<MutableEntry> iterator() {
-  #   return new IndexV1Iterator();
-  # }
-  #
-  # /** {@inheritDoc} */
-  # @Override
   # public void resolve(Set<ObjectId> matches, AbbreviatedObjectId id,
   #     int matchLimit) throws IOException {
   #   byte[] data = idxdata[id.getFirstByte()];
@@ -256,5 +239,18 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
 
       reduce(level1, Enum.drop(level2, Constants.object_id_length() + 4), fun.(entry, acc), fun)
     end
+  end
+
+  defimpl Reader do
+    alias Xgit.Errors.UnsupportedOperationError
+
+    @impl true
+    def crc32_checksum_for_object(_index, _object_id) do
+      raise UnsupportedOperationError,
+        message: "CRC32 checksums not available for V1 pack index."
+    end
+
+    @impl true
+    def has_crc32_support?(_index), do: false
   end
 end
