@@ -54,8 +54,16 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
   alias Xgit.Internal.Storage.File.PackIndex.Entry
 
   defp path_for_pack_34be9032 do
+    # aka "small index"
     Path.expand("../../../../fixtures/pack-34be9032ac282b11fa9babdc2b2a93ca996c9c2f.idx", __DIR__)
   end
+
+  # DISABLED: We don't actually have a dense pack index file to work from.
+  # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.
+  # defp path_for_pack_df2982f28 do
+  #   # aka "dense index"
+  #   Path.expand("../../../../fixtures/pack-df2982f284bbabb6bdb59ee3fcc6eb0983e20371.idx", __DIR__)
+  # end
 
   test "expect results for pack 34be9032" do
     objects_in_pack_34be9032 =
@@ -63,7 +71,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
       |> PackIndex.open()
       |> Enum.map(fn %Entry{name: name} -> name end)
 
-    assert Enum.to_list(objects_in_pack_34be9032) == [
+    assert objects_in_pack_34be9032 == [
              "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
              "540a36d136cf413e4b064c2b0e0a4db60f77feab",
              "5b6e7c66c276e7610d4a73c70ec1a1f7c1003259",
@@ -75,11 +83,25 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
            ]
   end
 
-  # @Override
-  # public File getFileForPackdf2982f28() {
-  #   return JGitTestUtil.getTestResourceFile(
-  #                   "pack-df2982f284bbabb6bdb59ee3fcc6eb0983e20371.idx");
-  # }
+  # DISABLED: We don't actually have a dense pack index file to work from.
+  # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.
+  # test "expect (partial) results for pack df2982f28" do
+  #   objects_in_pack_df2982f28 =
+  #     path_for_pack_df2982f28()
+  #     |> PackIndex.open()
+  #     |> Stream.drop_while(fn %Entry{name: name} ->
+  #       name != "0a3d7772488b6b106fb62813c4d6d627918d9181"
+  #     end)
+  #     |> Stream.drop(1)
+  #     |> Stream.take(3)
+  #     |> Enum.map(fn %Entry{name: name} -> name end)
+  #
+  #   assert objects_in_pack_df2982f28 == [
+  #            "1004d0d7ac26fbf63050a234c9b88a46075719d3",
+  #            "10da5895682013006950e7da534b705252b03be6",
+  #            "1203b03dc816ccbb67773f28b3c19318654b0bc8"
+  #          ]
+  # end
 
   test "CRC32 operations not supported by pack index V1" do
     index =
