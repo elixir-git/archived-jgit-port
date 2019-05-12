@@ -238,8 +238,10 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
 
     defp reduce(_level1, _leve2, {:halt, acc}, _fun), do: {:halted, acc}
 
-    defp reduce(level1, level2, {:suspend, acc}, fun),
-      do: {:suspended, acc, &reduce(level1, level2, &1, fun)}
+    # TO DO: Restore this case if we find that we actually use suspended enumerations.
+    # For now, I don't see a use case for it.
+    # defp reduce(level1, level2, {:suspend, acc}, fun),
+    #   do: {:suspended, acc, &reduce(level1, level2, &1, fun)}
 
     defp reduce([] = _level1, [] = _level2, {:cont, acc}, _fun), do: {:done, acc}
 
