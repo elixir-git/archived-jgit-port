@@ -75,7 +75,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
     }
   end
 
-  defp idx_header_from_fanout_table([], acc), do: Enum.reverse(acc)
+  defp idx_header_from_fanout_table([], acc), do: Enum.reverse(acc) |> List.to_tuple()
 
   defp idx_header_from_fanout_table([_a, _b, _c, _d | _tail] = fanout_table, acc) do
     {value, tail} = NB.decode_uint32(fanout_table)
@@ -93,55 +93,14 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   end
 
   # /** {@inheritDoc} */
-  # @Override
-  # public long getOffset64Count() {
-  #   long n64 = 0;
-  #   for (MutableEntry e : this) {
-  #     if (e.getOffset() >= Integer.MAX_VALUE)
-  #       n64++;
-  #   }
-  #   return n64;
-  # }
-  #
-  # private int findLevelOne(long nthPosition) {
-  #   int levelOne = Arrays.binarySearch(idxHeader, nthPosition + 1);
-  #   if (levelOne >= 0) {
-  #     // If we hit the bucket exactly the item is in the bucket, or
-  #     // any bucket before it which has the same object count.
-  #     //
-  #     long base = idxHeader[levelOne];
-  #     while (levelOne > 0 && base == idxHeader[levelOne - 1])
-  #       levelOne--;
-  #   } else {
-  #     // The item is in the bucket we would insert it into.
-  #     //
-  #     levelOne = -(levelOne + 1);
-  #   }
-  #   return levelOne;
-  # }
-  #
-  # private int getLevelTwo(long nthPosition, int levelOne) {
-  #   final long base = levelOne > 0 ? idxHeader[levelOne - 1] : 0;
-  #   return (int) (nthPosition - base);
-  # }
-  #
-  # /** {@inheritDoc} */
-  # @Override
-  # public ObjectId getObjectId(long nthPosition) {
-  #   final int levelOne = findLevelOne(nthPosition);
-  #   final int p = getLevelTwo(nthPosition, levelOne);
-  #   final int dataIdx = idOffset(p);
-  #   return ObjectId.fromRaw(idxdata[levelOne], dataIdx);
-  # }
-  #
-  # @Override
-  # long getOffset(long nthPosition) {
-  #   final int levelOne = findLevelOne(nthPosition);
-  #   final int levelTwo = getLevelTwo(nthPosition, levelOne);
-  #   final int p = (4 + Constants.OBJECT_ID_LENGTH) * levelTwo;
-  #   return NB.decodeUInt32(idxdata[levelOne], p);
-  # }
-  #
+	# @Override
+	# public ObjectId getObjectId(long nthPosition) {
+	# 	final int levelOne = findLevelOne(nthPosition);
+	# 	final int p = getLevelTwo(nthPosition, levelOne);
+	# 	final int dataIdx = idOffset(p);
+	# 	return ObjectId.fromRaw(idxdata[levelOne], dataIdx);
+	# }
+
   # /** {@inheritDoc} */
   # @Override
   # public long findOffset(AnyObjectId objId) {
@@ -243,6 +202,37 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
 
   defimpl Reader do
     alias Xgit.Errors.UnsupportedOperationError
+
+    @impl true
+    def get_offset_at_index(pack_index, index) do
+      #   final int levelOne = findLevelOne(nthPosition);
+      #   final int levelTwo = getLevelTwo(nthPosition, levelOne);
+      #   final int p = (4 + Constants.OBJECT_ID_LENGTH) * levelTwo;
+      #   return NB.decodeUInt32(idxdata[levelOne], p);
+    end
+
+    # private int findLevelOne(long nthPosition) {
+    #   int levelOne = Arrays.binarySearch(idxHeader, nthPosition + 1);
+    #   if (levelOne >= 0) {
+    #     // If we hit the bucket exactly the item is in the bucket, or
+    #     // any bucket before it which has the same object count.
+    #     //
+    #     long base = idxHeader[levelOne];
+    #     while (levelOne > 0 && base == idxHeader[levelOne - 1])
+    #       levelOne--;
+    #   } else {
+    #     // The item is in the bucket we would insert it into.
+    #     //
+    #     levelOne = -(levelOne + 1);
+    #   }
+    #   return levelOne;
+    # }
+    #
+    # private int getLevelTwo(long nthPosition, int levelOne) {
+    #   final long base = levelOne > 0 ? idxHeader[levelOne - 1] : 0;
+    #   return (int) (nthPosition - base);
+    # }
+
 
     @impl true
     def crc32_checksum_for_object(_index, _object_id) do

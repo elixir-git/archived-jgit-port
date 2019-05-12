@@ -64,6 +64,12 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
     """
 
     @doc ~S"""
+    Get offset in a pack for the n-th (zero-based) object entry returned by
+    enumerating this index.
+    """
+    def get_offset_at_index(pack_index, index)
+
+    @doc ~S"""
     Retrieve stored CRC32 checksum of the requested object raw-data (including header).
 
     Returns CRC32 checksum of specified object (at 32 less significant bits) or
@@ -227,20 +233,13 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   #   final int one = nthPosition & 1;
   #   return getObjectId(((long) u31) << 1 | one);
   # }
-  #
-  # /**
-  #  * Get offset in a pack for the n-th object entry returned by
-  #  * {@link #iterator()}.
-  #  *
-  #  * @param nthPosition
-  #  *            unsigned 32 bit position within the traversal of
-  #  *            {@link #iterator()} for which the caller needs the offset. The
-  #  *            first returned {@link MutableEntry} is 0, the second is 1,
-  #  *            etc. Positions past 2**31-1 are negative, but still valid.
-  #  * @return the offset in a pack for the corresponding entry.
-  #  */
-  # abstract long getOffset(long nthPosition);
-  #
+
+  @doc ~S"""
+  Get offset in a pack for the n-th (zero-based) object entry returned by
+  enumerating this index.
+  """
+  defdelegate get_offset_at_index(pack_index, index), to: __MODULE__.Reader
+
   # /**
   #  * Locate the file offset position for the requested object.
   #  *
