@@ -180,27 +180,17 @@ defmodule Xgit.Util.NB do
   #   r |= intbuf[offset + 6] & 0xff;
   #   return (r << 8) | (intbuf[offset + 7] & 0xff);
   # }
-  #
-  # /**
-  #  * Convert sequence of 4 bytes (network byte order) into unsigned value.
-  #  *
-  #  * @param intbuf
-  #  *            buffer to acquire the 4 bytes of data from.
-  #  * @param offset
-  #  *            position within the buffer to begin reading from. This
-  #  *            position and the next 3 bytes after it (for a total of 4
-  #  *            bytes) will be read.
-  #  * @return unsigned integer value that matches the 32 bits read.
-  #  */
-  # public static long decodeUInt32(final byte[] intbuf, final int offset) {
-  #   int low = (intbuf[offset + 1] & 0xff) << 8;
-  #   low |= (intbuf[offset + 2] & 0xff);
-  #   low <<= 8;
-  #
-  #   low |= (intbuf[offset + 3] & 0xff);
-  #   return ((long) (intbuf[offset] & 0xff)) << 24 | low;
-  # }
-  #
+
+  @doc ~S"""
+  Convert sequence of 4 bytes (network byte order) into unsigned value.
+
+  Reads the first four bytes from `intbuf` and returns `{value, buf}`
+  where value is the unsigned integer value from the first four bytes at `intbuf`
+  and `buf` is the remainder of the byte array after those bytes.
+  """
+  def decode_uint32([b1, b2, b3, b4 | tail]),
+    do: {b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100 + b4, tail}
+
   # /**
   #  * Convert sequence of 8 bytes (network byte order) into unsigned value.
   #  *
