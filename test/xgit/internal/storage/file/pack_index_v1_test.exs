@@ -50,6 +50,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
   use ExUnit.Case, async: true
 
   alias Xgit.Internal.Storage.File.PackIndex
+  alias Xgit.Internal.Storage.File.PackIndex.Entry
   # alias Xgit.Internal.Storage.File.PackIndexV1
 
   defp path_for_pack_34be9032 do
@@ -57,9 +58,12 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
   end
 
   test "expect results for pack 34be9032" do
-    pack_index = PackIndex.open(path_for_pack_34be9032())
+    objects_in_pack_34be9032 =
+      path_for_pack_34be9032()
+      |> PackIndex.open()
+      |> Enum.map(fn %Entry{name: name} -> name end)
 
-    assert Enum.to_list(pack_index) == [
+    assert Enum.to_list(objects_in_pack_34be9032) == [
              "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
              "540a36d136cf413e4b064c2b0e0a4db60f77feab",
              "5b6e7c66c276e7610d4a73c70ec1a1f7c1003259",

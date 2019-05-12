@@ -269,74 +269,19 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   #  */
   # public abstract void resolve(Set<ObjectId> matches, AbbreviatedObjectId id,
   #     int matchLimit) throws IOException;
-  #
-  # /**
-  #  * Represent mutable entry of pack index consisting of object id and offset
-  #  * in pack (both mutable).
-  #  *
-  #  */
-  # public static class MutableEntry {
-  #   final MutableObjectId idBuffer = new MutableObjectId();
-  #
-  #   long offset;
-  #
-  #   /**
-  #    * Returns offset for this index object entry
-  #    *
-  #    * @return offset of this object in a pack file
-  #    */
-  #   public long getOffset() {
-  #     return offset;
-  #   }
-  #
-  #   /** @return hex string describing the object id of this entry. */
-  #   public String name() {
-  #     ensureId();
-  #     return idBuffer.name();
-  #   }
-  #
-  #   /** @return a copy of the object id. */
-  #   public ObjectId toObjectId() {
-  #     ensureId();
-  #     return idBuffer.toObjectId();
-  #   }
-  #
-  #   /** @return a complete copy of this entry, that won't modify */
-  #   public MutableEntry cloneEntry() {
-  #     final MutableEntry r = new MutableEntry();
-  #     ensureId();
-  #     r.idBuffer.fromObjectId(idBuffer);
-  #     r.offset = offset;
-  #     return r;
-  #   }
-  #
-  #   void ensureId() {
-  #     // Override in implementations.
-  #   }
-  # }
-  #
-  # abstract class EntriesIterator implements Iterator<MutableEntry> {
-  #   protected final MutableEntry entry = initEntry();
-  #
-  #   protected long returnedNumber = 0;
-  #
-  #   protected abstract MutableEntry initEntry();
-  #
-  #   @Override
-  #   public boolean hasNext() {
-  #     return returnedNumber < getObjectCount();
-  #   }
-  #
-  #   /**
-  #    * Implementation must update {@link #returnedNumber} before returning
-  #    * element.
-  #    */
-  #   @Override
-  #   public abstract MutableEntry next();
-  #
-  #   @Override
-  #   public void remove() {
-  #     throw new UnsupportedOperationException();
-  #   }
-  # }
+
+  defmodule Entry do
+    @moduledoc ~S"""
+    Represents a single entry of pack index consisting of object ID and offset
+    in pack.
+
+    (Unlike jgit, these entries are not mutable.)
+
+    Struct members:
+    * `:name` (string): Hex string containing the object ID of this entry.
+    * `:offset` (integer): Offset for this index object entry.
+    """
+    @enforce_keys [:name, :offset]
+    defstruct [:name, :offset]
+  end
 end

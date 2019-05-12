@@ -221,37 +221,38 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   # private static int idOffset(int mid) {
   #   return ((4 + Constants.OBJECT_ID_LENGTH) * mid) + 4;
   # }
-  #
-  # private class IndexV1Iterator extends EntriesIterator {
-  #   int levelOne;
-  #
-  #   int levelTwo;
-  #
-  #   @Override
-  #   protected MutableEntry initEntry() {
-  #     return new MutableEntry() {
-  #       @Override
-  #       protected void ensureId() {
-  #         idBuffer.fromRaw(idxdata[levelOne], levelTwo
-  #             - Constants.OBJECT_ID_LENGTH);
-  #       }
-  #     };
-  #   }
-  #
-  #   @Override
-  #   public MutableEntry next() {
-  #     for (; levelOne < idxdata.length; levelOne++) {
-  #       if (idxdata[levelOne] == null)
-  #         continue;
-  #       if (levelTwo < idxdata[levelOne].length) {
-  #         entry.offset = NB.decodeUInt32(idxdata[levelOne], levelTwo);
-  #         levelTwo += Constants.OBJECT_ID_LENGTH + 4;
-  #         returnedNumber++;
-  #         return entry;
-  #       }
-  #       levelTwo = 0;
-  #     }
-  #     throw new NoSuchElementException();
-  #   }
-  # }
+
+  defimpl Enumerable do
+    alias Xgit.Internal.Storage.File.PackIndex.Entry
+    alias Xgit.Internal.Storage.File.PackIndexV1
+    alias Xgit.Lib.ObjectId
+
+    def count(_), do: {:error, PackIndexV1}
+    def member?(_, _), do: {:error, PackIndexV1}
+    def slice(_), do: {:error, PackIndexV1}
+
+    def reduce(%PackIndexV1{idx_data: idx_data}, acc, fun) when is_list(idx_data),
+      do: reduce(idx_data, [], acc, fun)
+
+    defp reduce(level1, level2, acc, fun)
+
+    defp reduce(_level1, _leve2, {:halt, acc}, _fun), do: {:halted, acc}
+
+    defp reduce(level1, level2, {:suspend, acc}, fun),
+      do: {:suspended, acc, &reduce(level1, level2, &1, fun)}
+
+    defp reduce([] = _level1, [] = _level2, {:cont, acc}, _fun), do: {:done, acc}
+
+    defp reduce([l1_head | l1_tail], [] = _level2, {:cont, _} = acc, fun),
+      do: reduce(l1_tail, l1_head, acc, fun)
+
+    defp reduce(level1, level2, {:cont, acc}, fun) do
+      entry = %Entry{
+        name: level2 |> Enum.drop(4) |> ObjectId.from_raw_bytes(),
+        offset: level2 |> NB.decode_uint32() |> elem(0)
+      }
+
+      reduce(level1, Enum.drop(level2, Constants.object_id_length() + 4), fun.(entry, acc), fun)
+    end
+  end
 end
