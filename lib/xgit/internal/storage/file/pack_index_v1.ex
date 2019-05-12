@@ -63,9 +63,17 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
     fanout_table_suffix = IO.read(file_pid, @index_header_length - length(header))
     fanout_table = header ++ fanout_table_suffix
 
+    idx_header =
+      fanout_table
+      |> Enum.chunk_every(4)
+      |> Enum.map(
+
+    1..256
+    |> Enum.map
     # idxHeader = new long[256]; // really unsigned 32-bit...
     # for (int k = 0; k < idxHeader.length; k++)
     #   idxHeader[k] = NB.decodeUInt32(fanoutTable, k * 4);
+
     # idxdata = new byte[idxHeader.length][];
     # for (int k = 0; k < idxHeader.length; k++) {
     #   int n;
