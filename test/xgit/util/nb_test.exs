@@ -133,27 +133,30 @@ defmodule Xgit.Util.NBTest do
     end
   end
 
-  # @Test
-  # public void testDecodeUInt32() {
-  #   assertEquals(0L, NB.decodeUInt32(b(0, 0, 0, 0), 0));
-  #   assertEquals(0L, NB.decodeUInt32(padb(3, 0, 0, 0, 0), 3));
-  #
-  #   assertEquals(3L, NB.decodeUInt32(b(0, 0, 0, 3), 0));
-  #   assertEquals(3L, NB.decodeUInt32(padb(3, 0, 0, 0, 3), 3));
-  #
-  #   assertEquals(0xdeadbeefL, NB.decodeUInt32(b(0xde, 0xad, 0xbe, 0xef), 0));
-  #   assertEquals(0xdeadbeefL, NB.decodeUInt32(padb(3, 0xde, 0xad, 0xbe,
-  #       0xef), 3));
-  #
-  #   assertEquals(0x0310adefL, NB.decodeUInt32(b(0x03, 0x10, 0xad, 0xef), 0));
-  #   assertEquals(0x0310adefL, NB.decodeUInt32(padb(3, 0x03, 0x10, 0xad,
-  #       0xef), 3));
-  #
-  #   assertEquals(0xffffffffL, NB.decodeUInt32(b(0xff, 0xff, 0xff, 0xff), 0));
-  #   assertEquals(0xffffffffL, NB.decodeUInt32(padb(3, 0xff, 0xff, 0xff,
-  #       0xff), 3));
-  # }
-  #
+  describe "decode_uint32/1" do
+    test "simple cases" do
+      assert NB.decode_uint32([0, 0, 0, 0, 0]) == {0, [0]}
+      assert NB.decode_uint32([0, 0, 0, 0, 3]) == {0, [3]}
+
+      assert NB.decode_uint32([0, 0, 0, 0, 3, 42]) == {0, [3, 42]}
+
+      assert NB.decode_uint32([0, 0, 0, 3]) == {3, []}
+      assert NB.decode_uint32([0, 0, 0, 3, 0]) == {3, [0]}
+      assert NB.decode_uint32([0, 0, 0, 3, 3]) == {3, [3]}
+
+      assert NB.decode_uint32([0x03, 0x10, 0xAD, 0xEF, 1]) == {0x0310ADEF, [1]}
+
+      assert NB.decode_uint32([0xFF, 0xFF, 0xFF, 0xFF, 0xFE]) == {0xFFFFFFFF, [0xFE]}
+      assert NB.decode_uint32([0xDE, 0xAD, 0xBE, 0xEF, 1]) == {0xDEADBEEF, [1]}
+    end
+
+    test "rejects byte list too short" do
+      assert_raise FunctionClauseError, fn ->
+        NB.decode_uint32([1, 2, 3])
+      end
+    end
+  end
+
   # @Test
   # public void testDecodeUInt64() {
   #   assertEquals(0L, NB.decodeUInt64(b(0, 0, 0, 0, 0, 0, 0, 0), 0));
