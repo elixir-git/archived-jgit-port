@@ -58,7 +58,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
     Path.expand("../../../../fixtures/pack-34be9032ac282b11fa9babdc2b2a93ca996c9c2f.idx", __DIR__)
   end
 
-  # DISABLED: We don't actually have a dense pack index file to work from.
+  # DISABLED: We don't actually have a dense V1 pack index file to work from.
   # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.
   # defp path_for_pack_df2982f28 do
   #   # aka "dense index"
@@ -83,7 +83,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
            ]
   end
 
-  # DISABLED: We don't actually have a dense pack index file to work from.
+  # DISABLED: We don't actually have a dense V1 pack index file to work from.
   # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.
   # test "expect (partial) results for pack df2982f28" do
   #   objects_in_pack_df2982f28 =
