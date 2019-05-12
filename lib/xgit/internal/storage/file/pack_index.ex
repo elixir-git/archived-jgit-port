@@ -69,7 +69,7 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
     Returns CRC32 checksum of specified object (at 32 less significant bits) or
     raises `MissingObjectError` if the requested object ID was not found in this index.
 
-    Raises `???` if this index doesn't support CRC32 checksum.
+    Raises `UnsupportedOperationError` if this index doesn't support CRC32 checksum.
     """
     def crc32_checksum_for_object(index, object_id)
 
