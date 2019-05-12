@@ -47,6 +47,8 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
+  use ExUnit.Case, async: true
+
   alias Xgit.Internal.Storage.File.PackIndex
   # alias Xgit.Internal.Storage.File.PackIndexV1
 

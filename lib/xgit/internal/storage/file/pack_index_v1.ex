@@ -50,59 +50,47 @@
 defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   @moduledoc false
 
-  defstruct [:idx_header, :idex_data, :object_count]
-  @enforce_keys [:idx_header, :idex_data, :object_count]
+  @enforce_keys [:idx_header, :idx_data, :object_count, :pack_checksum]
+  defstruct [:idx_header, :idx_data, :object_count, :pack_checksum]
 
-  # private final long[] idxHeader;
-  # byte[][] idxdata;
-  # private long objectCnt;
+  alias Xgit.Lib.Constants
+  alias Xgit.Util.NB
 
   @index_header_length 1024
 
-  def parse(file_pid, header) when is_pid(file_pid and is_list(header) do
+  def parse(file_pid, header) when is_pid(file_pid) and is_list(header) do
     fanout_table_suffix = IO.read(file_pid, @index_header_length - length(header))
     fanout_table = header ++ fanout_table_suffix
 
-    idx_header =
-      fanout_table
-      |> Enum.chunk_every(4)
-      |> Enum.map(
+    idx_header = idx_header_from_fanout_table(fanout_table, [])
+    {idx_data, object_count} = Enum.map_reduce(idx_header, 0, &read_index_data(&1, &2, file_pid))
+    pack_checksum = IO.read(file_pid, 20)
 
-    1..256
-    |> Enum.map
-    # idxHeader = new long[256]; // really unsigned 32-bit...
-    # for (int k = 0; k < idxHeader.length; k++)
-    #   idxHeader[k] = NB.decodeUInt32(fanoutTable, k * 4);
-
-    # idxdata = new byte[idxHeader.length][];
-    # for (int k = 0; k < idxHeader.length; k++) {
-    #   int n;
-    #   if (k == 0) {
-    #     n = (int) (idxHeader[k]);
-    #   } else {
-    #     n = (int) (idxHeader[k] - idxHeader[k - 1]);
-    #   }
-    #   if (n > 0) {
-    #     final long len = n * (Constants.OBJECT_ID_LENGTH + 4);
-    #     if (len > Integer.MAX_VALUE - 8) // http://stackoverflow.com/a/8381338
-    #       throw new IOException(JGitText.get().indexFileIsTooLargeForJgit);
-    #
-    #     idxdata[k] = new byte[(int) len];
-    #     IO.readFully(fd, idxdata[k], 0, idxdata[k].length);
-    #   }
-    # }
-    # objectCnt = idxHeader[255];
-    #
-    # packChecksum = new byte[20];
-    # IO.readFully(fd, packChecksum, 0, packChecksum.length);
+    %__MODULE__{
+      idx_header: idx_header,
+      idx_data: idx_data,
+      object_count: object_count,
+      pack_checksum: pack_checksum
+    }
   end
 
-  # /** {@inheritDoc} */
-  # @Override
-  # public long getObjectCount() {
-  #   return objectCnt;
-  # }
-	#
+  defp idx_header_from_fanout_table([], acc), do: Enum.reverse(acc)
+
+  defp idx_header_from_fanout_table([_a, _b, _c, _d | _tail] = fanout_table, acc) do
+    {value, tail} = NB.decode_uint32(fanout_table)
+    idx_header_from_fanout_table(tail, [value | acc])
+  end
+
+  defp read_index_data(acc = _item, acc, _file_pid), do: {[], acc}
+
+  defp read_index_data(item, acc, file_pid) do
+    bytes_to_read = (item - acc) * (Constants.object_id_length() + 4)
+    # TO DO: Enforce safety limit for size of index array?
+    # throw new IOException(JGitText.get().indexFileIsTooLargeForJgit);
+
+    {IO.read(file_pid, bytes_to_read), item}
+  end
+
   # /** {@inheritDoc} */
   # @Override
   # public long getOffset64Count() {
@@ -113,7 +101,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   #   }
   #   return n64;
   # }
-	#
+  #
   # private int findLevelOne(long nthPosition) {
   #   int levelOne = Arrays.binarySearch(idxHeader, nthPosition + 1);
   #   if (levelOne >= 0) {
@@ -130,12 +118,12 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   #   }
   #   return levelOne;
   # }
-	#
+  #
   # private int getLevelTwo(long nthPosition, int levelOne) {
   #   final long base = levelOne > 0 ? idxHeader[levelOne - 1] : 0;
   #   return (int) (nthPosition - base);
   # }
-	#
+  #
   # /** {@inheritDoc} */
   # @Override
   # public ObjectId getObjectId(long nthPosition) {
@@ -144,7 +132,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   #   final int dataIdx = idOffset(p);
   #   return ObjectId.fromRaw(idxdata[levelOne], dataIdx);
   # }
-	#
+  #
   # @Override
   # long getOffset(long nthPosition) {
   #   final int levelOne = findLevelOne(nthPosition);
@@ -152,7 +140,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   #   final int p = (4 + Constants.OBJECT_ID_LENGTH) * levelTwo;
   #   return NB.decodeUInt32(idxdata[levelOne], p);
   # }
-	#
+  #
   # /** {@inheritDoc} */
   # @Override
   # public long findOffset(AnyObjectId objId) {
@@ -179,25 +167,25 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   #   } while (low < high);
   #   return -1;
   # }
-	#
+  #
   # /** {@inheritDoc} */
   # @Override
   # public long findCRC32(AnyObjectId objId) {
   #   throw new UnsupportedOperationException();
   # }
-	#
+  #
   # /** {@inheritDoc} */
   # @Override
   # public boolean hasCRC32Support() {
   #   return false;
   # }
-	#
+  #
   # /** {@inheritDoc} */
   # @Override
   # public Iterator<MutableEntry> iterator() {
   #   return new IndexV1Iterator();
   # }
-	#
+  #
   # /** {@inheritDoc} */
   # @Override
   # public void resolve(Set<ObjectId> matches, AbbreviatedObjectId id,
@@ -229,16 +217,16 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   #       low = p + 1;
   #   } while (low < high);
   # }
-	#
+  #
   # private static int idOffset(int mid) {
   #   return ((4 + Constants.OBJECT_ID_LENGTH) * mid) + 4;
   # }
-	#
+  #
   # private class IndexV1Iterator extends EntriesIterator {
   #   int levelOne;
-	#
+  #
   #   int levelTwo;
-	#
+  #
   #   @Override
   #   protected MutableEntry initEntry() {
   #     return new MutableEntry() {
@@ -249,7 +237,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   #       }
   #     };
   #   }
-	#
+  #
   #   @Override
   #   public MutableEntry next() {
   #     for (; levelOne < idxdata.length; levelOne++) {

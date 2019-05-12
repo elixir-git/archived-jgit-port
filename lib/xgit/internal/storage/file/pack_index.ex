@@ -56,6 +56,8 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   by `ObjectId`.
   """
 
+  alias Xgit.Internal.Storage.File.PackIndexV1
+
   @doc ~S"""
   Open an existing pack `.idx` file for reading.
 
@@ -69,10 +71,10 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   def open(idx_file_path) when is_binary(idx_file_path) do
     try do
       idx_file_path
-      |> File.open!([:read])
+      |> File.open!([:read, :charlist])
       |> read()
     catch
-      x -> raise "Unreadable pack index: #{idx_file_path}"
+      _ -> raise "Unreadable pack index: #{idx_file_path}"
     end
   end
 
@@ -96,7 +98,7 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
       #       throw new UnsupportedPackIndexVersionException(v);
       #     }
     else
-      PackIndexV1.read(file_pid, header)
+      PackIndexV1.parse(file_pid, header)
     end
   end
 
