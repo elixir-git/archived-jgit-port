@@ -86,6 +86,23 @@ defmodule Xgit.Lib.ObjectIdTest do
              "0102030405060708090a0b0c0d0e0f1011121314"
   end
 
+  test "to_raw_bytes/1" do
+    assert ObjectId.to_raw_bytes("000102030405060708090a0b0c0d0e0f10111213") ==
+             Enum.to_list(0..19)
+
+    assert ObjectId.to_raw_bytes("ff0102030405060708090a0b0c0d0e0f10111213") == [
+             255 | Enum.to_list(1..19)
+           ]
+
+    assert_raise ArgumentError, fn ->
+      ObjectId.to_raw_bytes("FF0102030405060708090a0b0c0d0e0f10111213")
+    end
+
+    assert_raise FunctionClauseError, fn ->
+      ObjectId.to_raw_bytes("f0102030405060708090a0b0c0d0e0f10111213")
+    end
+  end
+
   test "from_hex_charlist/1" do
     assert ObjectId.from_hex_charlist('1234567890abcdef12341234567890abcdef1234') ==
              {'1234567890abcdef12341234567890abcdef1234', []}
