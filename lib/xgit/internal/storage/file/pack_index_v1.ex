@@ -94,33 +94,6 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
 
   # /** {@inheritDoc} */
   # @Override
-  # public long findOffset(AnyObjectId objId) {
-  #   final int levelOne = objId.getFirstByte();
-  #   byte[] data = idxdata[levelOne];
-  #   if (data == null)
-  #     return -1;
-  #   int high = data.length / (4 + Constants.OBJECT_ID_LENGTH);
-  #   int low = 0;
-  #   do {
-  #     final int mid = (low + high) >>> 1;
-  #     final int pos = idOffset(mid);
-  #     final int cmp = objId.compareTo(data, pos);
-  #     if (cmp < 0)
-  #       high = mid;
-  #     else if (cmp == 0) {
-  #       int b0 = data[pos - 4] & 0xff;
-  #       int b1 = data[pos - 3] & 0xff;
-  #       int b2 = data[pos - 2] & 0xff;
-  #       int b3 = data[pos - 1] & 0xff;
-  #       return (((long) b0) << 24) | (b1 << 16) | (b2 << 8) | (b3);
-  #     } else
-  #       low = mid + 1;
-  #   } while (low < high);
-  #   return -1;
-  # }
-  #
-  # /** {@inheritDoc} */
-  # @Override
   # public void resolve(Set<ObjectId> matches, AbbreviatedObjectId id,
   #     int matchLimit) throws IOException {
   #   byte[] data = idxdata[id.getFirstByte()];
@@ -265,6 +238,32 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
       |> Enum.at(level_one)
       |> Enum.drop(byte_offset)
       |> ObjectId.from_raw_bytes()
+    end
+
+    @impl true
+    def find_offset(pack_index, object_id) do
+      # final int levelOne = objId.getFirstByte();
+      # byte[] data = idxdata[levelOne];
+      # if (data == null)
+      #   return -1;
+      # int high = data.length / (4 + Constants.OBJECT_ID_LENGTH);
+      # int low = 0;
+      # do {
+      #   final int mid = (low + high) >>> 1;
+      #   final int pos = idOffset(mid);
+      #   final int cmp = objId.compareTo(data, pos);
+      #   if (cmp < 0)
+      #     high = mid;
+      #   else if (cmp == 0) {
+      #     int b0 = data[pos - 4] & 0xff;
+      #     int b1 = data[pos - 3] & 0xff;
+      #     int b2 = data[pos - 2] & 0xff;
+      #     int b3 = data[pos - 1] & 0xff;
+      #     return (((long) b0) << 24) | (b1 << 16) | (b2 << 8) | (b3);
+      #   } else
+      #     low = mid + 1;
+      # } while (low < high);
+      # return -1;
     end
 
     @impl true

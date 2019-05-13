@@ -82,6 +82,14 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
     def get_offset_at_index(index, nth_position)
 
     @doc ~S"""
+    Locate the file offset position for the requested object.
+
+    Returns -1 if the object does not exist in this index and is thus not stored
+    in the associated pack.
+    """
+    def find_offset(pack_index, object_id)
+
+    @doc ~S"""
     Retrieve stored CRC32 checksum of the requested object raw-data (including header).
 
     Returns CRC32 checksum of specified object (at 32 less significant bits) or
@@ -198,16 +206,13 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   """
   defdelegate get_offset_at_index(pack_index, nth_position), to: __MODULE__.Reader
 
-  # /**
-  #  * Locate the file offset position for the requested object.
-  #  *
-  #  * @param objId
-  #  *            name of the object to locate within the pack.
-  #  * @return offset of the object's header and compressed content; -1 if the
-  #  *         object does not exist in this index and is thus not stored in the
-  #  *         associated pack.
-  #  */
-  # public abstract long findOffset(AnyObjectId objId);
+  @doc ~S"""
+  Locate the file offset position for the requested object.
+
+  Returns -1 if the object does not exist in this index and is thus not stored
+  in the associated pack.
+  """
+  defdelegate find_offset(pack_index, object_id), to: __MODULE__.Reader
 
   @doc ~S"""
   Retrieve stored CRC32 checksum of the requested object raw-data (including header).
