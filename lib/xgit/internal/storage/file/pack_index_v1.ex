@@ -241,13 +241,24 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
     end
 
     @impl true
-    def find_offset(pack_index, object_id) do
-      # final int levelOne = objId.getFirstByte();
-      # byte[] data = idxdata[levelOne];
-      # if (data == null)
-      #   return -1;
-      # int high = data.length / (4 + Constants.OBJECT_ID_LENGTH);
-      # int low = 0;
+    def find_offset(%{idx_data: idx_data}, object_id) do
+      raw_object_id = ObjectId.to_raw_bytes(object_id)
+      level_one = List.first(raw_object_id)
+
+      # TO DO: Watch this for performance. Do we need to convert this to a binary
+      # right off the bat, or is per `find_offset` call acceptable?
+      data =
+        idx_data
+        |> Enum.at(level_one)
+        |> :erlang.list_to_binary()
+
+      find_offset_in_level_two_index(
+        data,
+        :erlang.list_to_binary(raw_object_id),
+        0,
+        div(byte_size(data), 24)
+      )
+
       # do {
       #   final int mid = (low + high) >>> 1;
       #   final int pos = idOffset(mid);
@@ -264,6 +275,29 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
       #     low = mid + 1;
       # } while (low < high);
       # return -1;
+    end
+
+    defp find_offset_in_level_two_index(_data, _raw_object_id, index, index), do: -1
+
+    defp find_offset_in_level_two_index(data, raw_object_id, min_index, max_index) do
+      mid_index = div(min_index + max_index, 2)
+      id_offset = mid_index * 24 + 4
+      raw_id_at_index = :erlang.binary_part(data, id_offset, 20)
+
+      cond do
+        raw_id_at_index == raw_object_id ->
+          data
+          |> String.slice(id_offset - 4, 4)
+          |> :erlang.binary_to_list()
+          |> NB.decode_uint32()
+          |> elem(0)
+
+        raw_id_at_index < raw_object_id ->
+          find_offset_in_level_two_index(data, raw_object_id, min_index, mid_index)
+
+        true ->
+          find_offset_in_level_two_index(data, raw_object_id, mid_index + 1, max_index)
+      end
     end
 
     @impl true

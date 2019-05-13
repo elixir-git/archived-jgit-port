@@ -128,7 +128,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
       pack_index
       |> Enum.with_index()
       |> Enum.each(fn {%Entry{name: name}, index} ->
-        assert PackIndex.get_object_id_at_index(pack_index, index) == name  
+        assert PackIndex.get_object_id_at_index(pack_index, index) == name
       end)
     end
 
@@ -148,6 +148,24 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
       |> Enum.with_index()
       |> Enum.each(fn {%Entry{offset: offset}, index} ->
         assert PackIndex.get_offset_at_index(pack_index, index) == offset
+      end)
+    end
+
+    test "offsets match output of iterator (dense index)" do
+      # DISABLED: We don't actually have a dense V1 pack index file to work from.
+      # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.
+    end
+  end
+
+  describe "find_offset/2" do
+    test "offsets match output of iterator (small index)" do
+      pack_index =
+        path_for_pack_34be9032()
+        |> PackIndex.open()
+
+      pack_index
+      |> Enum.each(fn %Entry{name: name, offset: offset} ->
+        assert PackIndex.find_offset(pack_index, name) == offset
       end)
     end
 
