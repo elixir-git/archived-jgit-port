@@ -258,23 +258,6 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
         0,
         div(byte_size(data), 24)
       )
-
-      # do {
-      #   final int mid = (low + high) >>> 1;
-      #   final int pos = idOffset(mid);
-      #   final int cmp = objId.compareTo(data, pos);
-      #   if (cmp < 0)
-      #     high = mid;
-      #   else if (cmp == 0) {
-      #     int b0 = data[pos - 4] & 0xff;
-      #     int b1 = data[pos - 3] & 0xff;
-      #     int b2 = data[pos - 2] & 0xff;
-      #     int b3 = data[pos - 1] & 0xff;
-      #     return (((long) b0) << 24) | (b1 << 16) | (b2 << 8) | (b3);
-      #   } else
-      #     low = mid + 1;
-      # } while (low < high);
-      # return -1;
     end
 
     defp find_offset_in_level_two_index(_data, _raw_object_id, index, index), do: -1
