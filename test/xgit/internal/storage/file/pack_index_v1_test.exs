@@ -128,7 +128,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
       pack_index
       |> Enum.with_index()
       |> Enum.each(fn {%Entry{name: name}, index} ->
-        assert PackIndex.get_object_id_at_index(pack_index, index) == name
+        assert PackIndex.get_object_id_at_index(pack_index, index) == name  
       end)
     end
 

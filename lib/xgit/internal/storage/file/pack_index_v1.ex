@@ -94,15 +94,6 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
 
   # /** {@inheritDoc} */
   # @Override
-  # public ObjectId getObjectId(long nthPosition) {
-  # 	final int levelOne = findLevelOne(nthPosition);
-  # 	final int p = getLevelTwo(nthPosition, levelOne);
-  # 	final int dataIdx = idOffset(p);
-  # 	return ObjectId.fromRaw(idxdata[levelOne], dataIdx);
-  # }
-
-  # /** {@inheritDoc} */
-  # @Override
   # public long findOffset(AnyObjectId objId) {
   #   final int levelOne = objId.getFirstByte();
   #   byte[] data = idxdata[levelOne];
