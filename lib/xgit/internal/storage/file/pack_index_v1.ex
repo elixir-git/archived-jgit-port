@@ -202,7 +202,19 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
 
   defimpl Reader do
     alias Xgit.Errors.UnsupportedOperationError
+    alias Xgit.Lib.ObjectId
     alias Xgit.Util.TupleUtils
+
+    @impl true
+    def get_object_id_at_index(%{idx_header: idx_header, idx_data: idx_data}, nth_position) do
+      level_one =
+        idx_header
+        |> find_level_one(nth_position)
+
+      level_one
+      |> find_level_two(idx_header, nth_position)
+      |> read_object_id_at_index(level_one, idx_data)
+    end
 
     @impl true
     def get_offset_at_index(%{idx_header: idx_header, idx_data: idx_data}, nth_position) do
@@ -253,6 +265,15 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
       |> Enum.drop(byte_offset)
       |> NB.decode_uint32()
       |> elem(0)
+    end
+
+    defp read_object_id_at_index(level_two, level_one, idx_data) do
+      byte_offset = level_two * (4 + Constants.object_id_length()) + 4
+
+      idx_data
+      |> Enum.at(level_one)
+      |> Enum.drop(byte_offset)
+      |> ObjectId.from_raw_bytes()
     end
 
     @impl true

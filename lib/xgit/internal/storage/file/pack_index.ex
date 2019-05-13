@@ -64,6 +64,18 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
     """
 
     @doc ~S"""
+    Get object ID for the nth object entry returned by enumerating this index.
+
+    This function is a constant-time replacement for the following loop:
+
+    ```
+    %{name: name} = entry = Enum.at(index, nth_position)
+    name
+    ```
+    """
+    def get_object_id_at_index(pack_index, nth_position)
+
+    @doc ~S"""
     Get offset in a pack for the n-th (zero-based) object entry returned by
     enumerating this index.
     """
@@ -151,21 +163,7 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   # public boolean contains(AnyObjectId id) {
   #   return findOffset(id) != -1;
   # }
-  #
-  # /**
-  #  * {@inheritDoc}
-  #  * <p>
-  #  * Provide iterator that gives access to index entries. Note, that iterator
-  #  * returns reference to mutable object, the same reference in each call -
-  #  * for performance reason. If client needs immutable objects, it must copy
-  #  * returned object on its own.
-  #  * <p>
-  #  * Iterator returns objects in SHA-1 lexicographical order.
-  #  * </p>
-  #  */
-  # @Override
-  # public abstract Iterator<MutableEntry> iterator();
-  #
+
   # /**
   #  * Obtain the total number of objects described by this index.
   #  *
@@ -181,64 +179,24 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   #  *         object positioned after the 2 GB position within the file.
   #  */
   # public abstract long getOffset64Count();
-  #
-  # /**
-  #  * Get ObjectId for the n-th object entry returned by {@link #iterator()}.
-  #  * <p>
-  #  * This method is a constant-time replacement for the following loop:
-  #  *
-  #  * <pre>
-  #  * Iterator&lt;MutableEntry&gt; eItr = index.iterator();
-  #  * int curPosition = 0;
-  #  * while (eItr.hasNext() &amp;&amp; curPosition++ &lt; nthPosition)
-  #  *  eItr.next();
-  #  * ObjectId result = eItr.next().toObjectId();
-  #  * </pre>
-  #  *
-  #  * @param nthPosition
-  #  *            position within the traversal of {@link #iterator()} that the
-  #  *            caller needs the object for. The first returned
-  #  *            {@link org.eclipse.jgit.internal.storage.file.PackIndex.MutableEntry}
-  #  *            is 0, the second is 1, etc.
-  #  * @return the ObjectId for the corresponding entry.
-  #  */
-  # public abstract ObjectId getObjectId(long nthPosition);
-  #
-  # /**
-  #  * Get ObjectId for the n-th object entry returned by {@link #iterator()}.
-  #  * <p>
-  #  * This method is a constant-time replacement for the following loop:
-  #  *
-  #  * <pre>
-  #  * Iterator&lt;MutableEntry&gt; eItr = index.iterator();
-  #  * int curPosition = 0;
-  #  * while (eItr.hasNext() &amp;&amp; curPosition++ &lt; nthPosition)
-  #  *  eItr.next();
-  #  * ObjectId result = eItr.next().toObjectId();
-  #  * </pre>
-  #  *
-  #  * @param nthPosition
-  #  *            unsigned 32 bit position within the traversal of
-  #  *            {@link #iterator()} that the caller needs the object for. The
-  #  *            first returned
-  #  *            {@link org.eclipse.jgit.internal.storage.file.PackIndex.MutableEntry}
-  #  *            is 0, the second is 1, etc. Positions past 2**31-1 are
-  #  *            negative, but still valid.
-  #  * @return the ObjectId for the corresponding entry.
-  #  */
-  # public final ObjectId getObjectId(int nthPosition) {
-  #   if (nthPosition >= 0)
-  #     return getObjectId((long) nthPosition);
-  #   final int u31 = nthPosition >>> 1;
-  #   final int one = nthPosition & 1;
-  #   return getObjectId(((long) u31) << 1 | one);
-  # }
+
+  @doc ~S"""
+  Get object ID for the nth object entry returned by enumerating this index.
+
+  This function is a constant-time replacement for the following loop:
+
+  ```
+  %{name: name} = entry = Enum.at(index, nth_position)
+  name
+  ```
+  """
+  defdelegate get_object_id_at_index(pack_index, nth_position), to: __MODULE__.Reader
 
   @doc ~S"""
   Get offset in a pack for the n-th (zero-based) object entry returned by
   enumerating this index.
   """
-  defdelegate get_offset_at_index(pack_index, index), to: __MODULE__.Reader
+  defdelegate get_offset_at_index(pack_index, nth_position), to: __MODULE__.Reader
 
   # /**
   #  * Locate the file offset position for the requested object.
