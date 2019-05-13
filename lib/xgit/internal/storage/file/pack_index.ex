@@ -67,7 +67,7 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
     Get offset in a pack for the n-th (zero-based) object entry returned by
     enumerating this index.
     """
-    def get_offset_at_index(pack_index, index)
+    def get_offset_at_index(index, nth_position)
 
     @doc ~S"""
     Retrieve stored CRC32 checksum of the requested object raw-data (including header).

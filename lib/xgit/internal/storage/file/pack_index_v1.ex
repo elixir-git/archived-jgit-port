@@ -68,14 +68,14 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
     pack_checksum = IO.read(file_pid, 20)
 
     %__MODULE__{
-      idx_header: idx_header,
+      idx_header: List.to_tuple(idx_header),
       idx_data: idx_data,
       object_count: object_count,
       pack_checksum: pack_checksum
     }
   end
 
-  defp idx_header_from_fanout_table([], acc), do: Enum.reverse(acc) |> List.to_tuple()
+  defp idx_header_from_fanout_table([], acc), do: Enum.reverse(acc)
 
   defp idx_header_from_fanout_table([_a, _b, _c, _d | _tail] = fanout_table, acc) do
     {value, tail} = NB.decode_uint32(fanout_table)
@@ -93,13 +93,13 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   end
 
   # /** {@inheritDoc} */
-	# @Override
-	# public ObjectId getObjectId(long nthPosition) {
-	# 	final int levelOne = findLevelOne(nthPosition);
-	# 	final int p = getLevelTwo(nthPosition, levelOne);
-	# 	final int dataIdx = idOffset(p);
-	# 	return ObjectId.fromRaw(idxdata[levelOne], dataIdx);
-	# }
+  # @Override
+  # public ObjectId getObjectId(long nthPosition) {
+  # 	final int levelOne = findLevelOne(nthPosition);
+  # 	final int p = getLevelTwo(nthPosition, levelOne);
+  # 	final int dataIdx = idOffset(p);
+  # 	return ObjectId.fromRaw(idxdata[levelOne], dataIdx);
+  # }
 
   # /** {@inheritDoc} */
   # @Override
@@ -202,37 +202,58 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
 
   defimpl Reader do
     alias Xgit.Errors.UnsupportedOperationError
+    alias Xgit.Util.TupleUtils
 
     @impl true
-    def get_offset_at_index(pack_index, index) do
-      #   final int levelOne = findLevelOne(nthPosition);
-      #   final int levelTwo = getLevelTwo(nthPosition, levelOne);
-      #   final int p = (4 + Constants.OBJECT_ID_LENGTH) * levelTwo;
-      #   return NB.decodeUInt32(idxdata[levelOne], p);
+    def get_offset_at_index(%{idx_header: idx_header, idx_data: idx_data}, nth_position) do
+      level_one =
+        idx_header
+        |> find_level_one(nth_position)
+
+      level_one
+      |> find_level_two(idx_header, nth_position)
+      |> read_offset_at_index(level_one, idx_data)
     end
 
-    # private int findLevelOne(long nthPosition) {
-    #   int levelOne = Arrays.binarySearch(idxHeader, nthPosition + 1);
-    #   if (levelOne >= 0) {
-    #     // If we hit the bucket exactly the item is in the bucket, or
-    #     // any bucket before it which has the same object count.
-    #     //
-    #     long base = idxHeader[levelOne];
-    #     while (levelOne > 0 && base == idxHeader[levelOne - 1])
-    #       levelOne--;
-    #   } else {
-    #     // The item is in the bucket we would insert it into.
-    #     //
-    #     levelOne = -(levelOne + 1);
-    #   }
-    #   return levelOne;
-    # }
-    #
-    # private int getLevelTwo(long nthPosition, int levelOne) {
-    #   final long base = levelOne > 0 ? idxHeader[levelOne - 1] : 0;
-    #   return (int) (nthPosition - base);
-    # }
+    defp find_level_one(idx_header, nth_position) do
+      idx_header
+      |> TupleUtils.binary_search(nth_position + 1)
+      |> to_level_one_bucket(idx_header)
+    end
 
+    defp to_level_one_bucket(level_one, _idx_header) when level_one < 0,
+      do: -(level_one + 1)
+
+    defp to_level_one_bucket(0, _idx_header), do: 0
+
+    defp to_level_one_bucket(level_one, idx_header) do
+      if elem(idx_header, level_one) == elem(idx_header, level_one - 1) do
+        to_level_one_bucket(level_one - 1, idx_header)
+      else
+        level_one
+      end
+    end
+
+    defp find_level_two(level_one, idx_header, nth_position) do
+      base =
+        if level_one > 0 do
+          elem(idx_header, level_one - 1)
+        else
+          0
+        end
+
+      nth_position - base
+    end
+
+    defp read_offset_at_index(level_two, level_one, idx_data) do
+      byte_offset = level_two * (4 + Constants.object_id_length())
+
+      idx_data
+      |> Enum.at(level_one)
+      |> Enum.drop(byte_offset)
+      |> NB.decode_uint32()
+      |> elem(0)
+    end
 
     @impl true
     def crc32_checksum_for_object(_index, _object_id) do

@@ -128,7 +128,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
       pack_index
       |> Enum.with_index()
       |> Enum.each(fn {%Entry{offset: offset}, index} ->
-        assert offset = PackIndex.get_offset_at_index(pack_index, index)
+        assert PackIndex.get_offset_at_index(pack_index, index) == offset
       end)
     end
 
@@ -136,5 +136,5 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
       # DISABLED: We don't actually have a dense V1 pack index file to work from.
       # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.
     end
-	end
+  end
 end
