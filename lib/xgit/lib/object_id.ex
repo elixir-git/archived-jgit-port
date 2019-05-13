@@ -86,6 +86,15 @@ defmodule Xgit.Lib.ObjectId do
   end
 
   @doc ~S"""
+  Convert a ObjectID to a raw byte list.
+  """
+  def to_raw_bytes(<<id::binary-size(40)>>) do
+    id
+    |> Base.decode16!(case: :lower)
+    |> :erlang.binary_to_list()
+  end
+
+  @doc ~S"""
   Read an ObjectID from a hex string (charlist).
 
   If a valid ID is found, returns `{id, next}` where `id` is the matched ID string
