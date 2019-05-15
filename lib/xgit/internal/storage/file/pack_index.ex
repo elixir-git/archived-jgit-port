@@ -57,6 +57,8 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   """
 
   alias Xgit.Internal.Storage.File.PackIndexV1
+  alias Xgit.Internal.Storage.File.PackIndexV2
+  alias Xgit.Util.NB
 
   defprotocol Reader do
     @moduledoc ~S"""
@@ -136,14 +138,17 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
     header = IO.read(file_pid, 8)
 
     if toc?(header) do
-      raise "not ready for V2 or later pack index format"
-      #     final int v = NB.decodeInt32(hdr, 4);
-      #     switch (v) {
-      #     case 2:
-      #       return new PackIndexV2(fd);
-      #     default:
-      #       throw new UnsupportedPackIndexVersionException(v);
-      #     }
+      v =
+        header
+        |> Enum.drop(4)
+        |> NB.decode_int32()
+        |> elem(0)
+
+      if v == 2 do
+        PackIndexV2.parse(file_pid)
+      else
+        raise Xgit.Errors.UnsupportedPackIndexVersionError, "Unsupported pack index version #{v}"
+      end
     else
       PackIndexV1.parse(file_pid, header)
     end
@@ -152,9 +157,6 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   defp toc?([0xFF, ?t, ?O, ?c | _]), do: true
   defp toc?(_), do: false
 
-  # /** Footer checksum applied on the bottom of the pack file. */
-  # protected byte[] packChecksum;
-  #
   # /**
   #  * Determine if an object is contained within the pack file.
   #  *
