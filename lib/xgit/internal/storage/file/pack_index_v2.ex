@@ -59,12 +59,14 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   #   IMPORTANT: This is different from jgit, which parses the names into
   #   an array of 32-bit integers (5 for each object ID).
   #
+  # crc32: (256-element tuple, each element being a binary)
+  #   CRCs are in raw form as one large Erlang binary
+  #
   # offset32: (...)
-  # crc32: (...)
   # offset64: (...)
 
-  @enforce_keys [:object_count, :fanout_table, :names, :offset32, :crc32, :offset64]
-  defstruct [:object_count, :fanout_table, :names, :offset32, :crc32, :offset64]
+  @enforce_keys [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64]
+  defstruct [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64]
 
   # alias Xgit.Internal.Storage.File.PackIndex.Reader
   alias Xgit.Lib.Constants
@@ -81,6 +83,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
     object_count = List.last(fanout_table)
 
     names = read_object_name_table(file_pid, fanout_table)
+    crc32 = read_crc32s(file_pid, names)
 
     raise "parse V2 incomplete"
 
@@ -117,8 +120,8 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
       object_count: object_count,
       fanout_table: List.to_tuple(fanout_table),
       names: names,
+      crc32: crc32,
       offset32: "not yet",
-      crc32: "not yet",
       offset64: "not yet"
     }
   end
@@ -151,7 +154,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
     {[read_fanout_bucket(bucket_count, file_pid) | names], file_pid, new_cumulative_object_count}
   end
 
-  defp read_fanout_bucket(0, _file_pid), do: []
+  defp read_fanout_bucket(0, _file_pid), do: ""
 
   defp read_fanout_bucket(bucket_count, _file_pid) when bucket_count < 0 do
     raise File.Error,
@@ -167,6 +170,28 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
 
     file_pid
     |> IO.read(size_of_object_ids_list)
+    |> :erlang.list_to_binary()
+  end
+
+  defp read_crc32s(file_pid, names) do
+    # Tricky piece here: We're using `names` merely to get the number of
+    # ObjectIDs that are in this bucket. Easier than doing the delta-based
+    # calculation that we did in fanout_table_from_raw_bytes/2 above.
+
+    Enum.map(names, fn names_for_bucket ->
+      read_crc32s_for_bucket(names_for_bucket, file_pid)
+    end)
+  end
+
+  defp read_crc32s_for_bucket("", _file_pid), do: ""
+
+  defp read_crc32s_for_bucket(names, file_pid) do
+    size_of_crc32_list = Kernel.div(byte_size(names), 5)
+
+    IO.inspect(size_of_crc32_list, label: "CRC32 bytes")
+
+    file_pid
+    |> IO.read(size_of_crc32_list)
     |> :erlang.list_to_binary()
   end
 
