@@ -47,11 +47,27 @@
 defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   @moduledoc false
 
-  # @enforce_keys [:idx_header, :idx_data, :object_count, :pack_checksum]
-  # defstruct [:idx_header, :idx_data, :object_count, :pack_checksum]
+  # Struct members:
   #
+  # object_count: (integer) number of objects in pack
+  #
+  # fanout_table: (256-element tuple, each element being an integer)
+  #   cumulative number of objects in pack for this fanout
+
+  # names: (256-element tuple, each element being a binary)
+  #   object IDs in raw form as one large Erlang binary
+  #   IMPORTANT: This is different from jgit, which parses the names into
+  #   an array of 32-bit integers (5 for each object ID).
+  #
+  # offset32: (...)
+  # crc32: (...)
+  # offset64: (...)
+
+  @enforce_keys [:object_count, :fanout_table, :names, :offset32, :crc32, :offset64]
+  defstruct [:object_count, :fanout_table, :names, :offset32, :crc32, :offset64]
+
   # alias Xgit.Internal.Storage.File.PackIndex.Reader
-  # alias Xgit.Lib.Constants
+  alias Xgit.Lib.Constants
   alias Xgit.Util.NB
 
   @fanout 256
@@ -64,51 +80,10 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
 
     object_count = List.last(fanout_table)
 
-    IO.inspect(object_count, label: "V2 object count")
+    names = read_object_name_table(file_pid, fanout_table)
 
     raise "parse V2 incomplete"
 
-    #     names = new int[FANOUT][];
-    #     offset32 = new byte[FANOUT][];
-    #     crc32 = new byte[FANOUT][];
-    #
-    #     // Object name table. The size we can permit per fan-out bucket
-    #     // is limited to Java's 2 GB per byte array limitation. That is
-    #     // no more than 107,374,182 objects per fan-out.
-    #     //
-    #     for (int k = 0; k < FANOUT; k++) {
-    #       final long bucketCnt;
-    #       if (k == 0)
-    #         bucketCnt = fanoutTable[k];
-    #       else
-    #         bucketCnt = fanoutTable[k] - fanoutTable[k - 1];
-    #
-    #       if (bucketCnt == 0) {
-    #         names[k] = NO_INTS;
-    #         offset32[k] = NO_BYTES;
-    #         crc32[k] = NO_BYTES;
-    #         continue;
-    #       } else if (bucketCnt < 0)
-    #         throw new IOException(MessageFormat.format(
-    #             JGitText.get().indexFileCorruptedNegativeBucketCount,
-    #             Long.valueOf(bucketCnt)));
-    #
-    #       final long nameLen = bucketCnt * Constants.OBJECT_ID_LENGTH;
-    #       if (nameLen > Integer.MAX_VALUE - 8) // see http://stackoverflow.com/a/8381338
-    #         throw new IOException(JGitText.get().indexFileIsTooLargeForJgit);
-    #
-    #       final int intNameLen = (int) nameLen;
-    #       final byte[] raw = new byte[intNameLen];
-    #       final int[] bin = new int[intNameLen >>> 2];
-    #       IO.readFully(fd, raw, 0, raw.length);
-    #       for (int i = 0; i < bin.length; i++)
-    #         bin[i] = NB.decodeInt32(raw, i << 2);
-    #
-    #       names[k] = bin;
-    #       offset32[k] = new byte[(int) (bucketCnt * 4)];
-    #       crc32[k] = new byte[(int) (bucketCnt * 4)];
-    #     }
-    #
     #     // CRC32 table.
     #     for (int k = 0; k < FANOUT; k++)
     #       IO.readFully(fd, crc32[k], 0, crc32[k].length);
@@ -137,6 +112,15 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
     #     packChecksum = new byte[20];
     #     IO.readFully(fd, packChecksum, 0, packChecksum.length);
     #   }
+
+    %__MODULE__{
+      object_count: object_count,
+      fanout_table: List.to_tuple(fanout_table),
+      names: names,
+      offset32: "not yet",
+      crc32: "not yet",
+      offset64: "not yet"
+    }
   end
 
   defp fanout_table_from_raw_bytes([], acc), do: Enum.reverse(acc)
@@ -144,6 +128,46 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   defp fanout_table_from_raw_bytes([_a, _b, _c, _d | _tail] = raw_fanout, acc) do
     {value, tail} = NB.decode_uint32(raw_fanout)
     fanout_table_from_raw_bytes(tail, [value | acc])
+  end
+
+  defp read_object_name_table(file_pid, fanout_table) do
+    fanout_table
+    |> Enum.reduce({[], file_pid, 0}, &read_one_fanout_bucket/2)
+    |> elem(0)
+    |> Enum.reverse()
+  end
+
+  defp read_one_fanout_bucket(
+         new_cumulative_object_count,
+         {names, file_pid, previous_cumulative_object_count}
+       ) do
+    # TO DO: Do we have a limit on fanout-buckets similar to the one in JVM?
+    # // Object name table. The size we can permit per fan-out bucket
+    # // is limited to Java's 2 GB per byte array limitation. That is
+    # // no more than 107,374,182 objects per fan-out.
+
+    bucket_count = new_cumulative_object_count - previous_cumulative_object_count
+
+    {[read_fanout_bucket(bucket_count, file_pid) | names], file_pid, new_cumulative_object_count}
+  end
+
+  defp read_fanout_bucket(0, _file_pid), do: []
+
+  defp read_fanout_bucket(bucket_count, _file_pid) when bucket_count < 0 do
+    raise File.Error,
+      message: "Invalid negative bucket count read from pack v2 index file: #{bucket_count}"
+  end
+
+  defp read_fanout_bucket(bucket_count, file_pid) when is_integer(bucket_count) do
+    size_of_object_ids_list = bucket_count * Constants.object_id_length()
+
+    # TO DO: Do we need to enforce this limit?
+    # if (nameLen > Integer.MAX_VALUE - 8) // see http://stackoverflow.com/a/8381338
+    #   throw new IOException(JGitText.get().indexFileIsTooLargeForJgit);
+
+    file_pid
+    |> IO.read(size_of_object_ids_list)
+    |> :erlang.list_to_binary()
   end
 
   # # /** {@inheritDoc} */
@@ -351,75 +375,6 @@ end
 # /** Support for the pack index v2 format. */
 # class PackIndexV2 extends PackIndex {
 #   private static final long IS_O64 = 1L << 31;
-#
-#   private static final int[] NO_INTS = {};
-#
-#   private static final byte[] NO_BYTES = {};
-#
-#   private long objectCnt;
-#
-#   private final long[] fanoutTable;
-#
-#   /** 256 arrays of contiguous object names. */
-#   int[][] names;
-#
-#   /** 256 arrays of the 32 bit offset data, matching {@link #names}. */
-#   byte[][] offset32;
-#
-#   /** 256 arrays of the CRC-32 of objects, matching {@link #names}. */
-#   private byte[][] crc32;
-#
-#   /** 64 bit offset table. */
-#   byte[] offset64;
-#
-#   PackIndexV2(final InputStream fd) throws IOException {
-#     final byte[] fanoutRaw = new byte[4 * FANOUT];
-#     IO.readFully(fd, fanoutRaw, 0, fanoutRaw.length);
-#     fanoutTable = new long[FANOUT];
-#     for (int k = 0; k < FANOUT; k++)
-#       fanoutTable[k] = NB.decodeUInt32(fanoutRaw, k * 4);
-#     objectCnt = fanoutTable[FANOUT - 1];
-#
-#     names = new int[FANOUT][];
-#     offset32 = new byte[FANOUT][];
-#     crc32 = new byte[FANOUT][];
-#
-#     // Object name table. The size we can permit per fan-out bucket
-#     // is limited to Java's 2 GB per byte array limitation. That is
-#     // no more than 107,374,182 objects per fan-out.
-#     //
-#     for (int k = 0; k < FANOUT; k++) {
-#       final long bucketCnt;
-#       if (k == 0)
-#         bucketCnt = fanoutTable[k];
-#       else
-#         bucketCnt = fanoutTable[k] - fanoutTable[k - 1];
-#
-#       if (bucketCnt == 0) {
-#         names[k] = NO_INTS;
-#         offset32[k] = NO_BYTES;
-#         crc32[k] = NO_BYTES;
-#         continue;
-#       } else if (bucketCnt < 0)
-#         throw new IOException(MessageFormat.format(
-#             JGitText.get().indexFileCorruptedNegativeBucketCount,
-#             Long.valueOf(bucketCnt)));
-#
-#       final long nameLen = bucketCnt * Constants.OBJECT_ID_LENGTH;
-#       if (nameLen > Integer.MAX_VALUE - 8) // see http://stackoverflow.com/a/8381338
-#         throw new IOException(JGitText.get().indexFileIsTooLargeForJgit);
-#
-#       final int intNameLen = (int) nameLen;
-#       final byte[] raw = new byte[intNameLen];
-#       final int[] bin = new int[intNameLen >>> 2];
-#       IO.readFully(fd, raw, 0, raw.length);
-#       for (int i = 0; i < bin.length; i++)
-#         bin[i] = NB.decodeInt32(raw, i << 2);
-#
-#       names[k] = bin;
-#       offset32[k] = new byte[(int) (bucketCnt * 4)];
-#       crc32[k] = new byte[(int) (bucketCnt * 4)];
-#     }
 #
 #     // CRC32 table.
 #     for (int k = 0; k < FANOUT; k++)
