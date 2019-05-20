@@ -62,8 +62,11 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   # crc32: (256-element tuple, each element being a binary)
   #   CRCs are in raw form as one large Erlang binary
   #
-  # offset32: (...)
-  # offset64: (...)
+  # offset32: (256-element tuple, each element being a binary)
+  #   32-bit offsets are in raw form as one large Erlang binary
+  #
+  # offset64: (binary) a single Erlang binary containing the all of the
+  #   64-bit offset values that were bumped out from the 32-bit table
 
   @enforce_keys [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64]
   defstruct [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64]
@@ -83,46 +86,25 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
     object_count = List.last(fanout_table)
 
     names = read_object_name_table(file_pid, fanout_table)
+
     crc32 = read_crc32s(file_pid, names)
+
+    offset32 = read_offset32s(file_pid, names)
+
+    offset64 = read_offset64s(file_pid, offset32)
 
     raise "parse V2 incomplete"
 
-    #     // CRC32 table.
-    #     for (int k = 0; k < FANOUT; k++)
-    #       IO.readFully(fd, crc32[k], 0, crc32[k].length);
-    #
-    #     // 32 bit offset table. Any entries with the most significant bit
-    #     // set require a 64 bit offset entry in another table.
-    #     //
-    #     int o64cnt = 0;
-    #     for (int k = 0; k < FANOUT; k++) {
-    #       final byte[] ofs = offset32[k];
-    #       IO.readFully(fd, ofs, 0, ofs.length);
-    #       for (int p = 0; p < ofs.length; p += 4)
-    #         if (ofs[p] < 0)
-    #           o64cnt++;
-    #     }
-    #
-    #     // 64 bit offset table. Most objects should not require an entry.
-    #     //
-    #     if (o64cnt > 0) {
-    #       offset64 = new byte[o64cnt * 8];
-    #       IO.readFully(fd, offset64, 0, offset64.length);
-    #     } else {
-    #       offset64 = NO_BYTES;
-    #     }
-    #
     #     packChecksum = new byte[20];
     #     IO.readFully(fd, packChecksum, 0, packChecksum.length);
-    #   }
 
     %__MODULE__{
       object_count: object_count,
       fanout_table: List.to_tuple(fanout_table),
-      names: names,
-      crc32: crc32,
-      offset32: "not yet",
-      offset64: "not yet"
+      names: List.to_tuple(names),
+      crc32: List.to_tuple(crc32),
+      offset32: List.to_tuple(offset32),
+      offset64: offset64
     }
   end
 
@@ -188,10 +170,66 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   defp read_crc32s_for_bucket(names, file_pid) do
     size_of_crc32_list = Kernel.div(byte_size(names), 5)
 
-    IO.inspect(size_of_crc32_list, label: "CRC32 bytes")
-
     file_pid
     |> IO.read(size_of_crc32_list)
+    |> :erlang.list_to_binary()
+  end
+
+  defp read_offset32s(file_pid, names) do
+    # Tricky piece here: We're using `names` merely to get the number of
+    # ObjectIDs that are in this bucket. Easier than doing the delta-based
+    # calculation that we did in fanout_table_from_raw_bytes/2 above.
+
+    Enum.map(names, fn names_for_bucket ->
+      read_offset32s_for_bucket(names_for_bucket, file_pid)
+    end)
+  end
+
+  defp read_offset32s_for_bucket("", _file_pid), do: ""
+
+  defp read_offset32s_for_bucket(names, file_pid) do
+    size_of_offset32_list = Kernel.div(byte_size(names), 5)
+
+    IO.inspect(size_of_offset32_list, label: "offset32 bytes")
+
+    file_pid
+    |> IO.read(size_of_offset32_list)
+    |> :erlang.list_to_binary()
+  end
+
+  defp read_offset64s(file_pid, offset32s) do
+    # Any entries in the 32-bit offset table with the most significant bit
+    # require an entry in the 64-bit offset table. Typically, this will be
+    # an empty list.
+
+    offset32s
+    |> Enum.reduce(0, &count_64_bit_offsets/2)
+    |> read_n_offset_64s(file_pid)
+  end
+
+  defp count_64_bit_offsets("", acc), do: acc
+
+  defp count_64_bit_offsets(offset32_bucket, acc) do
+    items_in_bucket =
+      offset32_bucket
+      |> byte_size()
+      |> Kernel.div(4)
+
+    acc +
+      Enum.reduce(0..(items_in_bucket - 1), 0, fn i, acc ->
+        if :binary.at(offset32_bucket, i * 4) >= 128 do
+          acc + 1
+        else
+          acc
+        end
+      end)
+  end
+
+  defp read_n_offset_64s(0, _file_pid), do: ""
+
+  defp read_n_offset_64s(n, file_pid) do
+    file_pid
+    |> IO.read(n * 8)
     |> :erlang.list_to_binary()
   end
 
