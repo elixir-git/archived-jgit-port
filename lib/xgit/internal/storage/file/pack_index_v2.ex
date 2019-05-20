@@ -67,9 +67,11 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   #
   # offset64: (binary) a single Erlang binary containing the all of the
   #   64-bit offset values that were bumped out from the 32-bit table
+  #
+  # pack_checksum: (byte list) 20-byte checksum written after all of the above
 
-  @enforce_keys [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64]
-  defstruct [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64]
+  @enforce_keys [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64, :pack_checksum]
+  defstruct [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64, :pack_checksum]
 
   # alias Xgit.Internal.Storage.File.PackIndex.Reader
   alias Xgit.Lib.Constants
@@ -93,10 +95,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
 
     offset64 = read_offset64s(file_pid, offset32)
 
-    raise "parse V2 incomplete"
-
-    #     packChecksum = new byte[20];
-    #     IO.readFully(fd, packChecksum, 0, packChecksum.length);
+    pack_checksum = IO.read(file_pid, 20)
 
     %__MODULE__{
       object_count: object_count,
@@ -104,7 +103,8 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
       names: List.to_tuple(names),
       crc32: List.to_tuple(crc32),
       offset32: List.to_tuple(offset32),
-      offset64: offset64
+      offset64: offset64,
+      pack_checksum: pack_checksum
     }
   end
 
