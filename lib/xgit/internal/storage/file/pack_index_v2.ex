@@ -70,7 +70,15 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   #
   # pack_checksum: (byte list) 20-byte checksum written after all of the above
 
-  @enforce_keys [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64, :pack_checksum]
+  @enforce_keys [
+    :object_count,
+    :fanout_table,
+    :names,
+    :crc32,
+    :offset32,
+    :offset64,
+    :pack_checksum
+  ]
   defstruct [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64, :pack_checksum]
 
   # alias Xgit.Internal.Storage.File.PackIndex.Reader
@@ -189,8 +197,6 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
 
   defp read_offset32s_for_bucket(names, file_pid) do
     size_of_offset32_list = Kernel.div(byte_size(names), 5)
-
-    IO.inspect(size_of_offset32_list, label: "offset32 bytes")
 
     file_pid
     |> IO.read(size_of_offset32_list)
