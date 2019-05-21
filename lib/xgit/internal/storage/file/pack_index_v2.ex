@@ -53,7 +53,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   #
   # fanout_table: (256-element tuple, each element being an integer)
   #   cumulative number of objects in pack for this fanout
-
+  #
   # names: (256-element tuple, each element being a binary)
   #   object IDs in raw form as one large Erlang binary
   #   IMPORTANT: This is different from jgit, which parses the names into
@@ -274,43 +274,70 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   # # private static int idOffset(int mid) {
   # #   return ((4 + Constants.OBJECT_ID_LENGTH) * mid) + 4;
   # # }
-  #
-  # defimpl Enumerable do
-  #   alias Xgit.Internal.Storage.File.PackIndex.Entry
-  #   alias Xgit.Internal.Storage.File.PackIndexV1
-  #   alias Xgit.Lib.ObjectId
-  #
-  #   def count(_), do: {:error, PackIndexV1}
-  #   def member?(_, _), do: {:error, PackIndexV1}
-  #   def slice(_), do: {:error, PackIndexV1}
-  #
-  #   def reduce(%PackIndexV1{idx_data: idx_data}, acc, fun) when is_list(idx_data),
-  #     do: reduce(idx_data, [], acc, fun)
-  #
-  #   defp reduce(level1, level2, acc, fun)
-  #
-  #   defp reduce(_level1, _leve2, {:halt, acc}, _fun), do: {:halted, acc}
-  #
-  #   # TO DO: Restore this case if we find that we actually use suspended enumerations.
-  #   # For now, I don't see a use case for it.
-  #   # defp reduce(level1, level2, {:suspend, acc}, fun),
-  #   #   do: {:suspended, acc, &reduce(level1, level2, &1, fun)}
-  #
-  #   defp reduce([] = _level1, [] = _level2, {:cont, acc}, _fun), do: {:done, acc}
-  #
-  #   defp reduce([l1_head | l1_tail], [] = _level2, {:cont, _} = acc, fun),
-  #     do: reduce(l1_tail, l1_head, acc, fun)
-  #
-  #   defp reduce(level1, level2, {:cont, acc}, fun) do
-  #     entry = %Entry{
-  #       name: level2 |> Enum.drop(4) |> ObjectId.from_raw_bytes(),
-  #       offset: level2 |> NB.decode_uint32() |> elem(0)
-  #     }
-  #
-  #     reduce(level1, Enum.drop(level2, Constants.object_id_length() + 4), fun.(entry, acc), fun)
-  #   end
-  # end
-  #
+
+  defimpl Enumerable do
+    alias Xgit.Internal.Storage.File.PackIndex.Entry
+    alias Xgit.Internal.Storage.File.PackIndexV2
+    alias Xgit.Lib.ObjectId
+
+    def count(_), do: {:error, PackIndexV2}
+    def member?(_, _), do: {:error, PackIndexV2}
+    def slice(_), do: {:error, PackIndexV2}
+
+    def reduce(%PackIndexV2{} = index, acc, fun), do: reduce(index, 0, 0, acc, fun)
+
+    defp reduce(index, level1_idx, level2_idx, acc, fun)
+
+    defp reduce(_index, _level1_idx, _level2_idx, {:halt, acc}, _fun), do: {:halted, acc}
+
+    # TO DO: Restore this case if we find that we actually use suspended enumerations.
+    # For now, I don't see a use case for it.
+    # defp reduce(_index, _level1_idx, level2_idx, {:suspend, acc}, fun),
+    #   do: {:suspended, acc, &reduce(level1, level2, &1, fun)}
+
+    defp reduce(_index, 256 = _level1_idx, _level2_idx, {:cont, acc}, _fun), do: {:done, acc}
+
+    defp reduce(
+           %PackIndexV2{names: names, offset32: offset32} = index,
+           level1_index,
+           level2_index,
+           {:cont, acc},
+           fun
+         ) do
+      # TO DO: A lot of indexing into tuples and binaries here. Improve perf?
+      names_bucket = elem(names, level1_index)
+      bucket_offset = level2_index * Constants.object_id_length()
+
+      if bucket_offset >= byte_size(names_bucket) do
+        reduce(index, level1_index + 1, 0, {:cont, acc}, fun)
+      else
+        name =
+          names_bucket
+          |> :binary.bin_to_list(bucket_offset, Constants.object_id_length())
+          |> ObjectId.from_raw_bytes()
+
+        offset =
+          offset32
+          |> elem(level1_index)
+          |> :binary.bin_to_list(level2_index * 4, 4)
+          |> NB.decode_uint32()
+          |> elem(0)
+
+        if offset >= 0x80000000 do
+          raise "64-bit offsets not yet supported"
+
+          # if ((offset & IS_O64) != 0) {
+          #   idx = (8 * (int) (offset & ~IS_O64));
+          #   offset = NB.decodeUInt64(offset64, idx);
+          # }
+        end
+
+        entry = %Entry{name: name, offset: offset}
+        reduce(index, level1_index, level2_index + 1, fun.(entry, acc), fun)
+      end
+    end
+  end
+
   # defimpl Reader do
   #   alias Xgit.Errors.UnsupportedOperationError
   #   alias Xgit.Lib.ObjectId
@@ -443,37 +470,7 @@ end
 
 # /** Support for the pack index v2 format. */
 # class PackIndexV2 extends PackIndex {
-#   private static final long IS_O64 = 1L << 31;
-#
-#     // CRC32 table.
-#     for (int k = 0; k < FANOUT; k++)
-#       IO.readFully(fd, crc32[k], 0, crc32[k].length);
-#
-#     // 32 bit offset table. Any entries with the most significant bit
-#     // set require a 64 bit offset entry in another table.
-#     //
-#     int o64cnt = 0;
-#     for (int k = 0; k < FANOUT; k++) {
-#       final byte[] ofs = offset32[k];
-#       IO.readFully(fd, ofs, 0, ofs.length);
-#       for (int p = 0; p < ofs.length; p += 4)
-#         if (ofs[p] < 0)
-#           o64cnt++;
-#     }
-#
-#     // 64 bit offset table. Most objects should not require an entry.
-#     //
-#     if (o64cnt > 0) {
-#       offset64 = new byte[o64cnt * 8];
-#       IO.readFully(fd, offset64, 0, offset64.length);
-#     } else {
-#       offset64 = NO_BYTES;
-#     }
-#
-#     packChecksum = new byte[20];
-#     IO.readFully(fd, packChecksum, 0, packChecksum.length);
-#   }
-#
+
 #   /** {@inheritDoc} */
 #   @Override
 #   public long getObjectCount() {
@@ -557,13 +554,7 @@ end
 #   public boolean hasCRC32Support() {
 #     return true;
 #   }
-#
-#   /** {@inheritDoc} */
-#   @Override
-#   public Iterator<MutableEntry> iterator() {
-#     return new EntriesIteratorV2();
-#   }
-#
+
 #   /** {@inheritDoc} */
 #   @Override
 #   public void resolve(Set<ObjectId> matches, AbbreviatedObjectId id,
@@ -621,43 +612,3 @@ end
 #     } while (low < high);
 #     return -1;
 #   }
-#
-#   private class EntriesIteratorV2 extends EntriesIterator {
-#     int levelOne;
-#
-#     int levelTwo;
-#
-#     @Override
-#     protected MutableEntry initEntry() {
-#       return new MutableEntry() {
-#         @Override
-#         protected void ensureId() {
-#           idBuffer.fromRaw(names[levelOne], levelTwo
-#               - Constants.OBJECT_ID_LENGTH / 4);
-#         }
-#       };
-#     }
-#
-#     @Override
-#     public MutableEntry next() {
-#       for (; levelOne < names.length; levelOne++) {
-#         if (levelTwo < names[levelOne].length) {
-#           int idx = levelTwo / (Constants.OBJECT_ID_LENGTH / 4) * 4;
-#           long offset = NB.decodeUInt32(offset32[levelOne], idx);
-#           if ((offset & IS_O64) != 0) {
-#             idx = (8 * (int) (offset & ~IS_O64));
-#             offset = NB.decodeUInt64(offset64, idx);
-#           }
-#           entry.offset = offset;
-#
-#           levelTwo += Constants.OBJECT_ID_LENGTH / 4;
-#           returnedNumber++;
-#           return entry;
-#         }
-#         levelTwo = 0;
-#       }
-#       throw new NoSuchElementException();
-#     }
-#   }
-#
-# }
