@@ -8,6 +8,8 @@ While I've chosen to follow many of the design patterns present in jgit, in my o
 
 The jgit APIs often speak in byte arrays with offset (pointers). In xgit, we instead pass around charlists. Since a charlist is a singly-linked list, we pass around updated charlist references without offset parameters because it is conceptually easier (and more performant) to do so.
 
+In a few cases where we need random access into a byte array (for example, in `PackIndex`), we do use binaries instead of charlists. In those cases, we must be careful to avoid use of Elixir's `String` module and instead use the corresponding functions from Erlang's `:binary` module. This will avoid subtle bugs (offset mismatches) resulting from Elixir's processing of binaries as UTF-8 strings.
+
 ## Localization
 
 jgit has its own localization mechanism (see class `JGitText`). I've decided not to port that mechanism, but rather to use the Elixir module [`gettext`](https://github.com/elixir-lang/gettext). Unlike jgit, we do not localize internal exception messages, only the publicly-facing interface.
