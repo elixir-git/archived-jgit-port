@@ -270,7 +270,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
       cond do
         raw_id_at_index == raw_object_id ->
           data
-          |> String.slice(id_offset - 4, 4)
+          |> :binary.part(id_offset - 4, 4)
           |> :erlang.binary_to_list()
           |> NB.decode_uint32()
           |> elem(0)
