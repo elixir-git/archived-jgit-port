@@ -167,7 +167,7 @@ defmodule Xgit.Lib.ObjectReader do
 
   def abbreviate(reader, object_id, length)
       when is_integer(length) and length >= 2 and length < 40 do
-    abbrev = String.slice(object_id, 0, length)
+    abbrev = :binary.part(object_id, 0, length)
 
     case resolve(reader, abbrev) do
       [_] ->
