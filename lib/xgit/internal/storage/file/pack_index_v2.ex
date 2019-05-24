@@ -81,7 +81,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   ]
   defstruct [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64, :pack_checksum]
 
-  # alias Xgit.Internal.Storage.File.PackIndex.Reader
+  alias Xgit.Internal.Storage.File.PackIndex.Reader
   alias Xgit.Lib.Constants
   alias Xgit.Util.NB
 
@@ -338,190 +338,150 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
     end
   end
 
-  # defimpl Reader do
-  #   alias Xgit.Errors.UnsupportedOperationError
-  #   alias Xgit.Lib.ObjectId
-  #   alias Xgit.Util.TupleUtils
-  #
-  #   @impl true
-  #   def get_object_id_at_index(%{idx_header: idx_header, idx_data: idx_data}, nth_position) do
-  #     level_one =
-  #       idx_header
-  #       |> find_level_one(nth_position)
-  #
-  #     level_one
-  #     |> find_level_two(idx_header, nth_position)
-  #     |> read_object_id_at_index(level_one, idx_data)
-  #   end
-  #
-  #   @impl true
-  #   def get_offset_at_index(%{idx_header: idx_header, idx_data: idx_data}, nth_position) do
-  #     level_one =
-  #       idx_header
-  #       |> find_level_one(nth_position)
-  #
-  #     level_one
-  #     |> find_level_two(idx_header, nth_position)
-  #     |> read_offset_at_index(level_one, idx_data)
-  #   end
-  #
-  #   defp find_level_one(idx_header, nth_position) do
-  #     idx_header
-  #     |> TupleUtils.binary_search(nth_position + 1)
-  #     |> to_level_one_bucket(idx_header)
-  #   end
-  #
-  #   defp to_level_one_bucket(level_one, _idx_header) when level_one < 0,
-  #     do: -(level_one + 1)
-  #
-  #   defp to_level_one_bucket(0, _idx_header), do: 0
-  #
-  #   defp to_level_one_bucket(level_one, idx_header) do
-  #     if elem(idx_header, level_one) == elem(idx_header, level_one - 1) do
-  #       to_level_one_bucket(level_one - 1, idx_header)
-  #     else
-  #       level_one
-  #     end
-  #   end
-  #
-  #   defp find_level_two(level_one, idx_header, nth_position) do
-  #     base =
-  #       if level_one > 0 do
-  #         elem(idx_header, level_one - 1)
-  #       else
-  #         0
-  #       end
-  #
-  #     nth_position - base
-  #   end
-  #
-  #   defp read_offset_at_index(level_two, level_one, idx_data) do
-  #     byte_offset = level_two * (4 + Constants.object_id_length())
-  #
-  #     idx_data
-  #     |> Enum.at(level_one)
-  #     |> Enum.drop(byte_offset)
-  #     |> NB.decode_uint32()
-  #     |> elem(0)
-  #   end
-  #
-  #   defp read_object_id_at_index(level_two, level_one, idx_data) do
-  #     byte_offset = level_two * (4 + Constants.object_id_length()) + 4
-  #
-  #     idx_data
-  #     |> Enum.at(level_one)
-  #     |> Enum.drop(byte_offset)
-  #     |> ObjectId.from_raw_bytes()
-  #   end
-  #
-  #   @impl true
-  #   def find_offset(%{idx_data: idx_data}, object_id) do
-  #     raw_object_id = ObjectId.to_raw_bytes(object_id)
-  #     level_one = List.first(raw_object_id)
-  #
-  #     # TO DO: Watch this for performance. Do we need to convert this to a binary
-  #     # right off the bat, or is per `find_offset` call acceptable?
-  #     data =
-  #       idx_data
-  #       |> Enum.at(level_one)
-  #       |> :erlang.list_to_binary()
-  #
-  #     find_offset_in_level_two_index(
-  #       data,
-  #       :erlang.list_to_binary(raw_object_id),
-  #       0,
-  #       div(byte_size(data), 24)
-  #     )
-  #   end
-  #
-  #   defp find_offset_in_level_two_index(_data, _raw_object_id, index, index), do: -1
-  #
-  #   defp find_offset_in_level_two_index(data, raw_object_id, min_index, max_index) do
-  #     mid_index = div(min_index + max_index, 2)
-  #     id_offset = mid_index * 24 + 4
-  #     raw_id_at_index = :erlang.binary_part(data, id_offset, 20)
-  #
-  #     cond do
-  #       raw_id_at_index == raw_object_id ->
-  #         data
-  #         |> String.slice(id_offset - 4, 4)
-  #         |> :erlang.binary_to_list()
-  #         |> NB.decode_uint32()
-  #         |> elem(0)
-  #
-  #       raw_id_at_index < raw_object_id ->
-  #         find_offset_in_level_two_index(data, raw_object_id, min_index, mid_index)
-  #
-  #       true ->
-  #         find_offset_in_level_two_index(data, raw_object_id, mid_index + 1, max_index)
-  #     end
-  #   end
-  #
-  #   @impl true
-  #   def crc32_checksum_for_object(_index, _object_id) do
-  #     raise UnsupportedOperationError,
-  #       message: "CRC32 checksums not available for V1 pack index."
-  #   end
-  #
-  #   @impl true
-  #   def has_crc32_support?(_index), do: false
-  # end
+  defimpl Reader do
+    alias Xgit.Lib.ObjectId
+    alias Xgit.Util.TupleUtils
+
+    @impl true
+    def get_object_id_at_index(
+          %{fanout_table: fanout_table, names: names},
+          nth_position
+        ) do
+      level_one =
+        fanout_table
+        |> find_level_one(nth_position)
+
+      level_one
+      |> find_level_two(fanout_table, nth_position)
+      |> read_object_id_at_index(level_one, names)
+    end
+
+    defp read_object_id_at_index(level_two, level_one, names) do
+      names
+      |> elem(level_one)
+      |> :binary.bin_to_list(
+        level_two * Constants.object_id_length(),
+        Constants.object_id_length()
+      )
+      |> ObjectId.from_raw_bytes()
+    end
+
+    @impl true
+    def get_offset_at_index(
+          %{fanout_table: fanout_table, offset32: offset32, offset64: offset64},
+          nth_position
+        ) do
+      level_one =
+        fanout_table
+        |> find_level_one(nth_position)
+
+      level_one
+      |> find_level_two(fanout_table, nth_position)
+      |> read_offset_at_index(level_one, offset32, offset64)
+    end
+
+    defp find_level_one(fanout_table, nth_position) do
+      fanout_table
+      |> TupleUtils.binary_search(nth_position + 1)
+      |> to_level_one_bucket(fanout_table)
+    end
+
+    defp to_level_one_bucket(level_one, _fanout_table) when level_one < 0,
+      do: -(level_one + 1)
+
+    defp to_level_one_bucket(0, _fanout_table), do: 0
+
+    defp to_level_one_bucket(level_one, fanout_table) do
+      if elem(fanout_table, level_one) == elem(fanout_table, level_one - 1) do
+        to_level_one_bucket(level_one - 1, fanout_table)
+      else
+        level_one
+      end
+    end
+
+    defp find_level_two(level_one, fanout_table, nth_position) do
+      base =
+        if level_one > 0 do
+          elem(fanout_table, level_one - 1)
+        else
+          0
+        end
+
+      nth_position - base
+    end
+
+    defp read_offset_at_index(level_two, level_one, offset32, offset64) do
+      offset32
+      |> elem(level_one)
+      |> :binary.bin_to_list(level_two * 4, 4)
+      |> NB.decode_uint32()
+      |> elem(0)
+      |> maybe_decode_offset64(offset64)
+    end
+
+    defp maybe_decode_offset64(offset, _offset64) when offset < 0x80000000, do: offset
+
+    # TO DO: Implement 64-bit case:
+    # if ((p & IS_O64) != 0)
+    #   return NB.decodeUInt64(offset64, (8 * (int) (p & ~IS_O64)));
+
+    @impl true
+    def find_offset(_pack_index, _object_id) do
+      raise "not yet implemented"
+      # raw_object_id = ObjectId.to_raw_bytes(object_id)
+      # level_one = List.first(raw_object_id)
+      #
+      # # TO DO: Watch this for performance. Do we need to convert this to a binary
+      # # right off the bat, or is per `find_offset` call acceptable?
+      # data =
+      #   idx_data
+      #   |> Enum.at(level_one)
+      #   |> :erlang.list_to_binary()
+      #
+      # find_offset_in_level_two_index(
+      #   data,
+      #   :erlang.list_to_binary(raw_object_id),
+      #   0,
+      #   div(byte_size(data), 24)
+      # )
+    end
+
+    # defp find_offset_in_level_two_index(_data, _raw_object_id, index, index), do: -1
+    #
+    # defp find_offset_in_level_two_index(data, raw_object_id, min_index, max_index) do
+    #   mid_index = div(min_index + max_index, 2)
+    #   id_offset = mid_index * 24 + 4
+    #   raw_id_at_index = :erlang.binary_part(data, id_offset, 20)
+    #
+    #   cond do
+    #     raw_id_at_index == raw_object_id ->
+    #       data
+    #       |> String.slice(id_offset - 4, 4)
+    #       |> :erlang.binary_to_list()
+    #       |> NB.decode_uint32()
+    #       |> elem(0)
+    #
+    #     raw_id_at_index < raw_object_id ->
+    #       find_offset_in_level_two_index(data, raw_object_id, min_index, mid_index)
+    #
+    #     true ->
+    #       find_offset_in_level_two_index(data, raw_object_id, mid_index + 1, max_index)
+    #   end
+    # end
+
+    @impl true
+    def crc32_checksum_for_object(_index, _object_id) do
+      raise "not yet implemented"
+    end
+
+    @impl true
+    def has_crc32_support?(_index), do: true
+  end
 end
 
 # /** Support for the pack index v2 format. */
 # class PackIndexV2 extends PackIndex {
 
-#   /** {@inheritDoc} */
-#   @Override
-#   public long getObjectCount() {
-#     return objectCnt;
-#   }
-#
-#   /** {@inheritDoc} */
-#   @Override
-#   public long getOffset64Count() {
-#     return offset64.length / 8;
-#   }
-#
-#   private int findLevelOne(long nthPosition) {
-#     int levelOne = Arrays.binarySearch(fanoutTable, nthPosition + 1);
-#     if (levelOne >= 0) {
-#       // If we hit the bucket exactly the item is in the bucket, or
-#       // any bucket before it which has the same object count.
-#       //
-#       long base = fanoutTable[levelOne];
-#       while (levelOne > 0 && base == fanoutTable[levelOne - 1])
-#         levelOne--;
-#     } else {
-#       // The item is in the bucket we would insert it into.
-#       //
-#       levelOne = -(levelOne + 1);
-#     }
-#     return levelOne;
-#   }
-#
-#   private int getLevelTwo(long nthPosition, int levelOne) {
-#     final long base = levelOne > 0 ? fanoutTable[levelOne - 1] : 0;
-#     return (int) (nthPosition - base);
-#   }
-#
-#   /** {@inheritDoc} */
-#   @Override
-#   public ObjectId getObjectId(long nthPosition) {
-#     final int levelOne = findLevelOne(nthPosition);
-#     final int p = getLevelTwo(nthPosition, levelOne);
-#     final int p4 = p << 2;
-#     return ObjectId.fromRaw(names[levelOne], p4 + p); // p * 5
-#   }
-#
-#   /** {@inheritDoc} */
-#   @Override
-#   public long getOffset(long nthPosition) {
-#     final int levelOne = findLevelOne(nthPosition);
-#     final int levelTwo = getLevelTwo(nthPosition, levelOne);
-#     return getOffset(levelOne, levelTwo);
-#   }
-#
 #   /** {@inheritDoc} */
 #   @Override
 #   public long findOffset(AnyObjectId objId) {
@@ -547,12 +507,6 @@ end
 #     if (levelTwo == -1)
 #       throw new MissingObjectException(objId.copy(), "unknown"); //$NON-NLS-1$
 #     return NB.decodeUInt32(crc32[levelOne], levelTwo << 2);
-#   }
-#
-#   /** {@inheritDoc} */
-#   @Override
-#   public boolean hasCRC32Support() {
-#     return true;
 #   }
 
 #   /** {@inheritDoc} */
