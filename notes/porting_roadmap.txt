@@ -162,7 +162,6 @@ PackFile
   ObjectInserter CYCLE (via test)
   PackBitmapIndex
   PackedObjectInfo
-  PackIndex
   PackOutputStream
   PackParser CYCLE via test
   PackReverseIndex
@@ -245,7 +244,6 @@ RevBlob
   RevWalk
 
 PackReverseIndex
-  PackIndex
 
 PackOutputStream
   MessageDigest SYSTEM
@@ -303,32 +301,14 @@ FilterSpec
 PackConfig
   (none)
 
-PackIndex ABSTRACT
-  PackIndexV1
-  PackIndexV2
-  SilentFileInputStream
-
-SilentFileInputStream (may not need this)
-
-PackIndexV2
-  PackIndexTestCase
-
-PackIndexV1
-  PackIndexTestCase
-
-PackIndexTestCase
-  PackIndex
-
 PackBitmapIndex ABSTRACT
   PackBitmapIndexV1
-  PackIndex
   PackReverseIndex
   SilentFileInputStream
 
 PackBitmapIndexV1
   BasePackBitmapIndex
   ObjectIdOwnerMap
-  PackIndex
   PackReverseIndex
   SimpleDataInput
   StoredBitmap
