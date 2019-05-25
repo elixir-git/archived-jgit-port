@@ -239,41 +239,39 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
     |> :erlang.list_to_binary()
   end
 
-  # # /** {@inheritDoc} */
-  # # @Override
-  # # public void resolve(Set<ObjectId> matches, AbbreviatedObjectId id,
-  # #     int matchLimit) throws IOException {
-  # #   byte[] data = idxdata[id.getFirstByte()];
-  # #   if (data == null)
-  # #     return;
-  # #   int max = data.length / (4 + Constants.OBJECT_ID_LENGTH);
-  # #   int high = max;
-  # #   int low = 0;
-  # #   do {
-  # #     int p = (low + high) >>> 1;
-  # #     final int cmp = id.prefixCompare(data, idOffset(p));
-  # #     if (cmp < 0)
-  # #       high = p;
-  # #     else if (cmp == 0) {
-  # #       // We may have landed in the middle of the matches.  Move
-  # #       // backwards to the start of matches, then walk forwards.
-  # #       //
-  # #       while (0 < p && id.prefixCompare(data, idOffset(p - 1)) == 0)
-  # #         p--;
-  # #       for (; p < max && id.prefixCompare(data, idOffset(p)) == 0; p++) {
-  # #         matches.add(ObjectId.fromRaw(data, idOffset(p)));
-  # #         if (matches.size() > matchLimit)
-  # #           break;
-  # #       }
-  # #       return;
-  # #     } else
-  # #       low = p + 1;
-  # #   } while (low < high);
-  # # }
-  # #
-  # # private static int idOffset(int mid) {
-  # #   return ((4 + Constants.OBJECT_ID_LENGTH) * mid) + 4;
-  # # }
+  # public void resolve(Set<ObjectId> matches, AbbreviatedObjectId id,
+  #     int matchLimit) throws IOException {
+  #   int[] data = names[id.getFirstByte()];
+  #   int max = offset32[id.getFirstByte()].length >>> 2;
+  #   int high = max;
+  #   if (high == 0)
+  #     return;
+  #   int low = 0;
+  #   do {
+  #     int p = (low + high) >>> 1;
+  #     final int cmp = id.prefixCompare(data, idOffset(p));
+  #     if (cmp < 0)
+  #       high = p;
+  #     else if (cmp == 0) {
+  #       // We may have landed in the middle of the matches.  Move
+  #       // backwards to the start of matches, then walk forwards.
+  #       //
+  #       while (0 < p && id.prefixCompare(data, idOffset(p - 1)) == 0)
+  #         p--;
+  #       for (; p < max && id.prefixCompare(data, idOffset(p)) == 0; p++) {
+  #         matches.add(ObjectId.fromRaw(data, idOffset(p)));
+  #         if (matches.size() > matchLimit)
+  #           break;
+  #       }
+  #       return;
+  #     } else
+  #       low = p + 1;
+  #   } while (low < high);
+  # }
+  #
+  # private static int idOffset(int p) {
+  #   return (p << 2) + p; // p * 5
+  # }
 
   defimpl Enumerable do
     alias Xgit.Internal.Storage.File.PackIndex.Entry
@@ -493,42 +491,3 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
     def has_crc32_support?(_index), do: true
   end
 end
-
-# /** Support for the pack index v2 format. */
-# class PackIndexV2 extends PackIndex {
-
-#   /** {@inheritDoc} */
-#   @Override
-#   public void resolve(Set<ObjectId> matches, AbbreviatedObjectId id,
-#       int matchLimit) throws IOException {
-#     int[] data = names[id.getFirstByte()];
-#     int max = offset32[id.getFirstByte()].length >>> 2;
-#     int high = max;
-#     if (high == 0)
-#       return;
-#     int low = 0;
-#     do {
-#       int p = (low + high) >>> 1;
-#       final int cmp = id.prefixCompare(data, idOffset(p));
-#       if (cmp < 0)
-#         high = p;
-#       else if (cmp == 0) {
-#         // We may have landed in the middle of the matches.  Move
-#         // backwards to the start of matches, then walk forwards.
-#         //
-#         while (0 < p && id.prefixCompare(data, idOffset(p - 1)) == 0)
-#           p--;
-#         for (; p < max && id.prefixCompare(data, idOffset(p)) == 0; p++) {
-#           matches.add(ObjectId.fromRaw(data, idOffset(p)));
-#           if (matches.size() > matchLimit)
-#             break;
-#         }
-#         return;
-#       } else
-#         low = p + 1;
-#     } while (low < high);
-#   }
-#
-#   private static int idOffset(int p) {
-#     return (p << 2) + p; // p * 5
-#   }
