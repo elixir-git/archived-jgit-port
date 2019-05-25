@@ -3,6 +3,13 @@
 Pure Elixir native implementation of git [![Coverage Status](https://coveralls.io/repos/github/scouten/xgit/badge.svg?t=xE9sgP)](https://coveralls.io/github/scouten/xgit)
 
 
+## WORK IN PROGRESS
+
+**This is very much a work in progress and not ready to be used in production.** What is implemented is well-tested and believed to be correct and stable, but much of the core git infrastructure is not yet implemented. There has been little attention, as yet, to measuring performance.
+
+If you are interested in contributing, please reach out. I'll be adding notes on the current work at hand and items where first-time contributions would be especially welcome in the near future.
+
+
 ## Why an all-Elixir implementation?
 
 With all of git already implemented in [libgit2](https://github.com/libgit2/libgit2), why do it again?
@@ -15,4 +22,4 @@ libgit2 is a big, complex library. And while it's been battle-tested, it's also 
 
 ## Credits
 
-xgit is heavily influenced by [jgit](https://www.eclipse.org/jgit/), an all-Java implementation of git. Many thanks to the jgit team for their hard work.
+xgit is a port of [jgit](https://www.eclipse.org/jgit/), an all-Java implementation of git. Many thanks to the jgit team for their hard work.
