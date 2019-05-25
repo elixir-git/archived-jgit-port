@@ -82,7 +82,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
     idx_header_from_fanout_table(tail, [value | acc])
   end
 
-  defp read_index_data(acc = _item, acc, _file_pid), do: {[], acc}
+  defp read_index_data(_item = acc, acc, _file_pid), do: {[], acc}
 
   defp read_index_data(item, acc, file_pid) do
     bytes_to_read = (item - acc) * (Constants.object_id_length() + 4)
