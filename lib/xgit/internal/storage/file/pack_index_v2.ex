@@ -339,6 +339,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   end
 
   defimpl Reader do
+    alias Xgit.Errors.MissingObjectError
     alias Xgit.Lib.ObjectId
     alias Xgit.Util.TupleUtils
 
@@ -462,8 +463,30 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
     end
 
     @impl true
-    def crc32_checksum_for_object(_index, _object_id) do
-      raise "not yet implemented"
+    def crc32_checksum_for_object(%{names: names, crc32: crc32}, object_id) do
+      raw_object_id = ObjectId.to_raw_bytes(object_id)
+      level_one = List.first(raw_object_id)
+      l2_names = elem(names, level_one)
+
+      l2_names
+      |> find_object_in_level_two_index(
+        :erlang.list_to_binary(raw_object_id),
+        0,
+        div(byte_size(l2_names), Constants.object_id_length())
+      )
+      |> read_crc32_at_index(level_one, object_id, crc32)
+    end
+
+    defp read_crc32_at_index(-1, _level_one, object_id, _crc32) do
+      raise MissingObjectError, object_id: object_id, type: "unknown"
+    end
+
+    defp read_crc32_at_index(level_two, level_one, _object_id, crc32) do
+      crc32
+      |> elem(level_one)
+      |> :binary.bin_to_list(level_two * 4, 4)
+      |> NB.decode_uint32()
+      |> elem(0)
     end
 
     @impl true
@@ -473,16 +496,6 @@ end
 
 # /** Support for the pack index v2 format. */
 # class PackIndexV2 extends PackIndex {
-
-#   /** {@inheritDoc} */
-#   @Override
-#   public long findCRC32(AnyObjectId objId) throws MissingObjectException {
-#     final int levelOne = objId.getFirstByte();
-#     final int levelTwo = binarySearchLevelTwo(objId, levelOne);
-#     if (levelTwo == -1)
-#       throw new MissingObjectException(objId.copy(), "unknown"); //$NON-NLS-1$
-#     return NB.decodeUInt32(crc32[levelOne], levelTwo << 2);
-#   }
 
 #   /** {@inheritDoc} */
 #   @Override

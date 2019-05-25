@@ -104,22 +104,6 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2Test do
            ]
   end
 
-  # test "CRC32 operations not supported by pack index V1" do
-  #   index =
-  #     path_for_pack_34be9032()
-  #     |> PackIndex.open()
-  #
-  #   assert PackIndex.has_crc32_support?(index) == false
-  #
-  #   assert_raise UnsupportedOperationError,
-  #                fn ->
-  #                  PackIndex.crc32_checksum_for_object(
-  #                    index,
-  #                    "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
-  #                  )
-  #                end
-  # end
-
   describe "get_object_id_at_index/2" do
     test "offsets match output of iterator (small index)" do
       pack_index =
@@ -196,32 +180,51 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2Test do
     end
   end
 
-  # /**
-  #  * Verify CRC32 indexing.
-  #  *
-  #  * @throws UnsupportedOperationException
-  #  * @throws MissingObjectException
-  #  */
-  # @Override
-  # @Test
-  # public void testCRC32() throws MissingObjectException,
-  #     UnsupportedOperationException {
-  #   assertTrue(smallIdx.hasCRC32Support());
-  #   assertEquals(0x00000000C2B64258L, smallIdx.findCRC32(ObjectId
-  #       .fromString("4b825dc642cb6eb9a060e54bf8d69288fbee4904")));
-  #   assertEquals(0x0000000072AD57C2L, smallIdx.findCRC32(ObjectId
-  #       .fromString("540a36d136cf413e4b064c2b0e0a4db60f77feab")));
-  #   assertEquals(0x00000000FF10A479L, smallIdx.findCRC32(ObjectId
-  #       .fromString("5b6e7c66c276e7610d4a73c70ec1a1f7c1003259")));
-  #   assertEquals(0x0000000034B27DDCL, smallIdx.findCRC32(ObjectId
-  #       .fromString("6ff87c4664981e4397625791c8ea3bbb5f2279a3")));
-  #   assertEquals(0x000000004743F1E4L, smallIdx.findCRC32(ObjectId
-  #       .fromString("82c6b885ff600be425b4ea96dee75dca255b69e7")));
-  #   assertEquals(0x00000000640B358BL, smallIdx.findCRC32(ObjectId
-  #       .fromString("902d5476fa249b7abc9d84c611577a81381f0327")));
-  #   assertEquals(0x000000002A17CB5EL, smallIdx.findCRC32(ObjectId
-  #       .fromString("aabf2ffaec9b497f0950352b3e582d73035c2035")));
-  #   assertEquals(0x000000000B3B5BA6L, smallIdx.findCRC32(ObjectId
-  #       .fromString("c59759f143fb1fe21c197981df75a7ee00290799")));
-  # }
+  test "CRC32 indexing" do
+    pack_index =
+      path_for_pack_34be9032()
+      |> PackIndex.open()
+
+    assert PackIndex.has_crc32_support?(pack_index) == true
+
+    assert PackIndex.crc32_checksum_for_object(
+             pack_index,
+             "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+           ) == 0xC2B64258
+
+    assert PackIndex.crc32_checksum_for_object(
+             pack_index,
+             "540a36d136cf413e4b064c2b0e0a4db60f77feab"
+           ) == 0x72AD57C2
+
+    assert PackIndex.crc32_checksum_for_object(
+             pack_index,
+             "5b6e7c66c276e7610d4a73c70ec1a1f7c1003259"
+           ) == 0xFF10A479
+
+    assert PackIndex.crc32_checksum_for_object(
+             pack_index,
+             "6ff87c4664981e4397625791c8ea3bbb5f2279a3"
+           ) == 0x34B27DDC
+
+    assert PackIndex.crc32_checksum_for_object(
+             pack_index,
+             "82c6b885ff600be425b4ea96dee75dca255b69e7"
+           ) == 0x4743F1E4
+
+    assert PackIndex.crc32_checksum_for_object(
+             pack_index,
+             "902d5476fa249b7abc9d84c611577a81381f0327"
+           ) == 0x640B358B
+
+    assert PackIndex.crc32_checksum_for_object(
+             pack_index,
+             "aabf2ffaec9b497f0950352b3e582d73035c2035"
+           ) == 0x2A17CB5E
+
+    assert PackIndex.crc32_checksum_for_object(
+             pack_index,
+             "c59759f143fb1fe21c197981df75a7ee00290799"
+           ) == 0x0B3B5BA6
+  end
 end
