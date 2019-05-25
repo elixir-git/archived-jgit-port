@@ -410,6 +410,8 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
       nth_position - base
     end
 
+    defp read_offset_at_index(-1, _level_one, _offset32, _offset64), do: -1
+
     defp read_offset_at_index(level_two, level_one, offset32, offset64) do
       offset32
       |> elem(level_one)
@@ -426,48 +428,38 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
     #   return NB.decodeUInt64(offset64, (8 * (int) (p & ~IS_O64)));
 
     @impl true
-    def find_offset(_pack_index, _object_id) do
-      raise "not yet implemented"
-      # raw_object_id = ObjectId.to_raw_bytes(object_id)
-      # level_one = List.first(raw_object_id)
-      #
-      # # TO DO: Watch this for performance. Do we need to convert this to a binary
-      # # right off the bat, or is per `find_offset` call acceptable?
-      # data =
-      #   idx_data
-      #   |> Enum.at(level_one)
-      #   |> :erlang.list_to_binary()
-      #
-      # find_offset_in_level_two_index(
-      #   data,
-      #   :erlang.list_to_binary(raw_object_id),
-      #   0,
-      #   div(byte_size(data), 24)
-      # )
+    def find_offset(%{names: names, offset32: offset32, offset64: offset64}, object_id) do
+      raw_object_id = ObjectId.to_raw_bytes(object_id)
+      level_one = List.first(raw_object_id)
+      l2_names = elem(names, level_one)
+
+      l2_names
+      |> find_object_in_level_two_index(
+        :erlang.list_to_binary(raw_object_id),
+        0,
+        div(byte_size(l2_names), Constants.object_id_length())
+      )
+      |> read_offset_at_index(level_one, offset32, offset64)
     end
 
-    # defp find_offset_in_level_two_index(_data, _raw_object_id, index, index), do: -1
-    #
-    # defp find_offset_in_level_two_index(data, raw_object_id, min_index, max_index) do
-    #   mid_index = div(min_index + max_index, 2)
-    #   id_offset = mid_index * 24 + 4
-    #   raw_id_at_index = :erlang.binary_part(data, id_offset, 20)
-    #
-    #   cond do
-    #     raw_id_at_index == raw_object_id ->
-    #       data
-    #       |> String.slice(id_offset - 4, 4)
-    #       |> :erlang.binary_to_list()
-    #       |> NB.decode_uint32()
-    #       |> elem(0)
-    #
-    #     raw_id_at_index < raw_object_id ->
-    #       find_offset_in_level_two_index(data, raw_object_id, min_index, mid_index)
-    #
-    #     true ->
-    #       find_offset_in_level_two_index(data, raw_object_id, mid_index + 1, max_index)
-    #   end
-    # end
+    defp find_object_in_level_two_index(_data, _raw_object_id, index, index), do: -1
+
+    defp find_object_in_level_two_index(data, raw_object_id, min_index, max_index) do
+      mid_index = div(min_index + max_index, 2)
+      id_offset = mid_index * Constants.object_id_length()
+      raw_id_at_index = :erlang.binary_part(data, id_offset, 20)
+
+      cond do
+        raw_id_at_index == raw_object_id ->
+          mid_index
+
+        raw_object_id < raw_id_at_index ->
+          find_object_in_level_two_index(data, raw_object_id, min_index, mid_index)
+
+        true ->
+          find_object_in_level_two_index(data, raw_object_id, mid_index + 1, max_index)
+      end
+    end
 
     @impl true
     def crc32_checksum_for_object(_index, _object_id) do
@@ -482,23 +474,6 @@ end
 # /** Support for the pack index v2 format. */
 # class PackIndexV2 extends PackIndex {
 
-#   /** {@inheritDoc} */
-#   @Override
-#   public long findOffset(AnyObjectId objId) {
-#     final int levelOne = objId.getFirstByte();
-#     final int levelTwo = binarySearchLevelTwo(objId, levelOne);
-#     if (levelTwo == -1)
-#       return -1;
-#     return getOffset(levelOne, levelTwo);
-#   }
-#
-#   private long getOffset(int levelOne, int levelTwo) {
-#     final long p = NB.decodeUInt32(offset32[levelOne], levelTwo << 2);
-#     if ((p & IS_O64) != 0)
-#       return NB.decodeUInt64(offset64, (8 * (int) (p & ~IS_O64)));
-#     return p;
-#   }
-#
 #   /** {@inheritDoc} */
 #   @Override
 #   public long findCRC32(AnyObjectId objId) throws MissingObjectException {
@@ -543,26 +518,4 @@ end
 #
 #   private static int idOffset(int p) {
 #     return (p << 2) + p; // p * 5
-#   }
-#
-#   private int binarySearchLevelTwo(AnyObjectId objId, int levelOne) {
-#     final int[] data = names[levelOne];
-#     int high = offset32[levelOne].length >>> 2;
-#     if (high == 0)
-#       return -1;
-#     int low = 0;
-#     do {
-#       final int mid = (low + high) >>> 1;
-#       final int mid4 = mid << 2;
-#       final int cmp;
-#
-#       cmp = objId.compareTo(data, mid4 + mid); // mid * 5
-#       if (cmp < 0)
-#         high = mid;
-#       else if (cmp == 0) {
-#         return mid;
-#       } else
-#         low = mid + 1;
-#     } while (low < high);
-#     return -1;
 #   }

@@ -60,12 +60,13 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2Test do
     )
   end
 
-  # DISABLED: We don't actually have a dense V1 pack index file to work from.
-  # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.
-  # defp path_for_pack_df2982f28 do
-  #   # aka "dense index"
-  #   Path.expand("../../../../fixtures/pack-df2982f284bbabb6bdb59ee3fcc6eb0983e20371.idxV2", __DIR__)
-  # end
+  defp path_for_pack_df2982f28 do
+    # aka "dense index"
+    Path.expand(
+      "../../../../fixtures/pack-df2982f284bbabb6bdb59ee3fcc6eb0983e20371.idxV2",
+      __DIR__
+    )
+  end
 
   test "expect results for pack 34be9032" do
     objects_in_pack_34be9032 =
@@ -85,25 +86,23 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2Test do
            ]
   end
 
-  # DISABLED: We don't actually have a dense V1 pack index file to work from.
-  # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.
-  # test "expect (partial) results for pack df2982f28" do
-  #   objects_in_pack_df2982f28 =
-  #     path_for_pack_df2982f28()
-  #     |> PackIndex.open()
-  #     |> Stream.drop_while(fn %Entry{name: name} ->
-  #       name != "0a3d7772488b6b106fb62813c4d6d627918d9181"
-  #     end)
-  #     |> Stream.drop(1)
-  #     |> Stream.take(3)
-  #     |> Enum.map(fn %Entry{name: name} -> name end)
-  #
-  #   assert objects_in_pack_df2982f28 == [
-  #            "1004d0d7ac26fbf63050a234c9b88a46075719d3",
-  #            "10da5895682013006950e7da534b705252b03be6",
-  #            "1203b03dc816ccbb67773f28b3c19318654b0bc8"
-  #          ]
-  # end
+  test "expect (partial) results for pack df2982f28" do
+    objects_in_pack_df2982f28 =
+      path_for_pack_df2982f28()
+      |> PackIndex.open()
+      |> Stream.drop_while(fn %Entry{name: name} ->
+        name != "0a3d7772488b6b106fb62813c4d6d627918d9181"
+      end)
+      |> Stream.drop(1)
+      |> Stream.take(3)
+      |> Enum.map(fn %Entry{name: name} -> name end)
+
+    assert objects_in_pack_df2982f28 == [
+             "1004d0d7ac26fbf63050a234c9b88a46075719d3",
+             "10da5895682013006950e7da534b705252b03be6",
+             "1203b03dc816ccbb67773f28b3c19318654b0bc8"
+           ]
+  end
 
   # test "CRC32 operations not supported by pack index V1" do
   #   index =
@@ -135,8 +134,15 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2Test do
     end
 
     test "offsets match output of iterator (dense index)" do
-      # DISABLED: We don't actually have a dense V1 pack index file to work from.
-      # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.
+      pack_index =
+        path_for_pack_df2982f28()
+        |> PackIndex.open()
+
+      pack_index
+      |> Enum.with_index()
+      |> Enum.each(fn {%Entry{name: name}, index} ->
+        assert PackIndex.get_object_id_at_index(pack_index, index) == name
+      end)
     end
   end
 
@@ -154,8 +160,15 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2Test do
     end
 
     test "offsets match output of iterator (dense index)" do
-      # DISABLED: We don't actually have a dense V1 pack index file to work from.
-      # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.
+      pack_index =
+        path_for_pack_df2982f28()
+        |> PackIndex.open()
+
+      pack_index
+      |> Enum.with_index()
+      |> Enum.each(fn {%Entry{offset: offset}, index} ->
+        assert PackIndex.get_offset_at_index(pack_index, index) == offset
+      end)
     end
   end
 
@@ -172,23 +185,17 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2Test do
     end
 
     test "offsets match output of iterator (dense index)" do
-      # DISABLED: We don't actually have a dense V1 pack index file to work from.
-      # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.
+      pack_index =
+        path_for_pack_df2982f28()
+        |> PackIndex.open()
+
+      pack_index
+      |> Enum.each(fn %Entry{name: name, offset: offset} ->
+        assert PackIndex.find_offset(pack_index, name) == offset
+      end)
     end
   end
 
-  # @Override
-  # public File getFileForPack34be9032() {
-  #   return JGitTestUtil.getTestResourceFile(
-  #       "pack-34be9032ac282b11fa9babdc2b2a93ca996c9c2f.idxV2");
-  # }
-  #
-  # @Override
-  # public File getFileForPackdf2982f28() {
-  #   return JGitTestUtil.getTestResourceFile(
-  #       "pack-df2982f284bbabb6bdb59ee3fcc6eb0983e20371.idxV2");
-  # }
-  #
   # /**
   #  * Verify CRC32 indexing.
   #  *
