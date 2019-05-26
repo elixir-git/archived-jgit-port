@@ -79,6 +79,8 @@ defmodule Xgit.Lib.ObjectDatabase do
     end
   end
 
+  # TO DO: https://github.com/elixir-git/xgit/issues/132
+
   # /**
   #  * Order of prefixes to search when using non-absolute references.
   #  * <p>
@@ -141,6 +143,8 @@ defmodule Xgit.Lib.ObjectDatabase do
   May raise `File.Error` or similar if the database could not be created.
 
   Should return `{:ok, mod_state}` for function chaining or (TBD) if not.
+
+  TO DO: Finalize error-handling strategy here. https://github.com/elixir-git/xgit/issues/132
   """
   @callback handle_create(state :: term) :: {:ok, state :: term} | {:error, reason :: term}
 

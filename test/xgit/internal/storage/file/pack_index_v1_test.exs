@@ -60,6 +60,8 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
 
   # DISABLED: We don't actually have a dense V1 pack index file to work from.
   # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.
+  # TO DO: Create a dense V1 pack index file: https://github.com/elixir-git/xgit/issues/127
+
   # defp path_for_pack_df2982f28 do
   #   # aka "dense index"
   #   Path.expand("../../../../fixtures/pack-df2982f284bbabb6bdb59ee3fcc6eb0983e20371.idx", __DIR__)
@@ -82,6 +84,8 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
              "c59759f143fb1fe21c197981df75a7ee00290799"
            ]
   end
+
+  # TO DO: https://github.com/elixir-git/xgit/issues/127
 
   # DISABLED: We don't actually have a dense V1 pack index file to work from.
   # See https://bugs.eclipse.org/bugs/show_bug.cgi?id=547201.

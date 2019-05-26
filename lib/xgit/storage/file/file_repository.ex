@@ -145,6 +145,7 @@ defmodule Xgit.Storage.File.FileRepository do
       |> load_config()
 
     # TO DO: Shouldn't this fall back to user_config?
+    # https://github.com/elixir-git/xgit/issues/139
 
     # repoConfig.addChangeListener(new ConfigChangedListener() {
     #   @Override
@@ -184,7 +185,7 @@ defmodule Xgit.Storage.File.FileRepository do
       ObjectDirectory.start_link(config: Config.new(), objects: object_dir)
 
     # TO DO: Pass additional options (repoConfig, alternateObjectDirectories, Constants.SHALLOW)
-    # through to ObjectDirectory.
+    # through to ObjectDirectory. https://github.com/elixir-git/xgit/issues/139
 
     # objectDatabase = new ObjectDirectory(repoConfig, //
     #     options.getObjectDirectory(), //
@@ -242,6 +243,8 @@ defmodule Xgit.Storage.File.FileRepository do
   defp downcase_if_not_nil(nil), do: nil
   defp downcase_if_not_nil(s), do: String.downcase(s)
 
+  # TO DO: https://github.com/elixir-git/xgit/issues/139
+
   # private static final String UNNAMED = "Unnamed repository; edit this file to name it for gitweb."; //$NON-NLS-1$
   #
   # private final Object snapshotLock = new Object();
@@ -290,6 +293,8 @@ defmodule Xgit.Storage.File.FileRepository do
     # TEMPORARY / BOOTSTRAPPING: Remove the File.write! and replace with the
     # RefUpdate code below. Porting RefUpdate draws in a few too many things just yet.
     File.write!(Path.join(git_dir, "HEAD"), "ref: refs/heads/master")
+
+    # TO DO: https://github.com/elixir-git/xgit/issues/139
 
     # RefUpdate head = updateRef(Constants.HEAD);
     # head.disableRefLog();
@@ -379,6 +384,7 @@ defmodule Xgit.Storage.File.FileRepository do
     do: {:ok, repo_config, state}
 
   # TO DO: Should this call through to update_config?
+  # https://github.com/elixir-git/xgit/issues/139
 
   # defp update_config(%{repo_config: repo_config}) do
   #   # TO DO: Port the part that updates the configs if needed.

@@ -49,6 +49,8 @@ defmodule Xgit.Util.NB do
   Conversion utilities for network byte order handling.
   """
 
+  # TO DO: https://github.com/elixir-git/xgit/issues/141
+
   # /**
   #  * Compare a 32 bit unsigned integer stored in a 32 bit signed integer.
   #  * <p>

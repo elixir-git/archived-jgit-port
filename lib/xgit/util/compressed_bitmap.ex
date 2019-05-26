@@ -47,6 +47,8 @@ defmodule Xgit.Util.CompressedBitmap do
   Hopefully eventually replaced with something as efficient
   as com.googlecode.javaewah.EWAHCompressedBitmap.
 
+  TO DO: https://github.com/elixir-git/xgit/issues/140
+
   Unlike traditional `MapSet`, values must be non-negative integers.
 
   Consider replacing with:

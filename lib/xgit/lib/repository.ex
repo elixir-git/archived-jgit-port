@@ -64,6 +64,8 @@ defmodule Xgit.Lib.Repository do
 
   @type t :: pid
 
+  # TO DO: https://github.com/elixir-git/xgit/issues/136
+
   # /**
   #  * Branch names containing slashes should not have a name component that is
   #  * one of the reserved device names on Windows.

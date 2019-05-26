@@ -9,6 +9,10 @@ Pure Elixir native implementation of git [![Build Status](https://travis-ci.org/
 
 If you are interested in contributing, please reach out. I'll be adding notes on the current work at hand and items where first-time contributions would be especially welcome in the near future.
 
+The currently active project is to implement the API equivalent of the `git add` command. This project can be tracked via https://github.com/elixir-git/xgit/projects/1.
+
+First time contributors: Please see https://github.com/elixir-git/xgit/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22.
+
 
 ## Why an all-Elixir implementation?
 

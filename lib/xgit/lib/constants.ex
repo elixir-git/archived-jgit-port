@@ -363,6 +363,7 @@ defmodule Xgit.Lib.Constants do
   @doc "Binary value for custom merger."
   def attr_built_in_binary_merger, do: "binary"
 
+  # TO DO: https://github.com/elixir-git/xgit/issues/130
   # /**
   #  * Create a new digest function for objects.
   #  *
