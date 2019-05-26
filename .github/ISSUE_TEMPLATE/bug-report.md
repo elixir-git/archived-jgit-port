@@ -3,6 +3,7 @@ name: Bug Report
 about: Describe a way in which xgit doesn't behave as expected
 ---
 - [ ] Add label: "bug"
+- [ ] Add label: "good first issue" or "help wanted" if appropriate
 
 **Describe the Bug**
 _Please provide a clear and concise description of the bug._

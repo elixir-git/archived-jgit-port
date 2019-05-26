@@ -3,6 +3,7 @@ name: TO DO
 about: Describe an existing aspect of xgit which has not been completely implemented.
 ---
 - [ ] Add label: "TO DO"
+- [ ] Add label: "good first issue" or "help wanted" if appropriate
 - [ ] Add link to this issue in a comment near the `TO DO` comment
 
 **Describe the Request**
