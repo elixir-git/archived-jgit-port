@@ -1,6 +1,6 @@
 # Xgit
 
-Pure Elixir native implementation of git [![Coverage Status](https://coveralls.io/repos/github/scouten/xgit/badge.svg?t=xE9sgP)](https://coveralls.io/github/scouten/xgit)
+Pure Elixir native implementation of git [![Build Status](https://travis-ci.org/elixir-git/xgit.svg?branch=master)](https://travis-ci.org/elixir-git/xgit) [![Coverage Status](https://coveralls.io/repos/github/elixir-git/xgit/badge.svg?branch=master)](https://coveralls.io/github/elixir-git/xgit?branch=master)
 
 
 ## WORK IN PROGRESS
