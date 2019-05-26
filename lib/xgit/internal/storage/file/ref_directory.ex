@@ -68,6 +68,8 @@ defmodule Xgit.Internal.Storage.File.RefDirectory do
 
   alias Xgit.Lib.Constants
 
+  # TO DO: https://github.com/elixir-git/xgit/issues/128
+
   # /** Magic string denoting the start of a symbolic reference file. */
   # public static final String SYMREF = "ref: "; //$NON-NLS-1$
   #

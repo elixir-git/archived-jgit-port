@@ -67,6 +67,8 @@ defmodule Xgit.Test.RepositoryTestCase do
     end
   end
 
+  # TO DO: https://github.com/elixir-git/xgit/issues/147
+
   # /**
   #  * Copy a file
   #  *

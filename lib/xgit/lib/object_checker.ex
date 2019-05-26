@@ -574,6 +574,8 @@ defmodule Xgit.Lib.ObjectChecker do
   defp skip_object_id?(nil, _object_id), do: false
   defp skip_object_id?(skiplist, object_id), do: MapSet.member?(skiplist, object_id)
 
+  # TO DO: https://github.com/elixir-git/xgit/issues/131
+
   # /**
   #  * Check tree path entry for validity.
   #  * <p>

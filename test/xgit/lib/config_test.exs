@@ -61,6 +61,8 @@ defmodule Xgit.Lib.ConfigTest do
   # A non-ASCII whitespace character: U+2002 EN QUAD.
   @ws "\u2002"
 
+  # TO DO: https://github.com/elixir-git/xgit/issues/129
+
   # private static final String REFS_ORIGIN = "+refs/heads/*:refs/remotes/origin/*";
   #
   # private static final String REFS_UPSTREAM = "+refs/heads/*:refs/remotes/upstream/*";

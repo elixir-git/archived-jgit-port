@@ -47,6 +47,8 @@
 defmodule Xgit.Lib.RepositoryCache do
   @moduledoc false
   # MOSTLY UNIMPLEMENTED FOR NOW
+  # TO DO: https://github.com/elixir-git/xgit/issues/135
+  # 
   # /**
   #  * Cache of active {@link org.eclipse.jgit.lib.Repository} instances.
   #  */

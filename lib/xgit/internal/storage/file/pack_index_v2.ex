@@ -239,6 +239,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
     |> :erlang.list_to_binary()
   end
 
+  # TO DO: Finish implementation of `resolve`: https://github.com/elixir-git/xgit/issues/127
   # public void resolve(Set<ObjectId> matches, AbbreviatedObjectId id,
   #     int matchLimit) throws IOException {
   #   int[] data = names[id.getFirstByte()];

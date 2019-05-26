@@ -219,6 +219,8 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
     |> setup_internals()
   end
 
+  # TO DO: https://github.com/elixir-git/xgit/issues/138
+
   # /**
   #  * Create a repository matching the configuration in this builder.
   #  * <p>
