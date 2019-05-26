@@ -7,11 +7,18 @@ Pure Elixir native implementation of git [![Build Status](https://travis-ci.org/
 
 **This is very much a work in progress and not ready to be used in production.** What is implemented is well-tested and believed to be correct and stable, but much of the core git infrastructure is not yet implemented. There has been little attention, as yet, to measuring performance.
 
-If you are interested in contributing, please reach out. I'll be adding notes on the current work at hand and items where first-time contributions would be especially welcome in the near future.
+### Where Can I Help?
 
-The currently active project is to implement the API equivalent of the `git add` command. This project can be tracked via https://github.com/elixir-git/xgit/projects/1.
+**The current major feature development is focused on implementing the API equivalent of the `git add` command.** Progress on this project is tracked as follows:
 
-First time contributors: Please see https://github.com/elixir-git/xgit/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22.
+* [Porting Roadmap](./notes/porting_roadmap.md)
+* [GitHub project for `git add`](https://github.com/elixir-git/xgit/projects/1)
+
+**There is also important work to be done in backfilling existing porting work.** Please see:
+
+* [Issues tagged "good first issue"](https://github.com/elixir-git/xgit/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+* [Issues tagged "help wanted"](https://github.com/elixir-git/xgit/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) _more issues, but potentially more challenging_
+* [Project "Backfill incomplete implementations"](https://github.com/elixir-git/xgit/projects/2)
 
 
 ## Why an all-Elixir implementation?
