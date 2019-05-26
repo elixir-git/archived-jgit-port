@@ -12,7 +12,7 @@ env:
 script:
   - mix deps.get
   - mix format --check-formatted
-  - mix coveralls.travis --pro
+  - mix coveralls.travis
   - mix credo
 
 branches:
