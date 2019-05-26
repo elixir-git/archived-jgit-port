@@ -7,11 +7,11 @@ Pure Elixir native implementation of git [![Build Status](https://travis-ci.org/
 
 **This is very much a work in progress and not ready to be used in production.** What is implemented is well-tested and believed to be correct and stable, but much of the core git infrastructure is not yet implemented. There has been little attention, as yet, to measuring performance.
 
-### Where Can I Help?
+## Where Can I Help?
 
 **The current major feature development is focused on implementing the API equivalent of the `git add` command.** Progress on this project is tracked as follows:
 
-* [Porting Roadmap](./notes/porting_roadmap.md)
+* [Porting Roadmap](./notes/porting_roadmap.txt)
 * [GitHub project for `git add`](https://github.com/elixir-git/xgit/projects/1)
 
 **There is also important work to be done in backfilling existing porting work.** Please see:
