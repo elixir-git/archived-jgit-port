@@ -8,5 +8,5 @@ about: Describe something new you'd like xgit to do
 **Describe the Request**
 _Please provide a clear and concise description of the thing you're hoping xgit will do._
 
-**Steps to Reproduce**
+**Definition of Done**
 _How do you define "done" for this feature? A PR with a failing unit test is the ideal report._
