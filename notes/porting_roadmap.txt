@@ -4,7 +4,6 @@ AddCommand
   DirCache
   DirCacheBuilder
   DirCacheBuildIterator
-  DirCacheEntry
   FileTreeIterator
   NameConflictTreeWalk
   ObjectInserter
@@ -22,7 +21,6 @@ FileTreeIterator
 WorkingTreeIterator ABSTRACT
   AbstractTreeIterator
   AutoLFInputStream
-  DirCacheEntry
   DirCacheIterator
   Holder (not sure we need this)
   IgnoreNode
@@ -73,14 +71,12 @@ DirCacheIterator
   AttributesNode
   DirCache
   DirCacheBuilder
-  DirCacheEntry
   DirCacheTree
   TreeWalk
 
 DirCacheTree
   DirCache
   DirCacheBuilder
-  DirCacheEntry
   TreeFormatter
 
 AttributesNode
@@ -394,7 +390,6 @@ TestRepository
   CommitBuilder DEFER?
   DirCache
   DirCacheBuilder
-  DirCacheEntry
   InMemoryRepository DEFER?
   ObjectInserter
   PathEdit (part of DirCacheEditor)
@@ -481,7 +476,6 @@ RevWalk
   AbstractRevQueue
   CommitBuilder DEFER?
   DateRevQueue
-  DirCacheEntry
   FIFORevQueue
   ObjectIdOwnerMap
   ObjectWalk
@@ -631,7 +625,6 @@ DirCacheBuilder
   BaseDirCacheEditor
   CanonicalTreeParser
   DirCache
-  DirCacheEntry
   IndexChangedListener
 
 DirCacheEditor (part of DirCacheEditor)
@@ -639,14 +632,12 @@ DirCacheEditor (part of DirCacheEditor)
 
 BaseDirCacheEditor
   DirCache CYCLE
-  DirCacheEntry
 
 DirCache
   DigestOutputStream SYSTEM
   DirCacheCGitCompatabilityTest DEFER?
   DirCacheCheckoutMaliciousPathTest
   DirCacheEditor CYCLE
-  DirCacheEntry
   DirCacheTree CYCLE
   IndexChangedListener
   LockFile
@@ -718,9 +709,6 @@ Attribute STRUCT
 
 AbstractTreeIterator
   TreeWalk CYCLE
-
-DirCacheEntry
-  ByteArrayOutputStream
 
 AutoLFInputStream
   (none)
