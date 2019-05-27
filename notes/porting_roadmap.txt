@@ -630,7 +630,7 @@ DirCacheBuilder
 DirCacheEditor (part of DirCacheEditor)
   BaseDirCacheEditor
 
-BaseDirCacheEditor
+BaseDirCacheEditor -- view this as a map operation
   DirCache CYCLE
 
 DirCache
