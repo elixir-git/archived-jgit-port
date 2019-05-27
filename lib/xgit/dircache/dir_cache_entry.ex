@@ -53,7 +53,16 @@ defmodule Xgit.DirCache.DirCacheEntry do
 
   An entry represents exactly one stage of a file. If a file path is unmerged
   then multiple `DirCacheEntry` instances may appear for the same path name.
+
+  Struct members:
+  * `info`: (binary, not UTF-8 encoded) header information
+  * `info_offset`: (integer) byte offset within `info` where our header starts.
+  * `path`: (String) our encoded path name, from the root of the repository.
+  * `in_core_flags`: (integer, bit flags) flags which are never stored to disk.
   """
+
+  @enforce_keys [:info, :info_offset, :path, :in_core_flags]
+  defstruct [info: "", info_offset: 0, :path, :in_core_flags]
 
   # private static final byte[] nullpad = new byte[8];
   #
@@ -109,19 +118,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
   #
   # /** In-core flag signaling that the entry should be considered as modified. */
   # private static final int UPDATE_NEEDED = 0x1;
-  #
-  # /** (Possibly shared) header information storage. */
-  # private final byte[] info;
-  #
-  # /** First location within {@link #info} where our header starts. */
-  # private final int infoOffset;
-  #
-  # /** Our encoded path name, from the root of the repository. */
-  # final byte[] path;
-  #
-  # /** Flags which are never stored to disk. */
-  # private byte inCoreFlags;
-  #
+
   # DirCacheEntry(final byte[] sharedInfo, final MutableInteger infoAt,
   #     final InputStream in, final MessageDigest md, final int smudge_s,
   #     final int smudge_ns) throws IOException {
