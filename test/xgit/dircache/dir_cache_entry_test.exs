@@ -49,21 +49,31 @@ defmodule Xgit.DirCache.DirCacheEntryTest do
 
   alias Xgit.DirCache.DirCacheEntry
 
-  # @Test
-  # public void testIsValidPath() {
-  #   assertTrue(isValidPath("a"));
-  #   assertTrue(isValidPath("a/b"));
-  #   assertTrue(isValidPath("ab/cd/ef"));
-  #
-  #   assertFalse(isValidPath(""));
-  #   assertFalse(isValidPath("/a"));
-  #   assertFalse(isValidPath("a//b"));
-  #   assertFalse(isValidPath("ab/cd//ef"));
-  #   assertFalse(isValidPath("a/"));
-  #   assertFalse(isValidPath("ab/cd/ef/"));
-  #   assertFalse(isValidPath("a\u0000b"));
-  # }
-  #
+  describe "new/1" do
+    test "valid path" do
+      assert valid_path?("a")
+      assert valid_path?("a/b")
+      assert valid_path?("ab/cd/ef")
+
+      refute valid_path?("")
+      refute valid_path?("/a")
+      refute valid_path?("a//b")
+      refute valid_path?("ab/cd//ef")
+      refute valid_path?("a/")
+      refute valid_path?("ab/cd/ef/")
+      refute valid_path?("a\u0000b")
+    end
+  end
+
+  defp valid_path?(path) do
+    try do
+      DirCacheEntry.new(path)
+      true
+    rescue
+      _ -> false
+    end
+  end
+
   # @SuppressWarnings("unused")
   # private static boolean isValidPath(String path) {
   #   try {
@@ -73,7 +83,7 @@ defmodule Xgit.DirCache.DirCacheEntryTest do
   #     return false;
   #   }
   # }
-  #
+
   # @SuppressWarnings("unused")
   # @Test
   # public void testCreate_ByStringPath() {

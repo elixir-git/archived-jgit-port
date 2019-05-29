@@ -193,38 +193,30 @@ defmodule Xgit.DirCache.DirCacheEntry do
   #   if (mightBeRacilyClean(smudge_s, smudge_ns))
   #     smudgeRacilyClean();
   # }
-  #
-  # /**
-  #  * Create an empty entry at stage 0.
-  #  *
-  #  * @param newPath
-  #  *            name of the cache entry.
-  #  * @throws java.lang.IllegalArgumentException
-  #  *             If the path starts or ends with "/", or contains "//" either
-  #  *             "\0". These sequences are not permitted in a git tree object
-  #  *             or DirCache file.
-  #  */
-  # public DirCacheEntry(String newPath) {
-  #   this(Constants.encode(newPath), STAGE_0);
-  # }
-  #
-  # /**
-  #  * Create an empty entry at the specified stage.
-  #  *
-  #  * @param newPath
-  #  *            name of the cache entry.
-  #  * @param stage
-  #  *            the stage index of the new entry.
-  #  * @throws java.lang.IllegalArgumentException
-  #  *             If the path starts or ends with "/", or contains "//" either
-  #  *             "\0". These sequences are not permitted in a git tree object
-  #  *             or DirCache file.  Or if {@code stage} is outside of the
-  #  *             range 0..3, inclusive.
-  #  */
-  # public DirCacheEntry(String newPath, int stage) {
-  #   this(Constants.encode(newPath), stage);
-  # }
-  #
+
+  @doc ~S"""
+  Create an empty entry at stage 0.
+
+  `path` is the name of the cache entry.
+
+  Raises `ArgumentError` if the path starts or ends with `"/"`, or contains `"//"`
+  or `"\0"`. These sequences are not permitted in a git tree object or `DirCache` file.
+  """
+  def new(path) when is_binary(path), do:    new(path, @stage_0)
+
+  @doc ~S"""
+  Create an empty entry at the specified stage.
+
+  `path` is the name of the cache entry.
+
+  `stage` is the stage index of the new entry (must be an integer in the range 0..3).
+
+  Raises `ArgumentError` if the path starts or ends with `"/"`, or contains `"//"`
+  or `"\0"`. These sequences are not permitted in a git tree object or `DirCache` file.
+  """
+  def new(path, stage) when is_binary(path) and is_integer(stage) and is_integer(stage) and stage >= 0 and stage <= 3,
+    do: new(:binary.bin_to_list(path), stage)
+
   # /**
   #  * Create an empty entry at stage 0.
   #  *
@@ -238,57 +230,32 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # public DirCacheEntry(byte[] newPath) {
   #   this(newPath, STAGE_0);
   # }
-  #
-  # /**
-  #  * Create an empty entry at the specified stage.
-  #  *
-  #  * @param path
-  #  *            name of the cache entry, in the standard encoding.
-  #  * @param stage
-  #  *            the stage index of the new entry.
-  #  * @throws java.lang.IllegalArgumentException
-  #  *             If the path starts or ends with "/", or contains "//" either
-  #  *             "\0". These sequences are not permitted in a git tree object
-  #  *             or DirCache file.  Or if {@code stage} is outside of the
-  #  *             range 0..3, inclusive.
-  #  */
-  # @SuppressWarnings("boxing")
-  # public DirCacheEntry(byte[] path, int stage) {
-  #   checkPath(path);
-  #   if (stage < 0 || 3 < stage)
-  #     throw new IllegalArgumentException(MessageFormat.format(
-  #         JGitText.get().invalidStageForPath,
-  #         stage, toString(path)));
-  #
-  #   info = new byte[INFO_LEN];
-  #   infoOffset = 0;
-  #   this.path = path;
-  #
-  #   int flags = ((stage & 0x3) << 12);
-  #   if (path.length < NAME_MASK)
-  #     flags |= path.length;
-  #   else
-  #     flags |= NAME_MASK;
-  #   NB.encodeInt16(info, infoOffset + P_FLAGS, flags);
-  # }
-  #
-  # /**
-  #  * Duplicate DirCacheEntry with same path and copied info.
-  #  * <p>
-  #  * The same path buffer is reused (avoiding copying), however a new info
-  #  * buffer is created and its contents are copied.
-  #  *
-  #  * @param src
-  #  *            entry to clone.
-  #  * @since 4.2
-  #  */
-  # public DirCacheEntry(DirCacheEntry src) {
-  #   path = src.path;
-  #   info = new byte[INFO_LEN];
-  #   infoOffset = 0;
-  #   System.arraycopy(src.info, src.infoOffset, info, 0, INFO_LEN);
-  # }
-  #
+
+  @doc ~S"""
+  Create an empty entry at the specified stage.
+
+  `path` is the name of the cache entry, in the standard encoding.
+
+  `stage` is the stage index of the new entry (must be an integer in the range 0..3).
+
+  Raises `ArgumentError` if the path starts or ends with `"/"`, or contains `"//"`
+  or `"\0"`. These sequences are not permitted in a git tree object or `DirCache` file.
+  """
+  def new(path, stage) when is_list(path) and is_integer(stage) and stage >= 0 and stage <= 3 do
+    check_path(path)
+
+    # info = new byte[INFO_LEN];
+    # infoOffset = 0;
+    # this.path = path;
+    #
+    # int flags = ((stage & 0x3) << 12);
+    # if (path.length < NAME_MASK)
+    #   flags |= path.length;
+    # else
+    #   flags |= NAME_MASK;
+    # NB.encodeInt16(info, infoOffset + P_FLAGS, flags);
+  end
+
   # void write(OutputStream os) throws IOException {
   #   final int len = isExtended() ? INFO_LEN_EXTENDED : INFO_LEN;
   #   final int pathLen = path.length;
