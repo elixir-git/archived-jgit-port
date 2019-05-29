@@ -214,7 +214,7 @@ defmodule Xgit.Util.NB do
   @doc ~S"""
   Convert a 16-bit integer to a sequence of two bytes in network byte order.
   """
-  def encode_int16(v) when is_integer(v) and v >= -32768 and v <= 65535,
+  def encode_int16(v) when is_integer(v) and v >= -32_768 and v <= 65_535,
     do: [v >>> 8 &&& 0xFF, v &&& 0xFF]
 
   # /**
