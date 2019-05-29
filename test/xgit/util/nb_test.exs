@@ -191,40 +191,14 @@ defmodule Xgit.Util.NBTest do
   #   assertEquals(0xffffffffffffffffL, NB.decodeUInt64(padb(3, 0xff, 0xff,
   #       0xff, 0xff, 0xff, 0xff, 0xff, 0xff), 3));
   # }
-  #
-  # @Test
-  # public void testEncodeInt16() {
-  #   final byte[] out = new byte[16];
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt16(out, 0, 0);
-  #   assertOutput(b(0, 0), out, 0);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt16(out, 3, 0);
-  #   assertOutput(b(0, 0), out, 3);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt16(out, 0, 3);
-  #   assertOutput(b(0, 3), out, 0);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt16(out, 3, 3);
-  #   assertOutput(b(0, 3), out, 3);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt16(out, 0, 0xdeac);
-  #   assertOutput(b(0xde, 0xac), out, 0);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt16(out, 3, 0xdeac);
-  #   assertOutput(b(0xde, 0xac), out, 3);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt16(out, 3, -1);
-  #   assertOutput(b(0xff, 0xff), out, 3);
-  # }
-  #
+
+  test "encode_int16/1" do
+    assert NB.encode_int16(0) == [0, 0]
+    assert NB.encode_int16(3) == [0, 3]
+    assert NB.encode_int16(0xDEAC) == [0xDE, 0xAC]
+    assert NB.encode_int16(-1) == [0xFF, 0xFF]
+  end
+
   # @Test
   # public void testEncodeInt24() {
   #   byte[] out = new byte[16];

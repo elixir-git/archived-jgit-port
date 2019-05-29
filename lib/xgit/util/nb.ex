@@ -51,6 +51,8 @@ defmodule Xgit.Util.NB do
 
   # TO DO: https://github.com/elixir-git/xgit/issues/141
 
+  use Bitwise
+
   # /**
   #  * Compare a 32 bit unsigned integer stored in a 32 bit signed integer.
   #  * <p>
@@ -208,26 +210,13 @@ defmodule Xgit.Util.NB do
   #   return (decodeUInt32(intbuf, offset) << 32)
   #       | decodeUInt32(intbuf, offset + 4);
   # }
-  #
-  # /**
-  #  * Write a 16 bit integer as a sequence of 2 bytes (network byte order).
-  #  *
-  #  * @param intbuf
-  #  *            buffer to write the 2 bytes of data into.
-  #  * @param offset
-  #  *            position within the buffer to begin writing to. This position
-  #  *            and the next byte after it (for a total of 2 bytes) will be
-  #  *            replaced.
-  #  * @param v
-  #  *            the value to write.
-  #  */
-  # public static void encodeInt16(final byte[] intbuf, final int offset, int v) {
-  #   intbuf[offset + 1] = (byte) v;
-  #   v >>>= 8;
-  #
-  #   intbuf[offset] = (byte) v;
-  # }
-  #
+
+  @doc ~S"""
+  Convert a 16-bit integer to a sequence of two bytes in network byte order.
+  """
+  def encode_int16(v) when is_integer(v) and v >= -32_768 and v <= 65_535,
+    do: [v >>> 8 &&& 0xFF, v &&& 0xFF]
+
   # /**
   #  * Write a 24 bit integer as a sequence of 3 bytes (network byte order).
   #  *
