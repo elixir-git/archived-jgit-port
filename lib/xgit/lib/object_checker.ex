@@ -574,55 +574,39 @@ defmodule Xgit.Lib.ObjectChecker do
   defp skip_object_id?(nil, _object_id), do: false
   defp skip_object_id?(skiplist, object_id), do: MapSet.member?(skiplist, object_id)
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/131
-
-  # /**
-  #  * Check tree path entry for validity.
-  #  * <p>
-  #  * Unlike {@link #checkPathSegment(byte[], int, int)}, this version scans a
-  #  * multi-directory path string such as {@code "src/main.c"}.
-  #  *
-  #  * @param path
-  #  *            path string to scan.
-  #  * @throws org.eclipse.jgit.errors.CorruptObjectException
-  #  *             path is invalid.
-  #  * @since 3.6
-  #  */
-  # public void checkPath(String path) throws CorruptObjectException {
-  #   byte[] buf = Constants.encode(path);
-  #   checkPath(buf, 0, buf.length);
-  # }
-  #
-  # /**
-  #  * Check tree path entry for validity.
-  #  * <p>
-  #  * Unlike {@link #checkPathSegment(byte[], int, int)}, this version scans a
-  #  * multi-directory path string such as {@code "src/main.c"}.
-  #  *
-  #  * @param raw
-  #  *            buffer to scan.
-  #  * @param ptr
-  #  *            offset to first byte of the name.
-  #  * @param end
-  #  *            offset to one past last byte of name.
-  #  * @throws org.eclipse.jgit.errors.CorruptObjectException
-  #  *             path is invalid.
-  #  * @since 3.6
-  #  */
-  # public void checkPath(byte[] raw, int ptr, int end)
-  #     throws CorruptObjectException {
-  #   int start = ptr;
-  #   for (; ptr < end; ptr++) {
-  #     if (raw[ptr] == '/') {
-  #       checkPathSegment(raw, start, ptr);
-  #       start = ptr + 1;
-  #     }
-  #   }
-  #   checkPathSegment(raw, start, end);
-  # }
-
   @doc ~S"""
   Check tree path entry for validity.
+
+  `path` may be either a `String` or a byte list.
+
+  Unlike `check_path_segment/2`, this version scans a multi-directory path
+  string such as `"src/main.c"`.
+
+  Raises `CorruptObjectError` if the path is invalid.
+  """
+  def check_path!(checker, path)
+
+  def check_path!(%__MODULE__{} = checker, path) when is_binary(path),
+    do: check_path!(checker, String.to_charlist(path))
+
+  def check_path!(%__MODULE__{} = _checker, []),
+    do: raise(CorruptObjectError, why: "empty path")
+
+  def check_path!(%__MODULE__{} = _checker, [?/ | _]),
+    do: raise(CorruptObjectError, why: "absolute path")
+
+  def check_path!(%__MODULE__{} = checker, path) when is_list(path) do
+    if Enum.any?(path, &(&1 == ?/)) do
+      {this, remainder} = Enum.split_while(path, &(&1 != ?/))
+      check_path_segment(checker, this)
+      check_path!(checker, Enum.drop(remainder, 1))
+    else
+      check_path_segment(checker, path)
+    end
+  end
+
+  @doc ~S"""
+  Check tree path segment for validity.
   """
   def check_path_segment(%__MODULE__{} = checker, data) when is_list(data) do
     if Enum.any?(data, &(&1 == 0)),
