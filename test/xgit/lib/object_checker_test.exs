@@ -1401,6 +1401,29 @@ defmodule Xgit.Lib.ObjectCheckerTest do
     end
   end
 
+  test "check_path/2" do
+    assert valid_path?("a")
+    assert valid_path?("a/b")
+    assert valid_path?("ab/cd/ef")
+
+    refute valid_path?("")
+    refute valid_path?("/a")
+    refute valid_path?("a//b")
+    refute valid_path?("ab/cd//ef")
+    refute valid_path?("a/")
+    refute valid_path?("ab/cd/ef/")
+    refute valid_path?("a\u0000b")
+  end
+
+  defp valid_path?(path) do
+    try do
+      ObjectChecker.check_path!(%ObjectChecker{}, path)
+      true
+    rescue
+      _ -> false
+    end
+  end
+
   describe "check_path_segment/2" do
     test "bug 477090" do
       checker = %ObjectChecker{macosx?: true}
