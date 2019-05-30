@@ -207,18 +207,9 @@ defprotocol Xgit.Util.SystemReader do
   # 	return isMacOS.booleanValue();
   # }
 
-  # /**
-  #  * Check tree path entry for validity.
-  #  * <p>
-  #  * Scans a multi-directory path string such as {@code "src/main.c"}.
-  #  *
-  #  * @param path path string to scan.
-  #  * @throws org.eclipse.jgit.errors.CorruptObjectException path is invalid.
-  #  * @since 3.6
-  #  */
-  # public void checkPath(String path) throws CorruptObjectException {
-  # 	platformChecker.checkPath(path);
-  # }
+  # PORTING NOTE: We do not implement check_path in SystemReader.
+  # Callers should instead create an instance of ObjectReader and call
+  # check_path_segment on that instance intead.
 end
 
 defimpl Xgit.Util.SystemReader, for: Any do
