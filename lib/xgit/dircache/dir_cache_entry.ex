@@ -688,7 +688,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
   defp check_path(path) do
     try do
       ObjectChecker.check_path!(%ObjectChecker{}, path)
-    rescue
+    catch
       _ -> raise InvalidPathError, path: path
     end
   end
