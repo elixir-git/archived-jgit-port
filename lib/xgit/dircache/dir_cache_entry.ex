@@ -688,8 +688,9 @@ defmodule Xgit.DirCache.DirCacheEntry do
   defp check_path(path) do
     try do
       ObjectChecker.check_path!(%ObjectChecker{}, path)
-    catch
-      _ -> raise InvalidPathError, path: path
+    rescue
+      # credo:disable-for-next-line Credo.Check.Warning.RaiseInsideRescue
+      _ -> raise InvalidPathError, path: List.to_string(path)
     end
   end
 
