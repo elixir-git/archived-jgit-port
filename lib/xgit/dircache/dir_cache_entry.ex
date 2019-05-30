@@ -62,10 +62,12 @@ defmodule Xgit.DirCache.DirCacheEntry do
   """
 
   @enforce_keys [:info, :info_offset, :path, :in_core_flags]
-  defstruct [info: "", info_offset: 0, :path, :in_core_flags]
+  defstruct [:path, :in_core_flags, info: "", info_offset: 0]
+
+  use Bitwise
 
   # private static final byte[] nullpad = new byte[8];
-  #
+
   # /** The standard (fully merged) stage for an entry. */
   # public static final int STAGE_0 = 0;
   #
@@ -99,13 +101,13 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # private static final int P_SIZE = 36;
   #
   # private static final int P_OBJECTID = 40;
-  #
-  # private static final int P_FLAGS = 60;
+
+  @p_flags 60
   # private static final int P_FLAGS2 = 62;
-  #
-  # /** Mask applied to data in {@link #P_FLAGS} to get the name length. */
-  # private static final int NAME_MASK = 0xfff;
-  #
+
+  # Mask applied to data in {@link #P_FLAGS} to get the name length.
+  @name_mask 0xFFF
+
   # private static final int INTENT_TO_ADD = 0x20000000;
   # private static final int SKIP_WORKTREE = 0x40000000;
   # private static final int EXTENDED_FLAGS = (INTENT_TO_ADD | SKIP_WORKTREE);
@@ -195,66 +197,40 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # }
 
   @doc ~S"""
-  Create an empty entry at stage 0.
-
-  `path` is the name of the cache entry.
-
-  Raises `ArgumentError` if the path starts or ends with `"/"`, or contains `"//"`
-  or `"\0"`. These sequences are not permitted in a git tree object or `DirCache` file.
-  """
-  def new(path) when is_binary(path), do:    new(path, @stage_0)
-
-  @doc ~S"""
   Create an empty entry at the specified stage.
 
-  `path` is the name of the cache entry.
+  `path` is the name of the cache entry. It may be either a String or a byte list.
 
-  `stage` is the stage index of the new entry (must be an integer in the range 0..3).
-
-  Raises `ArgumentError` if the path starts or ends with `"/"`, or contains `"//"`
-  or `"\0"`. These sequences are not permitted in a git tree object or `DirCache` file.
-  """
-  def new(path, stage) when is_binary(path) and is_integer(stage) and is_integer(stage) and stage >= 0 and stage <= 3,
-    do: new(:binary.bin_to_list(path), stage)
-
-  # /**
-  #  * Create an empty entry at stage 0.
-  #  *
-  #  * @param newPath
-  #  *            name of the cache entry, in the standard encoding.
-  #  * @throws java.lang.IllegalArgumentException
-  #  *             If the path starts or ends with "/", or contains "//" either
-  #  *             "\0". These sequences are not permitted in a git tree object
-  #  *             or DirCache file.
-  #  */
-  # public DirCacheEntry(byte[] newPath) {
-  #   this(newPath, STAGE_0);
-  # }
-
-  @doc ~S"""
-  Create an empty entry at the specified stage.
-
-  `path` is the name of the cache entry, in the standard encoding.
-
-  `stage` is the stage index of the new entry (must be an integer in the range 0..3).
+  `stage` is the stage index of the new entry (must be an integer in the range 0..3, default 0).
 
   Raises `ArgumentError` if the path starts or ends with `"/"`, or contains `"//"`
   or `"\0"`. These sequences are not permitted in a git tree object or `DirCache` file.
   """
-  def new(path, stage) when is_list(path) and is_integer(stage) and stage >= 0 and stage <= 3 do
+  def new(path, stage \\ 0)
+
+  def new(path, stage)
+      when is_binary(path) and is_integer(stage) and stage >= 0 and stage <= 3,
+      do: new(:binary.bin_to_list(path), stage)
+
+  def new(path, stage)
+      when is_list(path) and is_integer(stage) and stage >= 0 and stage <= 3 do
     check_path(path)
 
-    # info = new byte[INFO_LEN];
-    # infoOffset = 0;
-    # this.path = path;
-    #
-    # int flags = ((stage & 0x3) << 12);
-    # if (path.length < NAME_MASK)
-    #   flags |= path.length;
-    # else
-    #   flags |= NAME_MASK;
-    # NB.encodeInt16(info, infoOffset + P_FLAGS, flags);
+    info =
+      stage
+      |> shift_left12()
+      |> add_path_length(length(path))
+      |> NB.encode_16()
+      |> Enum.concat(List.duplicate(0, @p_flags))
+      |> :binary.list_to_bin()
+
+    %__MODULE__{info: info, info_offset: 0, path: path, in_core_flags: 0}
   end
+
+  defp shift_left12(n), do: n <<< 12
+
+  defp add_path_length(n, path) when length(path) >= @name_mask, do: n + @name_mask
+  defp add_path_length(n, path), do: n + length(path)
 
   # void write(OutputStream os) throws IOException {
   #   final int len = isExtended() ? INFO_LEN_EXTENDED : INFO_LEN;
@@ -704,7 +680,10 @@ defmodule Xgit.DirCache.DirCacheEntry do
   #   else
   #     return 0;
   # }
-  #
+
+  defp check_path(path) do
+  end
+
   # private static void checkPath(byte[] path) {
   #   try {
   #     SystemReader.getInstance().checkPath(path);
@@ -714,7 +693,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
   #     throw p;
   #   }
   # }
-  #
+
   # static String toString(byte[] path) {
   #   return UTF_8.decode(ByteBuffer.wrap(path)).toString();
   # }
