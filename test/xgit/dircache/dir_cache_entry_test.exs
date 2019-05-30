@@ -75,16 +75,6 @@ defmodule Xgit.DirCache.DirCacheEntryTest do
   end
 
   # @SuppressWarnings("unused")
-  # private static boolean isValidPath(String path) {
-  #   try {
-  #     new DirCacheEntry(path);
-  #     return true;
-  #   } catch (InvalidPathException e) {
-  #     return false;
-  #   }
-  # }
-
-  # @SuppressWarnings("unused")
   # @Test
   # public void testCreate_ByStringPath() {
   #   assertEquals("a", new DirCacheEntry("a").getPathString());
