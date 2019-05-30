@@ -209,7 +209,7 @@ defprotocol Xgit.Util.SystemReader do
 
   # PORTING NOTE: We do not implement check_path in SystemReader.
   # Callers should instead create an instance of ObjectReader and call
-  # check_path_segment on that instance intead.
+  # check_path/2 using that instance intead.
 end
 
 defimpl Xgit.Util.SystemReader, for: Any do
