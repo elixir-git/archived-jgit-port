@@ -66,6 +66,10 @@ defmodule Xgit.DirCache.DirCacheEntry do
 
   use Bitwise
 
+  alias Xgit.Errors.InvalidPathError
+  alias Xgit.Lib.ObjectChecker
+  alias Xgit.Util.NB
+
   # private static final byte[] nullpad = new byte[8];
 
   # /** The standard (fully merged) stage for an entry. */
@@ -219,8 +223,8 @@ defmodule Xgit.DirCache.DirCacheEntry do
     info =
       stage
       |> shift_left12()
-      |> add_path_length(length(path))
-      |> NB.encode_16()
+      |> add_path_length(path)
+      |> NB.encode_int16()
       |> Enum.concat(List.duplicate(0, @p_flags))
       |> :binary.list_to_bin()
 
@@ -682,17 +686,12 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # }
 
   defp check_path(path) do
+    try do
+      ObjectChecker.check_path!(%ObjectChecker{}, path)
+    rescue
+      _ -> raise InvalidPathError, path: path
+    end
   end
-
-  # private static void checkPath(byte[] path) {
-  #   try {
-  #     SystemReader.getInstance().checkPath(path);
-  #   } catch (CorruptObjectException e) {
-  #     InvalidPathException p = new InvalidPathException(toString(path));
-  #     p.initCause(e);
-  #     throw p;
-  #   }
-  # }
 
   # static String toString(byte[] path) {
   #   return UTF_8.decode(ByteBuffer.wrap(path)).toString();
