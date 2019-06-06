@@ -9,10 +9,12 @@ Pure Elixir native implementation of git [![Build Status](https://travis-ci.org/
 
 ## Where Can I Help?
 
-**The current major feature development is focused on implementing the API equivalent of the `git add` command.** Progress on this project is tracked as follows:
+**The current plan is to implement core git infrastructure (often referred to as "plumbing").** Once most of the plumbing is in place, then we can build on specific porcelain-level APIs and/or server infrastructure (push, pull, clone, etc.).
+
+**The current major infrastructure being targeted is porting the jgit `RevWalk` class.** This provides core infrastructure for walking commit history and object graphs. Progress on this project is tracked as follows:
 
 * [Porting Roadmap](./notes/porting_roadmap.txt)
-* [GitHub project for `git add`](https://github.com/elixir-git/xgit/projects/1)
+* [GitHub project for porting `RevWalk`](https://github.com/elixir-git/xgit/projects/3)
 
 **There is also important work to be done in backfilling existing porting work.** Please see:
 
@@ -21,7 +23,7 @@ Pure Elixir native implementation of git [![Build Status](https://travis-ci.org/
 * [Project "Backfill incomplete implementations"](https://github.com/elixir-git/xgit/projects/2)
 
 
-## Why an all-Elixir implementation?
+## Why an All-Elixir Implementation?
 
 With all of git already implemented in [libgit2](https://github.com/libgit2/libgit2), why do it again?
 
