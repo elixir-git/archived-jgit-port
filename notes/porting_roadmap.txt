@@ -1,480 +1,4 @@
-jgit porting dependency tree for getting `git add` up and running:
-
-AddCommand
-  DirCache
-  DirCacheBuilder
-  DirCacheBuildIterator
-  DirCacheEntry
-  FileTreeIterator
-  NameConflictTreeWalk
-  ObjectInserter
-  WorkingTreeIterator
-
-FileTreeIterator
-  AbstractTreeIterator
-  DirCache
-  DirCacheEditor
-  DirCacheIterator
-  EmptyTreeIterator
-  TreeWalk
-  WorkingTreeIterator
-
-WorkingTreeIterator ABSTRACT
-  AbstractTreeIterator
-  AutoLFInputStream
-  DirCacheEntry
-  DirCacheIterator
-  Holder (not sure we need this)
-  IgnoreNode
-  IMatcher
-  LocalFile (part of TemporaryBuffer)
-  PathMatcher
-  TemporaryBuffer
-  WorkingTreeOptions
-
-PathMatcher
-  AbstractMatcher
-  LeadingAsteriskMatcher
-  NameMatcher
-  TrailingAsteriskMatcher
-  WildCardMatcher
-  WildMatcher
-  IMatcher
-
-LeadingAsteriskMatcher
-  NameMatcher
-
-TrailingAsteriskMatcher
-  NameMatcher
-
-WildCardMatcher
-  NameMatcher
-
-NameMatcher
-  AbstractMatcher
-
-WildMatcher
-  AbstractMatcher
-
-AbstractMatcher ABSTRACT
-  IMatcher
-
-IMatcher ABSTRACT (consider rolling these back into one module)
-
-IgnoreNode
-  BufferedReader (Java)
-  FastIgnoreRule
-  FileTreeIterator
-  TreeWalk
-  WorkingTreeIterator (dependency CYCLE)
-
-DirCacheIterator
-  AbstractTreeIterator
-  AttributesNode
-  DirCache
-  DirCacheBuilder
-  DirCacheEntry
-  DirCacheTree
-  TreeWalk
-
-DirCacheTree
-  DirCache
-  DirCacheBuilder
-  DirCacheEntry
-  TreeFormatter
-
-AttributesNode
-  Attribute
-  Attributes
-  AttributesRule
-  BufferedReader
-  DirCacheIterator (CYCLE via test)
-  TreeWalk
-  WorkingTreeIterator (CYCLE via test)
-
-BufferedReader (Java built-in, check for Elixir equivalent)
-
-EmptyTreeIterator
-  AbstractTreeIterator
-
-ObjectInserter
-  CommitBuilder DEFER?
-  PackParser
-  TagBuilder DEFER?
-  TreeFormatter
-
-ObjectDirectoryPackParser
-  CRC32 SYSTEM
-  Deflater
-  PackedObjectInfo
-  PackFile
-  PackIndexWriter
-  PackLock
-  PackParser CYCLE
-  RandomAccessFile SYSTEM
-
-PackLock
-  (none)
-
-PackIndexWriterV2
-  PackedObjectInfo
-  PackIndexWriter
-
-PackIndexWriterV1
-  PackedObjectInfo
-  PackIndexWriter
-
-PackIndexWriter ABSTRACT
-  BufferedOutputStream SYSTEM
-  DigestOutputStream SYSTEM
-  PackedObjectInfo
-  PackIndexWriter
-  PackIndexWriterV1
-  PackIndexWriterV2
-
-PackParser
-  BatchingProgressMonitor
-  BlockList
-  Deflater
-  ObjectDirectoryPackParser
-  ObjectIdOwnerMap
-  ObjectIdSubclassMap
-  PackedObjectInfo
-  ProgressMonitor
-  TemporaryBuffer
-  TestRepository
-
-ObjectIdSubclassMap
-  (none, may devolve to system map)
-
-PackFile
-  BinaryDelta
-  ByteArrayOutputStream
-  ByteArrayWindow
-  CRC32 SYSTEM
-  Deflater
-  DeltaBaseCache CYCLE
-  DeltaEncoder
-  LargePackedWholeObject
-  LocalObjectRepresentation
-  LocalObjectToPack
-  MessageDigest SYSTEM
-  ObjectInserter CYCLE (via test)
-  PackBitmapIndex
-  PackedObjectInfo
-  PackOutputStream
-  PackParser CYCLE via test
-  PackReverseIndex
-  RevBlob
-  TemporaryBuffer
-  TestRepository
-  WindowCache
-  WindowCacheConfig
-  WindowCursor
-
-WindowCursor
-  BitmapIndex
-  ByteArrayWindow
-  ByteWindow
-  CachedPack
-  DeltaBaseCache
-  FileObjectDatabase
-  Inflater SYSTEM
-  InflaterCache
-  LocalCachedPack
-  LocalObjectToPack
-  ObjectInserter
-  ObjectReuseAsIs
-  PackBitmapIndex
-  ProgressMonitor
-
-ObjectReuseAsIs INTERFACE
-  BitmapBuilder
-  CachedPack
-  ObjectToPack
-  PackOutputStream
-  PackWriter
-  ProgressMonitor
-
-LocalCachedPack
-  CachedPack
-  ObjectDirectory
-
-ObjectDirectory PARTIALLY DONE
-
-InflaterCache
-  Inflater SYSTEM
-
-CachedPack ABSTRACT
-  ObjectToPack
-  StoredObjectRepresentation
-
-BitmapIndexImpl
-  BitmapBuilder
-  BitmapIndex
-  BitmapObject
-  BitSet
-  InflatingBitSet
-  PackBitmapIndex
-
-InflatingBitSet
-
-BitSet
-  (none)
-
-BitmapIndex
-  Bitmap (internal)
-  BitmapBuilder (internal)
-  BitmapObject
-
-BitmapObject ABSTRACT
-  (none)
-
-WindowCacheConfig
-  PackConfig
-  WindowCache
-
-WindowCache
-  ByteWindow
-  PackFile
-  WindowCacheConfig
-
-RevBlob
-  RevObject
-  RevWalk
-
-PackReverseIndex
-
-PackOutputStream
-  MessageDigest SYSTEM
-  ObjectToPack
-  PackWriter
-  ProgressMonitor
-
-PackWriter
-  BitmapBuilder
-  BlockList
-  Deflater SYSTEM
-  FilterSpec
-  ObjectCountCallback
-  ObjectIdOwnerMap
-  ObjectToPack
-  PackBitmapIndexBuilder
-  PackBitmapIndexWriterV1
-  PackConfig
-  PackIndexWriter
-  PackStatistics
-  ProgressMonitor
-  RevObject
-
-PackStatistics
-  CachedPack
-
-PackBitmapIndexWriterV1
-  DataOutput SYSTEM
-  DigestOutputStream SYSTEM
-  PackBitmapIndexBuilder
-  SimpleDataOutput
-
-SimpleDataOutput
-  DataOutput SYSTEM
-
-PackBitmapIndexBuilder
-  BasePackBitmapIndex
-  BlockList
-  ObjectIdOwnerMap
-  ObjectToPack
-  StoredBitmap
-
-BasePackBitmapIndex ABSTRACT
-  ObjectIdOwnerMap
-  PackBitmapIndex
-  StoredBitmap (part of BasePackBitmapIndex)
-
-
-ObjectCountCallback ABSTRACT
-  (none)
-
-FilterSpec
-  (none)
-
-PackConfig
-  (none)
-
-PackBitmapIndex ABSTRACT
-  PackBitmapIndexV1
-  PackReverseIndex
-  SilentFileInputStream
-
-PackBitmapIndexV1
-  BasePackBitmapIndex
-  ObjectIdOwnerMap
-  PackReverseIndex
-  SimpleDataInput
-  StoredBitmap
-
-SimpleDataInput
-  DataInput SYSTEM
-
-LocalObjectToPack
-  ObjectToPack
-  PackFile CYCLE
-
-ObjectToPack
-  DeltaCache
-  PackedObjectInfo
-  StoredObjectRepresentation
-
-DeltaCache
-  ObjectToPack
-  PackConfig
-  ReferenceQueue SYSTEM
-
-LocalObjectRepresentation
-  StoredObjectRepresentation
-
-StoredObjectRepresentation
-  (none)
-
-LargePackedWholeObject
-  FileObjectDatabase
-  InflaterInputStream SYSTEM
-  PackFile CYCLE
-  PackInputStream
-  WindowCursor
-
-PackInputStream
-  PackFile
-  WindowCursor
-
-FileObjectDatabase ABSTRACT
-  ObjectDirectoryInserter
-  PackFile CYCLE
-
-ObjectDirectoryInserter
-  Deflater SYSTEM
-  DeflaterOutputStream SYSTEM
-  FileObjectDatabase
-  FileOutputStream SYSTEM
-  FileUtils
-  PackParser
-  WriteConfig
-
-WriteConfig
-  (none)
-
-FileUtils
-  JGitTestUtil
-
-JGitTestUtil
-  (none)
-
-DeltaEncoder
-  (none)
-
-DeltaBaseCache
-  PackFile CYCLE
-
-ByteArrayWindow
-  ByteWindow
-  Inflater SYSTEM
-  PackFile
-  PackOutputStream
-
-ByteWindow ABSTRACT
-  Inflater SYSTEM
-  PackFile
-  PackOutputStream
-
-BinaryDelta
-  (none)
-
-TestRepository
-  (plan to do this as a partial?)
-  CommitBuilder DEFER?
-  DirCache
-  DirCacheBuilder
-  DirCacheEntry
-  InMemoryRepository DEFER?
-  ObjectInserter
-  PathEdit (part of DirCacheEditor)
-  RefUpdate
-  RefWriter
-  RevBlob
-  RevObject
-  RevTag DEFER?
-  RevWalk
-  TagBuilder DEFER?
-  ThreeWayMerger DEFER?
-  TreeWalk
-
-RefWriter ABSTRACT
-  (none)
-
-RefUpdate ABSTRACT
-  LockFile
-  ObjectInserter
-  PushCertificate
-  RefDirectory
-  RefDirectoryUpdate DEFER?
-  ReflogEntry
-  ReflogReader
-  RefRename
-  RevCommit
-  RevObject
-  RevWalk
-  SampleDataRepositoryTestCase
-
-RefRename ABSTRACT
-  RefUpdate CYCLE
-
-ReflogReader INTERFACE + ReflogReaderImpl
-  CheckoutEntry
-  ReflogEntry
-  SampleDataRepositoryTestCase
-
-CheckoutEntry INTERFACE
-  (none)
-
-SampleDataRepositoryTestCase
-  (none)
-
-ReflogEntry INTERFACE
-  CheckoutEntry
-
-RefDirectory PARTIALLY DONE
-  LooseRef DEFER?
-  PackedBatchRefUpdate DEFER?
-  PackedRefList DEFER?
-  RefDirectoryRename DEFER?
-  RefDirectoryUpdate DEFER?
-  RefList
-  RefMap
-  RevCommit
-  RevTag
-  TestRepository
-
-RefMap
-  RefList
-
-RefList
-  (none)
-
-PushCertificate
-  PushCertificateIdent
-  ReceiveCommand
-
-ReceiveCommand
-  RefUpdate
-  RevObject
-
-PushCertificateIdent
-  (none)
-
-RevObject ABSTRACT
-  RevFlag
-  RevFlagSet
-  RevWalk
+jgit porting dependency tree for getting `RevWalk` up and running:
 
 RevWalk
   (watch for multiple test case files, including RevWalkTestCase)
@@ -493,58 +17,23 @@ RevWalk
   RevObject
   RevTag DEFER?
   RevTree
-  StartGenerator
+  StartGenerator DEFER?
   TestRepository
   TreeFilter
 
-TreeFilter
-  EmptyTreeIterator
-  NotTreeFilter
-  TreeWalk
+---
 
-NotTreeFilter
-  TreeFilter
-  TreeWalk
-
-EmptyTreeIterator
-  AbstractTreeIterator
-
-AbstractTreeIterator
-  AttributesNode
-  EmptyTreeIterator
-  WorkingTreeIterator
-
-StartGenerator DEFER?
-
-RevFilter ABSTRACT
-  RevCommit
-  RevWalk
-
-
-ObjectWalk
-  BlockObjQueue
-  Commit
-  ObjectFilter
-  ObjectInserter
-  RevBlob
+AbstractRevQueue
   RevCommit
   RevFlag
-  RevObject
-  RevTree
-  RevWalk
-  RevWalkTestCase
-  TreeFormatter
 
-ObjectFilter ABSTRACT
-  (none)
+AbstractTreeIterator
+  AttributesNode DEFER?
+  EmptyTreeIterator
+  WorkingTreeIterator DEFER?
 
 BlockObjQueue
   RevObject
-
-FIFORevQueue
-  BlockRevQueue
-  RevCommit
-  RevQueueTestCase
 
 BlockRevQueue
   AbstractRevQueue
@@ -554,13 +43,51 @@ DateRevQueue
   RevCommit
   RevQueueTestCase
 
-RevQueueTestCase
-  RevCommit
-  RevWalkTestCase
+DirCacheEntry
+  ByteArrayOutputStream
 
-AbstractRevQueue
+EmptyTreeIterator
+  AbstractTreeIterator
+
+FIFORevQueue
+  BlockRevQueue
+  RevCommit
+  RevQueueTestCase
+
+FooterLine
+  FooterKey
+  RevCommit
+
+FooterKey
+  (none)
+
+NotTreeFilter
+  TreeFilter
+  TreeWalk DEFER?
+
+ObjectFilter ABSTRACT
+  (none)
+
+ObjectIdOwnerMap
+  (none, possibly devolves to system map)
+
+ObjectWalk
+  BlockObjQueue
+  Commit DEFER?
+  ObjectFilter
+  ObjectInserter DEFER?
+  RevBlob
   RevCommit
   RevFlag
+  RevObject
+  RevTree
+  RevWalk
+  RevWalkTestCase CYCLE with RevWalk itself
+  TreeFormatter DEFER?
+
+RevBlob
+  RevObject
+  RevWalk
 
 RevCommit
   FIFORevQueue
@@ -571,164 +98,54 @@ RevCommit
   RevTree
   RevWalk
 
-RevTree
-  RevObject
-  RevWalk
-
-FooterLine
-  FooterKey
-  RevCommit
-
-FooterKey
-  (none)
-
 RevCommitParseTest
   RevCommit
+  RevWalk
+
+RevFilter ABSTRACT
+  RevCommit
+  RevWalk
+
+RevFlag
   RevWalk
 
 RevFlagSet
   RevFlag
   RevWalkTestCase
 
-RevFlag
+RevObject ABSTRACT
+  RevFlag
+  RevFlagSet
   RevWalk
 
-PackedObjectInfo
-  ObjectIdOwnerMap
+RevQueueTestCase
+  RevCommit
+  RevWalkTestCase
 
-ObjectIdOwnerMap
-  (none, possibly devolves to system map)
+RevTree
+  RevObject
+  RevWalk
 
-Deflater (Java built-in)
-
-BlockList
-  (none)
-
-BatchingProgressMonitor
-  ProgressMonitor
-  TimeUnit SYSTEM
-
-ProgressMonitor INTERFACE
-  (none)
-
-NameConflictTreeWalk
-  AbstractTreeIterator
+TestRepository
+  (plan to do this as a partial?)
+  CommitBuilder DEFER?
   DirCache
   DirCacheBuilder
-  TreeWalk
-
-FileTreeIterator DO PARTIAL
-  AbstractTreeIterator
-  PathEdit (part of DirCacheEditor)
-  TreeWalk
-
-DirCacheBuildIterator
-  AbstractTreeIterator
-  DirCacheBuilder
-  DirCacheIterator
-
-DirCacheBuilder
-  BaseDirCacheEditor
-  CanonicalTreeParser
-  DirCache
   DirCacheEntry
-  IndexChangedListener
-
-DirCacheEditor (part of DirCacheEditor)
-  BaseDirCacheEditor
-
-BaseDirCacheEditor
-  DirCache CYCLE
-  DirCacheEntry
-
-DirCache
-  DigestOutputStream SYSTEM
-  DirCacheCGitCompatabilityTest DEFER?
-  DirCacheCheckoutMaliciousPathTest
-  DirCacheEditor CYCLE
-  DirCacheEntry
-  DirCacheTree CYCLE
-  IndexChangedListener
-  LockFile
-  MessageDigest SYSTEM
-  ObjectReader PARTIALLY DONE
-  SilentFileInputStream
-  TemporaryBuffer
-  TreeWalk
-
-IndexChangedListener
-  (need to think through internal eventing strategy)
-
-LockFile
-  FileUtils
-
-TreeWalk
-  AbstractTreeIterator CYCLE
-  Attributes
-  AttributesHandler
-  AttributesNodeProvider
-  AttributesProvider
-  CanonicalTreeParser
-  DirCacheIterator (CYCLE, used in test only, defer?)
-  FileTreeIterator (CYCLE, used in test only, defer?)
-  FilterCommandRegistry DEFER?
-  PathFilter
-  TreeFormatter
-
-PathFilter
-  TreeFilter
-  TreeWalk
-
-AttributesHandler
-  Attribute
-  AttributesNode
-  AttributesNodeProvider
-  AttributesRule
-  CanonicalTreeParser
-  DirCacheIterator
-  TreeWalk
-  WorkingTreeIterator
-
-AttributesNodeProvider INTERFACE
-  AttributesNode
-
-AttributesProvider INTERFACE
-  Attributes
-
-TreeFormatter
-  CanonicalTreeParser
+  InMemoryRepository DEFER?
   ObjectInserter
-  TemporaryBuffer
+  PathEdit (part of DirCacheEditor)
+  RefUpdate
+  RefWriter
+  RevBlob
+  RevObject
+  RevTag DEFER?
+  RevWalk
+  TagBuilder DEFER?
+  ThreeWayMerger DEFER?
+  TreeWalk DEFER?
 
-CanonicalTreeParser
-  AbstractTreeIterator
-  AttributesNode
-  AttributesRule
-  TreeFormatter CYCLE
-
-AttributesRule
-  Attribute
-  IMatcher
-
-Attributes
-  Attribute
-
-Attribute STRUCT
-  (none)
-
-AbstractTreeIterator
-  TreeWalk CYCLE
-
-DirCacheEntry
-  ByteArrayOutputStream
-
-AutoLFInputStream
-  (none)
-
-TemporaryBuffer (includes LocalFile)
-
-WorkingTreeOptions
-
-TestRng -> :crypto.strong_rand_bytes
-
-EWAHCompressedBitmap -> Xgit.Util.CompressedBitmap
+TreeFilter
+  EmptyTreeIterator
+  NotTreeFilter
+  TreeWalk DEFER?
