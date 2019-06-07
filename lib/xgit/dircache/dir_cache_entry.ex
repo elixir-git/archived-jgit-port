@@ -225,7 +225,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
       |> shift_left12()
       |> add_path_length(path)
       |> NB.encode_int16()
-      |> Enum.concat(List.duplicate(0, @p_flags))
+      |> prepend(List.duplicate(0, @p_flags))
       |> :binary.list_to_bin()
 
     %__MODULE__{info: info, info_offset: 0, path: path, in_core_flags: 0}
@@ -235,6 +235,8 @@ defmodule Xgit.DirCache.DirCacheEntry do
 
   defp add_path_length(n, path) when length(path) >= @name_mask, do: n + @name_mask
   defp add_path_length(n, path), do: n + length(path)
+
+  defp prepend(l1, l2), do: Enum.concat(l2, l1)
 
   # void write(OutputStream os) throws IOException {
   #   final int len = isExtended() ? INFO_LEN_EXTENDED : INFO_LEN;
@@ -372,18 +374,20 @@ defmodule Xgit.DirCache.DirCacheEntry do
   #   else
   #     inCoreFlags &= ~UPDATE_NEEDED;
   # }
-  #
-  # /**
-  #  * Get the stage of this entry.
-  #  * <p>
-  #  * Entries have one of 4 possible stages: 0-3.
-  #  *
-  #  * @return the stage of this entry.
-  #  */
-  # public int getStage() {
-  #   return (info[infoOffset + P_FLAGS] >>> 4) & 0x3;
-  # }
-  #
+
+  @doc ~S"""
+  Get the stage of this entry.
+
+  This will be an integer in the range 0..3.
+  """
+  def stage(%__MODULE__{info: info, info_offset: info_offset}) do
+    info
+    |> :binary.at(info_offset + @p_flags)
+    |> flags_from_byte()
+  end
+
+  defp flags_from_byte(b), do: b >>> 4 &&& 0x3
+
   # /**
   #  * Returns whether this entry should be skipped from the working tree.
   #  *
@@ -579,33 +583,21 @@ defmodule Xgit.DirCache.DirCacheEntry do
   #   final int n = Constants.OBJECT_ID_LENGTH;
   #   System.arraycopy(bs, p, idBuffer(), idOffset(), n);
   # }
-  #
-  # /**
-  #  * Get the entry's complete path.
-  #  * <p>
-  #  * This method is not very efficient and is primarily meant for debugging
-  #  * and final output generation. Applications should try to avoid calling it,
-  #  * and if invoked do so only once per interesting entry, where the name is
-  #  * absolutely required for correct function.
-  #  *
-  #  * @return complete path of the entry, from the root of the repository. If
-  #  *         the entry is in a subtree there will be at least one '/' in the
-  #  *         returned string.
-  #  */
-  # public String getPathString() {
-  #   return toString(path);
-  # }
-  #
-  # /**
-  #  * Get a copy of the entry's raw path bytes.
-  #  *
-  #  * @return raw path bytes.
-  #  * @since 3.4
-  #  */
-  # public byte[] getRawPath() {
-  #   return path.clone();
-  # }
-  #
+
+  @doc ~S"""
+  Get the entry's complete path.
+
+  This method is not very efficient and is primarily meant for debugging
+  and final output generation. Applications should try to avoid calling it,
+  and if invoked do so only once per interesting entry, where the name is
+  absolutely required for correct function.
+
+  Returns the complete path of the entry, from the root of the repository.
+  If the entry is in a subtree there will be at least one '/' in the returned
+  string.
+  """
+  def path(%__MODULE__{path: path}), do: to_string(path)
+
   # /**
   #  * {@inheritDoc}
   #  * <p>

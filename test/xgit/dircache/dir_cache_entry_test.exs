@@ -48,6 +48,7 @@ defmodule Xgit.DirCache.DirCacheEntryTest do
   use ExUnit.Case, async: true
 
   alias Xgit.DirCache.DirCacheEntry
+  alias Xgit.Errors.InvalidPathError
 
   describe "new/1" do
     test "valid path" do
@@ -74,63 +75,36 @@ defmodule Xgit.DirCache.DirCacheEntryTest do
     end
   end
 
-  # @SuppressWarnings("unused")
-  # @Test
-  # public void testCreate_ByStringPath() {
-  #   assertEquals("a", new DirCacheEntry("a").getPathString());
-  #   assertEquals("a/b", new DirCacheEntry("a/b").getPathString());
-  #
-  #   try {
-  #     new DirCacheEntry("/a");
-  #     fail("Incorrectly created DirCacheEntry");
-  #   } catch (IllegalArgumentException err) {
-  #     assertEquals("Invalid path: /a", err.getMessage());
-  #   }
-  # }
-  #
-  # @SuppressWarnings("unused")
-  # @Test
-  # public void testCreate_ByStringPathAndStage() {
-  #   DirCacheEntry e;
-  #
-  #   e = new DirCacheEntry("a", 0);
-  #   assertEquals("a", e.getPathString());
-  #   assertEquals(0, e.getStage());
-  #
-  #   e = new DirCacheEntry("a/b", 1);
-  #   assertEquals("a/b", e.getPathString());
-  #   assertEquals(1, e.getStage());
-  #
-  #   e = new DirCacheEntry("a/c", 2);
-  #   assertEquals("a/c", e.getPathString());
-  #   assertEquals(2, e.getStage());
-  #
-  #   e = new DirCacheEntry("a/d", 3);
-  #   assertEquals("a/d", e.getPathString());
-  #   assertEquals(3, e.getStage());
-  #
-  #   try {
-  #     new DirCacheEntry("/a", 1);
-  #     fail("Incorrectly created DirCacheEntry");
-  #   } catch (IllegalArgumentException err) {
-  #     assertEquals("Invalid path: /a", err.getMessage());
-  #   }
-  #
-  #   try {
-  #     new DirCacheEntry("a", -11);
-  #     fail("Incorrectly created DirCacheEntry");
-  #   } catch (IllegalArgumentException err) {
-  #     assertEquals("Invalid stage -11 for path a", err.getMessage());
-  #   }
-  #
-  #   try {
-  #     new DirCacheEntry("a", 4);
-  #     fail("Incorrectly created DirCacheEntry");
-  #   } catch (IllegalArgumentException err) {
-  #     assertEquals("Invalid stage 4 for path a", err.getMessage());
-  #   }
-  # }
-  #
+  test "new/2" do
+    e = DirCacheEntry.new("a", 0)
+    assert DirCacheEntry.path(e) == "a"
+    assert DirCacheEntry.stage(e) == 0
+
+    e = DirCacheEntry.new("a/b", 1)
+    assert DirCacheEntry.path(e) == "a/b"
+    assert DirCacheEntry.stage(e) == 1
+
+    e = DirCacheEntry.new("a/c", 2)
+    assert DirCacheEntry.path(e) == "a/c"
+    assert DirCacheEntry.stage(e) == 2
+
+    e = DirCacheEntry.new("a/d", 3)
+    assert DirCacheEntry.path(e) == "a/d"
+    assert DirCacheEntry.stage(e) == 3
+
+    assert_raise InvalidPathError, "Invalid path: /a", fn ->
+      DirCacheEntry.new("/a", 1)
+    end
+
+    assert_raise ArgumentError, "Invalid stage -11 for path a", fn ->
+      DirCacheEntry.new("a", -11)
+    end
+
+    assert_raise ArgumentError, "Invalid stage 4 for path a", fn ->
+      DirCacheEntry.new("a", 4)
+    end
+  end
+
   # @Test
   # public void testSetFileMode() {
   #   final DirCacheEntry e = new DirCacheEntry("a");
