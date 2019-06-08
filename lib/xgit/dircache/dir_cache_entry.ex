@@ -423,7 +423,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
   def raw_file_mode_bits(%__MODULE__{info: info, info_offset: info_offset}) do
     info
     |> :binary.bin_to_list(info_offset + @p_mode, 4)
-    |> NB.decode_int_32()
+    |> NB.decode_int32()
   end
 
   @doc ~S"""
@@ -451,6 +451,10 @@ defmodule Xgit.DirCache.DirCacheEntry do
 
     set_raw_file_mode(entry, mode_bits)
   end
+
+  defp valid_file_mode?(@type_tree), do: false
+  defp valid_file_mode?(@type_missing), do: false
+  defp valid_file_mode?(_), do: true
 
   defp set_raw_file_mode(%__MODULE__{info: info, info_offset: info_offset} = entry, mode_bits),
     do: %{

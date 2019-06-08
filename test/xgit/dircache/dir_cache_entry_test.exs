@@ -96,11 +96,11 @@ defmodule Xgit.DirCache.DirCacheEntryTest do
       DirCacheEntry.new("/a", 1)
     end
 
-    assert_raise ArgumentError, "Invalid stage -11 for path a", fn ->
+    assert_raise FunctionClauseError, fn ->
       DirCacheEntry.new("a", -11)
     end
 
-    assert_raise ArgumentError, "Invalid stage 4 for path a", fn ->
+    assert_raise FunctionClauseError, fn ->
       DirCacheEntry.new("a", 4)
     end
   end
