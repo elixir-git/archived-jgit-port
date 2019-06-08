@@ -424,6 +424,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
     info
     |> :binary.bin_to_list(info_offset + @p_mode, 4)
     |> NB.decode_int32()
+    |> elem(0)
   end
 
   @doc ~S"""

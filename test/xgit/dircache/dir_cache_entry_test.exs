@@ -49,6 +49,7 @@ defmodule Xgit.DirCache.DirCacheEntryTest do
 
   alias Xgit.DirCache.DirCacheEntry
   alias Xgit.Errors.InvalidPathError
+  alias Xgit.Lib.FileMode
 
   describe "new/1" do
     test "valid path" do
@@ -105,43 +106,42 @@ defmodule Xgit.DirCache.DirCacheEntryTest do
     end
   end
 
-  # @Test
-  # public void testSetFileMode() {
-  #   final DirCacheEntry e = new DirCacheEntry("a");
-  #
-  #   assertEquals(0, e.getRawMode());
-  #
-  #   e.setFileMode(FileMode.REGULAR_FILE);
-  #   assertSame(FileMode.REGULAR_FILE, e.getFileMode());
-  #   assertEquals(FileMode.REGULAR_FILE.getBits(), e.getRawMode());
-  #
-  #   e.setFileMode(FileMode.EXECUTABLE_FILE);
-  #   assertSame(FileMode.EXECUTABLE_FILE, e.getFileMode());
-  #   assertEquals(FileMode.EXECUTABLE_FILE.getBits(), e.getRawMode());
-  #
-  #   e.setFileMode(FileMode.SYMLINK);
-  #   assertSame(FileMode.SYMLINK, e.getFileMode());
-  #   assertEquals(FileMode.SYMLINK.getBits(), e.getRawMode());
-  #
-  #   e.setFileMode(FileMode.GITLINK);
-  #   assertSame(FileMode.GITLINK, e.getFileMode());
-  #   assertEquals(FileMode.GITLINK.getBits(), e.getRawMode());
-  #
-  #   try {
-  #     e.setFileMode(FileMode.MISSING);
-  #     fail("incorrectly accepted FileMode.MISSING");
-  #   } catch (IllegalArgumentException err) {
-  #     assertEquals("Invalid mode 0 for path a", err.getMessage());
-  #   }
-  #
-  #   try {
-  #     e.setFileMode(FileMode.TREE);
-  #     fail("incorrectly accepted FileMode.TREE");
-  #   } catch (IllegalArgumentException err) {
-  #     assertEquals("Invalid mode 40000 for path a", err.getMessage());
-  #   }
-  # }
-  #
+  @valid_file_modes [
+    FileMode.regular_file(),
+    FileMode.executable_file(),
+    FileMode.symlink(),
+    FileMode.gitlink()
+  ]
+
+  @invalid_file_modes [
+    FileMode.missing(),
+    FileMode.tree()
+  ]
+
+  describe "set_file_mode/2" do
+    test "happy paths" do
+      e = DirCacheEntry.new("a")
+      assert DirCacheEntry.raw_file_mode_bits(e) == 0
+
+      Enum.each(@valid_file_modes, fn file_mode ->
+        e2 = DirCacheEntry.set_file_mode(e, file_mode)
+        assert DirCacheEntry.file_mode(e2) == file_mode
+        assert DirCacheEntry.raw_file_mode_bits(e2) == file_mode.mode_bits
+      end)
+    end
+
+    test "disallows certain file modes" do
+      e = DirCacheEntry.new("a")
+      assert DirCacheEntry.raw_file_mode_bits(e) == 0
+
+      Enum.each(@invalid_file_modes, fn file_mode ->
+        assert_raise ArgumentError, "Invalid mode #{inspect(file_mode)} for path a", fn ->
+          DirCacheEntry.set_file_mode(e, file_mode)
+        end
+      end)
+    end
+  end
+
   # @Test
   # public void testCopyMetaDataWithStage() {
   #   copyMetaDataHelper(false);
