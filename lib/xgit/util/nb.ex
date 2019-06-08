@@ -239,32 +239,13 @@ defmodule Xgit.Util.NB do
   #
   #   intbuf[offset] = (byte) v;
   # }
-  #
-  # /**
-  #  * Write a 32 bit integer as a sequence of 4 bytes (network byte order).
-  #  *
-  #  * @param intbuf
-  #  *            buffer to write the 4 bytes of data into.
-  #  * @param offset
-  #  *            position within the buffer to begin writing to. This position
-  #  *            and the next 3 bytes after it (for a total of 4 bytes) will be
-  #  *            replaced.
-  #  * @param v
-  #  *            the value to write.
-  #  */
-  # public static void encodeInt32(final byte[] intbuf, final int offset, int v) {
-  #   intbuf[offset + 3] = (byte) v;
-  #   v >>>= 8;
-  #
-  #   intbuf[offset + 2] = (byte) v;
-  #   v >>>= 8;
-  #
-  #   intbuf[offset + 1] = (byte) v;
-  #   v >>>= 8;
-  #
-  #   intbuf[offset] = (byte) v;
-  # }
-  #
+
+  @doc ~S"""
+  Convert a 32-bit integer to a sequence of four bytes in network byte order.
+  """
+  def encode_int32(v) when is_integer(v) and v >= -2_147_483_647 and v <= 4_294_967_296,
+    do: [v >>> 24 &&& 0xFF, v >>> 16 &&& 0xFF, v >>> 8 &&& 0xFF, v &&& 0xFF]
+
   # /**
   #  * Write a 64 bit integer as a sequence of 8 bytes (network byte order).
   #  *
