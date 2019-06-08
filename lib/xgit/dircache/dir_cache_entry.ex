@@ -57,12 +57,12 @@ defmodule Xgit.DirCache.DirCacheEntry do
   Struct members:
   * `info`: (binary, not UTF-8 encoded) header information
   * `info_offset`: (integer) byte offset within `info` where our header starts.
-  * `path`: (String) our encoded path name, from the root of the repository.
+  * `path`: (charlist) our encoded path name, from the root of the repository.
   * `in_core_flags`: (integer, bit flags) flags which are never stored to disk.
   """
 
   @enforce_keys [:info, :info_offset, :path, :in_core_flags]
-  defstruct [:path, :in_core_flags, info: "", info_offset: 0]
+  defstruct [:path, :in_core_flags, info: '', info_offset: 0]
 
   use Bitwise
 
