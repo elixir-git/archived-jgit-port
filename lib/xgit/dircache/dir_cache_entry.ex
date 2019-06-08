@@ -71,24 +71,11 @@ defmodule Xgit.DirCache.DirCacheEntry do
   alias Xgit.Lib.ObjectChecker
   alias Xgit.Util.NB
 
-  # private static final byte[] nullpad = new byte[8];
+  # The following are offsets into the `info` binary for various fields:
+  @p_ctime 0
+  # 32-bit integer (seconds since Unix epoch)
+  # @p_ctime_ns 4 (nanoseconds since @ctime)
 
-  # /** The standard (fully merged) stage for an entry. */
-  # public static final int STAGE_0 = 0;
-  #
-  # /** The base tree revision for an entry. */
-  # public static final int STAGE_1 = 1;
-  #
-  # /** The first tree revision (usually called "ours"). */
-  # public static final int STAGE_2 = 2;
-  #
-  # /** The second tree revision (usually called "theirs"). */
-  # public static final int STAGE_3 = 3;
-  #
-  # private static final int P_CTIME = 0;
-  #
-  # // private static final int P_CTIME_NSEC = 4;
-  #
   # private static final int P_MTIME = 8;
   #
   # // private static final int P_MTIME_NSEC = 12;
@@ -98,6 +85,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # // private static final int P_INO = 20;
 
   @p_mode 24
+  # 32-bit integer (file mode)
 
   # // private static final int P_UID = 28;
   #
@@ -108,6 +96,8 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # private static final int P_OBJECTID = 40;
 
   @p_flags 60
+  # 16-bit integer flags | name length
+
   # private static final int P_FLAGS2 = 62;
 
   # Mask applied to data in `p_flags` to get the name length.
@@ -488,26 +478,23 @@ defmodule Xgit.DirCache.DirCacheEntry do
     :erlang.iolist_to_binary([prefix, new_bytes, suffix])
   end
 
-  # /**
-  #  * Get the cached creation time of this file, in milliseconds.
-  #  *
-  #  * @return cached creation time of this file, in milliseconds since the
-  #  *         Java epoch (midnight Jan 1, 1970 UTC).
-  #  */
-  # public long getCreationTime() {
-  #   return decodeTS(P_CTIME);
-  # }
-  #
-  # /**
-  #  * Set the cached creation time of this file, using milliseconds.
-  #  *
-  #  * @param when
-  #  *            new cached creation time of the file, in milliseconds.
-  #  */
-  # public void setCreationTime(long when) {
-  #   encodeTS(P_CTIME, when);
-  # }
-  #
+  @doc ~S"""
+  Get the cached creation time of this file.
+
+  The timestamp is interpreted as milliseconds since the Unix/Java epoch
+  (midnight Jan 1, 1970 UTC).
+  """
+  def creation_time(%__MODULE__{} = entry), do: decode_ts(entry, @p_ctime)
+
+  @doc ~S"""
+  Return a new entry, replacing the cached creation time from this entry.
+
+  The timestamp must be expressed as milliseconds since the Unix/Java epoch
+  (midnight Jan 1, 1970 UTC).
+  """
+  def set_creation_time(%__MODULE__{} = entry, new_ts) when is_integer(new_ts),
+    do: entry_with_new_ts(entry, @p_ctime, new_ts)
+
   # /**
   #  * Get the cached last modification date of this file, in milliseconds.
   #  * <p>
@@ -684,20 +671,32 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # boolean isExtended() {
   #   return (info[infoOffset + P_FLAGS] & EXTENDED) != 0;
   # }
-  #
-  # private long decodeTS(int pIdx) {
-  #   final int base = infoOffset + pIdx;
-  #   final int sec = NB.decodeInt32(info, base);
-  #   final int ms = NB.decodeInt32(info, base + 4) / 1000000;
-  #   return 1000L * sec + ms;
-  # }
-  #
-  # private void encodeTS(int pIdx, long when) {
-  #   final int base = infoOffset + pIdx;
-  #   NB.encodeInt32(info, base, (int) (when / 1000));
-  #   NB.encodeInt32(info, base + 4, ((int) (when % 1000)) * 1000000);
-  # }
-  #
+
+  defp decode_ts(%{info: info, info_offset: info_offset}, offset) do
+    {sec, ms_to_decode} =
+      info
+      |> :binary.bin_to_list(info_offset + offset, 8)
+      |> NB.decode_int32()
+
+    {ms, _} = NB.decode_int32(ms_to_decode)
+
+    sec * 1000 + div(ms, 1_000_000)
+  end
+
+  defp entry_with_new_ts(
+         %__MODULE__{info: info, info_offset: info_offset} = entry,
+         offset,
+         new_ts
+       ) do
+    sec = NB.encode_int32(div(new_ts, 1000))
+    ms = NB.encode_int32(Integer.mod(new_ts, 1000) * 1_000_000)
+
+    %{
+      entry
+      | info: replace_info_bytes(info, info_offset + offset, [sec ++ ms])
+    }
+  end
+
   # private int getExtendedFlags() {
   #   if (isExtended())
   #     return NB.decodeUInt16(info, infoOffset + P_FLAGS2) << 16;
