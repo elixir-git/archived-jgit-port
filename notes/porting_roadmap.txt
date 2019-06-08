@@ -5,7 +5,6 @@ RevWalk
   AbstractRevQueue
   CommitBuilder DEFER?
   DateRevQueue
-  DirCacheEntry
   FIFORevQueue
   ObjectIdOwnerMap
   ObjectWalk
@@ -42,9 +41,6 @@ BlockRevQueue
 DateRevQueue
   RevCommit
   RevQueueTestCase
-
-DirCacheEntry
-  ByteArrayOutputStream
 
 EmptyTreeIterator
   AbstractTreeIterator
@@ -131,7 +127,6 @@ TestRepository
   CommitBuilder DEFER?
   DirCache
   DirCacheBuilder
-  DirCacheEntry
   InMemoryRepository DEFER?
   ObjectInserter
   PathEdit (part of DirCacheEditor)
