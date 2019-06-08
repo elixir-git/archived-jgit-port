@@ -67,6 +67,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
   use Bitwise
 
   alias Xgit.Errors.InvalidPathError
+  alias Xgit.Lib.FileMode
   alias Xgit.Lib.ObjectChecker
   alias Xgit.Util.NB
 
@@ -95,9 +96,9 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # // private static final int P_DEV = 16;
   #
   # // private static final int P_INO = 20;
-  #
-  # private static final int P_MODE = 24;
-  #
+
+  @p_mode 24
+
   # // private static final int P_UID = 28;
   #
   # // private static final int P_GID = 32;
@@ -415,51 +416,60 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # public boolean isMerged() {
   #   return getStage() == STAGE_0;
   # }
-  #
-  # /**
-  #  * Obtain the raw {@link org.eclipse.jgit.lib.FileMode} bits for this entry.
-  #  *
-  #  * @return mode bits for the entry.
-  #  * @see FileMode#fromBits(int)
-  #  */
-  # public int getRawMode() {
-  #   return NB.decodeInt32(info, infoOffset + P_MODE);
-  # }
-  #
-  # /**
-  #  * Obtain the {@link org.eclipse.jgit.lib.FileMode} for this entry.
-  #  *
-  #  * @return the file mode singleton for this entry.
-  #  */
-  # public FileMode getFileMode() {
-  #   return FileMode.fromBits(getRawMode());
-  # }
-  #
-  # /**
-  #  * Set the file mode for this entry.
-  #  *
-  #  * @param mode
-  #  *            the new mode constant.
-  #  * @throws java.lang.IllegalArgumentException
-  #  *             If {@code mode} is
-  #  *             {@link org.eclipse.jgit.lib.FileMode#MISSING},
-  #  *             {@link org.eclipse.jgit.lib.FileMode#TREE}, or any other type
-  #  *             code not permitted in a tree object.
-  #  */
-  # public void setFileMode(FileMode mode) {
-  #   switch (mode.getBits() & FileMode.TYPE_MASK) {
-  #   case FileMode.TYPE_MISSING:
-  #   case FileMode.TYPE_TREE:
-  #     throw new IllegalArgumentException(MessageFormat.format(
-  #         JGitText.get().invalidModeForPath, mode, getPathString()));
-  #   }
-  #   NB.encodeInt32(info, infoOffset + P_MODE, mode.getBits());
-  # }
-  #
-  # void setFileMode(int mode) {
-  #   NB.encodeInt32(info, infoOffset + P_MODE, mode);
-  # }
-  #
+
+  @doc ~S"""
+  Obtain the raw `FileMode` bits for this entry.
+  """
+  def raw_file_mode_bits(%__MODULE__{info: info, info_offset: info_offset}) do
+    info
+    |> :binary.bin_to_list(info_offset + @p_mode, 4)
+    |> NB.decode_int_32()
+  end
+
+  @doc ~S"""
+  Obtain the `FileMode` for this entry.
+  """
+  def file_mode(%__MODULE__{} = entry) do
+    entry
+    |> raw_file_mode_bits()
+    |> FileMode.from_bits()
+  end
+
+  @type_tree FileMode.type_tree()
+  @type_missing FileMode.type_missing()
+
+  @doc ~S"""
+  Set the file mode for this entry.
+
+  Will raise `ArgumentError` if `mode` represents "missing", "tree", or any
+  other code that is not permitted in a tree object.
+  """
+  def set_file_mode(%__MODULE__{} = entry, %FileMode{mode_bits: mode_bits} = mode) do
+    unless valid_file_mode?(mode_bits &&& FileMode.type_mask()) do
+      raise ArgumentError, "Invalid mode #{inspect(mode)} for path #{path(entry)}"
+    end
+
+    set_raw_file_mode(entry, mode_bits)
+  end
+
+  defp set_raw_file_mode(%__MODULE__{info: info, info_offset: info_offset} = entry, mode_bits),
+    do: %{
+      entry
+      | info: replace_info_bytes(info, info_offset + @p_mode, NB.encode_int32(mode_bits))
+    }
+
+  defp replace_info_bytes(info, offset, new_bytes)
+       when is_binary(info) and is_integer(offset) and is_list(new_bytes) do
+    replace_length = length(new_bytes)
+
+    prefix = :binary.part(info, 0, offset)
+
+    suffix =
+      :binary.part(info, offset + replace_length, byte_size(info) - (offset + replace_length))
+
+    :erlang.iolist_to_binary([prefix, new_bytes, suffix])
+  end
+
   # /**
   #  * Get the cached creation time of this file, in milliseconds.
   #  *
