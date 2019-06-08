@@ -73,13 +73,13 @@ defmodule Xgit.DirCache.DirCacheEntry do
 
   # The following are offsets into the `info` binary for various fields:
   @p_ctime 0
-  # 32-bit integer (seconds since Unix epoch)
+  # 32-bit integer (creation time, seconds since Unix epoch)
   # @p_ctime_ns 4 (nanoseconds since @ctime)
 
-  # private static final int P_MTIME = 8;
-  #
-  # // private static final int P_MTIME_NSEC = 12;
-  #
+  @p_mtime 8
+  # 32-bit integer (creation time, seconds since Unix epoch)
+  # @p_mtime_ns 4 (nanoseconds since @mtime)
+
   # // private static final int P_DEV = 16;
   #
   # // private static final int P_INO = 20;
@@ -495,30 +495,27 @@ defmodule Xgit.DirCache.DirCacheEntry do
   def set_creation_time(%__MODULE__{} = entry, new_ts) when is_integer(new_ts),
     do: entry_with_new_ts(entry, @p_ctime, new_ts)
 
-  # /**
-  #  * Get the cached last modification date of this file, in milliseconds.
-  #  * <p>
-  #  * One of the indicators that the file has been modified by an application
-  #  * changing the working tree is if the last modification time for the file
-  #  * differs from the time stored in this entry.
-  #  *
-  #  * @return last modification time of this file, in milliseconds since the
-  #  *         Java epoch (midnight Jan 1, 1970 UTC).
-  #  */
-  # public long getLastModified() {
-  #   return decodeTS(P_MTIME);
-  # }
-  #
-  # /**
-  #  * Set the cached last modification date of this file, using milliseconds.
-  #  *
-  #  * @param when
-  #  *            new cached modification date of the file, in milliseconds.
-  #  */
-  # public void setLastModified(long when) {
-  #   encodeTS(P_MTIME, when);
-  # }
-  #
+  @doc ~S"""
+  Get the cached last modification time of this file.
+
+  One of the indicators that the file has been modified by an application
+  changing the working tree is if the last modification time for the file
+  differs from the time stored in this entry.
+
+  The timestamp is interpreted as milliseconds since the Unix/Java epoch
+  (midnight Jan 1, 1970 UTC).
+  """
+  def last_modified_time(%__MODULE__{} = entry), do: decode_ts(entry, @p_mtime)
+
+  @doc ~S"""
+  Return a new entry, replacing the cached last modification time from this entry.
+
+  The timestamp must be expressed as milliseconds since the Unix/Java epoch
+  (midnight Jan 1, 1970 UTC).
+  """
+  def set_last_modified_time(%__MODULE__{} = entry, new_ts) when is_integer(new_ts),
+    do: entry_with_new_ts(entry, @p_mtime, new_ts)
+
   # /**
   #  * Get the cached size (mod 4 GB) (in bytes) of this file.
   #  * <p>

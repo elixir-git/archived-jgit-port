@@ -174,6 +174,17 @@ defmodule Xgit.DirCache.DirCacheEntryTest do
     assert DirCacheEntry.creation_time(e3) == 15_422
   end
 
+  test "set_last_modified_time/2" do
+    e = DirCacheEntry.new("a")
+    assert DirCacheEntry.last_modified_time(e) == 0
+
+    e2 = DirCacheEntry.set_last_modified_time(e, 2)
+    assert DirCacheEntry.last_modified_time(e2) == 2
+
+    e3 = DirCacheEntry.set_last_modified_time(e2, 15_422)
+    assert DirCacheEntry.last_modified_time(e3) == 15_422
+  end
+
   # @Test
   # public void testCopyMetaDataWithStage() {
   #   copyMetaDataHelper(false);
