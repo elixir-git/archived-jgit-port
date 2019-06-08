@@ -118,6 +118,27 @@ defmodule Xgit.DirCache.DirCacheEntryTest do
     FileMode.tree()
   ]
 
+  describe "set_assume_valid/2" do
+    test "happy path" do
+      e = DirCacheEntry.new("a")
+      assert DirCacheEntry.assume_valid?(e) == false
+
+      e2 = DirCacheEntry.set_assume_valid(e, true)
+      assert DirCacheEntry.assume_valid?(e2) == true
+
+      e3 = DirCacheEntry.set_assume_valid(e2, false)
+      assert DirCacheEntry.assume_valid?(e3) == false
+    end
+
+    test "disallows non-boolean values" do
+      e = DirCacheEntry.new("a")
+
+      assert_raise FunctionClauseError, fn ->
+        DirCacheEntry.set_assume_valid(e, 1)
+      end
+    end
+  end
+
   describe "set_file_mode/2" do
     test "happy paths" do
       e = DirCacheEntry.new("a")

@@ -110,7 +110,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
   @p_flags 60
   # private static final int P_FLAGS2 = 62;
 
-  # Mask applied to data in {@link #P_FLAGS} to get the name length.
+  # Mask applied to data in `p_flags` to get the name length.
   @name_mask 0xFFF
 
   # private static final int INTENT_TO_ADD = 0x20000000;
@@ -121,8 +121,8 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # private static final int INFO_LEN_EXTENDED = 64;
   #
   # private static final int EXTENDED = 0x40;
-  # private static final int ASSUME_VALID = 0x80;
-  #
+  @assume_valid 0x80
+
   # /** In-core flag signaling that the entry should be considered as modified. */
   # private static final int UPDATE_NEEDED = 0x1;
 
@@ -326,34 +326,47 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # final int idOffset() {
   #   return infoOffset + P_OBJECTID;
   # }
-  #
-  # /**
-  #  * Is this entry always thought to be unmodified?
-  #  * <p>
-  #  * Most entries in the index do not have this flag set. Users may however
-  #  * set them on if the file system stat() costs are too high on this working
-  #  * directory, such as on NFS or SMB volumes.
-  #  *
-  #  * @return true if we must assume the entry is unmodified.
-  #  */
-  # public boolean isAssumeValid() {
-  #   return (info[infoOffset + P_FLAGS] & ASSUME_VALID) != 0;
-  # }
-  #
-  # /**
-  #  * Set the assume valid flag for this entry,
-  #  *
-  #  * @param assume
-  #  *            true to ignore apparent modifications; false to look at last
-  #  *            modified to detect file modifications.
-  #  */
-  # public void setAssumeValid(boolean assume) {
-  #   if (assume)
-  #     info[infoOffset + P_FLAGS] |= ASSUME_VALID;
-  #   else
-  #     info[infoOffset + P_FLAGS] &= ~ASSUME_VALID;
-  # }
-  #
+
+  @doc ~S"""
+  Is this entry always thought to be unmodified?
+
+  Most entries in the index do not have this flag set. Users may however enable
+  this flag if the file system `stat()` costs are too high on this working
+  directory, such as on NFS or SMB volumes.
+  """
+  def assume_valid?(%__MODULE__{} = entry) do
+    entry
+    |> flags_byte()
+    |> boolean_from_flag(@assume_valid)
+  end
+
+  defp flags_byte(%__MODULE__{info: info, info_offset: info_offset}),
+    do: :binary.at(info, info_offset + @p_flags)
+
+  defp boolean_from_flag(flags_byte, mask), do: (flags_byte &&& mask) != 0
+
+  @doc ~S"""
+  Set the assume-valid flag for this entry.
+
+  `assume?` should be `true` to ignore apparent modifications or `false` to
+  look at last modified to detect file modifications.
+  """
+  def set_assume_valid(%__MODULE__{info: info, info_offset: info_offset} = entry, assume?)
+      when is_boolean(assume?) do
+    new_flags_byte =
+      entry
+      |> flags_byte()
+      |> set_assume_valid_bit(assume?)
+
+    %{
+      entry
+      | info: replace_info_bytes(info, info_offset + @p_flags, [new_flags_byte])
+    }
+  end
+
+  defp set_assume_valid_bit(flags_byte, true), do: flags_byte ||| @assume_valid
+  defp set_assume_valid_bit(flags_byte, false), do: flags_byte &&& ~~~@assume_valid
+
   # /**
   #  * Whether this entry should be checked for changes
   #  *
@@ -381,13 +394,13 @@ defmodule Xgit.DirCache.DirCacheEntry do
 
   This will be an integer in the range 0..3.
   """
-  def stage(%__MODULE__{info: info, info_offset: info_offset}) do
-    info
-    |> :binary.at(info_offset + @p_flags)
-    |> flags_from_byte()
+  def stage(%__MODULE__{} = entry) do
+    entry
+    |> flags_byte()
+    |> stage_from_flags_byte()
   end
 
-  defp flags_from_byte(b), do: b >>> 4 &&& 0x3
+  defp stage_from_flags_byte(b), do: b >>> 4 &&& 0x3
 
   # /**
   #  * Returns whether this entry should be skipped from the working tree.
