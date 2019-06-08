@@ -346,7 +346,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
   defp boolean_from_flag(flags_byte, mask), do: (flags_byte &&& mask) != 0
 
   @doc ~S"""
-  Set the assume-valid flag for this entry.
+  Return a new entry, replacing the assume-valid flag from this entry.
 
   `assume?` should be `true` to ignore apparent modifications or `false` to
   look at last modified to detect file modifications.
@@ -453,7 +453,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
   @type_missing FileMode.type_missing()
 
   @doc ~S"""
-  Set the file mode for this entry.
+  Return a new entry, replacing the file mode setting from this entry.
 
   Will raise `ArgumentError` if `mode` represents "missing", "tree", or any
   other code that is not permitted in a tree object.
