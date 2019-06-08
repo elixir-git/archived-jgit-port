@@ -231,48 +231,15 @@ defmodule Xgit.Util.NBTest do
   #   NB.encodeInt24(out, 3, -1);
   #   assertOutput(b(0xff, 0xff, 0xff), out, 3);
   # }
-  #
-  # @Test
-  # public void testEncodeInt32() {
-  #   final byte[] out = new byte[16];
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt32(out, 0, 0);
-  #   assertOutput(b(0, 0, 0, 0), out, 0);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt32(out, 3, 0);
-  #   assertOutput(b(0, 0, 0, 0), out, 3);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt32(out, 0, 3);
-  #   assertOutput(b(0, 0, 0, 3), out, 0);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt32(out, 3, 3);
-  #   assertOutput(b(0, 0, 0, 3), out, 3);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt32(out, 0, 0xdeac);
-  #   assertOutput(b(0, 0, 0xde, 0xac), out, 0);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt32(out, 3, 0xdeac);
-  #   assertOutput(b(0, 0, 0xde, 0xac), out, 3);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt32(out, 0, 0xdeac9853);
-  #   assertOutput(b(0xde, 0xac, 0x98, 0x53), out, 0);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt32(out, 3, 0xdeac9853);
-  #   assertOutput(b(0xde, 0xac, 0x98, 0x53), out, 3);
-  #
-  #   prepareOutput(out);
-  #   NB.encodeInt32(out, 3, -1);
-  #   assertOutput(b(0xff, 0xff, 0xff, 0xff), out, 3);
-  # }
-  #
+
+  test "encode_int32/1" do
+    assert NB.encode_int32(0) == [0, 0, 0, 0]
+    assert NB.encode_int32(3) == [0, 0, 0, 3]
+    assert NB.encode_int32(0xDEAC) == [0, 0, 0xDE, 0xAC]
+    assert NB.encode_int32(0xDEAC9853) == [0xDE, 0xAC, 0x98, 0x53]
+    assert NB.encode_int32(-1) == [0xFF, 0xFF, 0xFF, 0xFF]
+  end
+
   # @Test
   # public void testEncodeInt64() {
   #   final byte[] out = new byte[16];
