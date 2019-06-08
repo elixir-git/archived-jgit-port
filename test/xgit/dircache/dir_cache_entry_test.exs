@@ -93,6 +93,17 @@ defmodule Xgit.DirCache.DirCacheEntryTest do
     assert DirCacheEntry.path(e) == "a/d"
     assert DirCacheEntry.stage(e) == 3
 
+    e =
+      DirCacheEntry.new(
+        "a/very/long/path/that/is/more/than/64/characters/long/to/cover/an/edge/case",
+        1
+      )
+
+    assert DirCacheEntry.path(e) ==
+             "a/very/long/path/that/is/more/than/64/characters/long/to/cover/an/edge/case"
+
+    assert DirCacheEntry.stage(e) == 1
+
     assert_raise InvalidPathError, "Invalid path: /a", fn ->
       DirCacheEntry.new("/a", 1)
     end
