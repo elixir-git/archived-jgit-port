@@ -57,6 +57,7 @@ defmodule Xgit.Lib.Repository do
   be any type of file, but source code is what SCMs are typically used for.)
   """
 
+  alias Xgit.DirCache
   alias Xgit.Errors.NoWorkTreeError
   alias Xgit.Util.GenServerUtils
 
@@ -1185,31 +1186,27 @@ defmodule Xgit.Lib.Repository do
   #     return walk.parseCommit(id);
   #   }
   # }
-  #
-  # /**
-  #  * Create a new in-core index representation and read an index from disk.
-  #  * <p>
-  #  * The new index will be read before it is returned to the caller. Read
-  #  * failures are reported as exceptions and therefore prevent the method from
-  #  * returning a partially populated index.
-  #  *
-  #  * @return a cache representing the contents of the specified index file (if
-  #  *         it exists) or an empty cache if the file does not exist.
-  #  * @throws org.eclipse.jgit.errors.NoWorkTreeException
-  #  *             if this is bare, which implies it has no working directory.
-  #  *             See {@link #isBare()}.
-  #  * @throws java.io.IOException
-  #  *             the index file is present but could not be read.
-  #  * @throws org.eclipse.jgit.errors.CorruptObjectException
-  #  *             the index file is using a format or extension that this
-  #  *             library does not support.
-  #  */
-  # @NonNull
-  # public DirCache readDirCache() throws NoWorkTreeException,
-  #     CorruptObjectException, IOException {
-  #   return DirCache.read(this);
-  # }
-  #
+
+  @doc ~S"""
+  Creates a new in-core index representation and read an index from disk.
+
+  The new index will be read before it is returned to the caller. Read
+  failures are reported as exceptions and therefore prevent the method from
+  returning a partially-populated index.
+
+  Returns a `DirCache` struct representing the contents of the specified index
+  file (if it exists) or an empty cache if the file does not exist.
+
+  Raises `NoWorkTreeException` if this is bare, which implies it has no working directory.
+
+  Raises `IOException` if the index file is present but could not be read.
+
+  Raises `CorruptObjectException` if the index file is using a format or extension
+  that this library does not support.
+  """
+  def read_dir_cache(repository) when is_pid(repository),
+    do: DirCache.read(repository)
+
   # /**
   #  * Create a new in-core index representation, lock it, and read from disk.
   #  * <p>
