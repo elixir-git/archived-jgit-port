@@ -59,6 +59,8 @@ defmodule Xgit.DirCache do
   resolutions to be easily performed.
   """
 
+  use GenServer
+
   # private static final byte[] SIG_DIRC = { 'D', 'I', 'R', 'C' };
   #
   # private static final int EXT_TREE = 0x54524545 /* 'TREE' */;
@@ -127,58 +129,53 @@ defmodule Xgit.DirCache do
   #   b.finish();
   #   return d;
   # }
-  #
-  # /**
-  #  * Create a new in-core index representation and read an index from disk.
-  #  * <p>
-  #  * The new index will be read before it is returned to the caller. Read
-  #  * failures are reported as exceptions and therefore prevent the method from
-  #  * returning a partially populated index.
-  #  *
-  #  * @param repository
-  #  *            repository containing the index to read
-  #  * @return a cache representing the contents of the specified index file (if
-  #  *         it exists) or an empty cache if the file does not exist.
+
+  @doc ~S"""
+  Create a new in-core index representation and read an index from disk.
+
+  The new index will be read before it is returned to the caller. Read
+  failures are reported as exceptions and therefore prevent the function from
+  returning a partially-populated index.
+
+  Returns a `DirCache` process representing the contents of the specified index
+  file (if it exists) or an empty cache if the file does not exist.
+
+  TO DO: What errors are thrown? (Add GH issue number.)
+
   #  * @throws java.io.IOException
   #  *             the index file is present but could not be read.
   #  * @throws org.eclipse.jgit.errors.CorruptObjectException
   #  *             the index file is using a format or extension that this
   #  *             library does not support.
-  #  */
-  # public static DirCache read(Repository repository)
-  #     throws CorruptObjectException, IOException {
-  #   final DirCache c = read(repository.getIndexFile(), repository.getFS());
-  #   c.repository = repository;
-  #   return c;
-  # }
-  #
-  # /**
-  #  * Create a new in-core index representation and read an index from disk.
-  #  * <p>
-  #  * The new index will be read before it is returned to the caller. Read
-  #  * failures are reported as exceptions and therefore prevent the method from
-  #  * returning a partially populated index.
-  #  *
-  #  * @param indexLocation
-  #  *            location of the index file on disk.
-  #  * @param fs
-  #  *            the file system abstraction which will be necessary to perform
-  #  *            certain file system operations.
-  #  * @return a cache representing the contents of the specified index file (if
-  #  *         it exists) or an empty cache if the file does not exist.
+  """
+  def from_repository(repository) when is_pid(repository) do
+    repository
+    |> Repository.index_file!()
+    |> from_index_file()
+    |> set_repository(repository)
+  end
+
+  @doc ~S"""
+  Create a new in-core index representation and read an index from disk.
+
+  The new index will be read before it is returned to the caller. Read
+  failures are reported as exceptions and therefore prevent the function from
+  returning a partially-populated index.
+
+  TO DO: What errors are thrown? (Add GH issue number.)
+
   #  * @throws java.io.IOException
   #  *             the index file is present but could not be read.
   #  * @throws org.eclipse.jgit.errors.CorruptObjectException
   #  *             the index file is using a format or extension that this
   #  *             library does not support.
-  #  */
-  # public static DirCache read(File indexLocation, FS fs)
-  #     throws CorruptObjectException, IOException {
-  #   final DirCache c = new DirCache(indexLocation, fs);
-  #   c.read();
-  #   return c;
-  # }
-  #
+  """
+  def from_index_file(path) when is_binary(path) do
+    {:ok, pid} = GenServer.start_link(__MODULE__, path)
+    read(pid)
+    pid
+  end
+
   # /**
   #  * Create a new in-core index representation, lock it, and read from disk.
   #  * <p>
@@ -280,10 +277,10 @@ defmodule Xgit.DirCache do
   #   c.registerIndexChangedListener(indexChangedListener);
   #   return c;
   # }
-  #
-  # /** Location of the current version of the index file. */
-  # private final File liveFile;
-  #
+
+  # GenServer state members:
+  # `live_file`: (String) Location of the current version of the index file.
+
   # /** Individual file index entries, sorted by path name. */
   # private DirCacheEntry[] sortedEntries;
   #
@@ -310,24 +307,11 @@ defmodule Xgit.DirCache do
   #
   # /** Repository containing this index */
   # private Repository repository;
-  #
-  # /**
-  #  * Create a new in-core index representation.
-  #  * <p>
-  #  * The new index will be empty. Callers may wish to read from the on disk
-  #  * file first with {@link #read()}.
-  #  *
-  #  * @param indexLocation
-  #  *            location of the index file on disk.
-  #  * @param fs
-  #  *            the file system abstraction which will be necessary to perform
-  #  *            certain file system operations.
-  #  */
-  # public DirCache(File indexLocation, FS fs) {
-  #   liveFile = indexLocation;
-  #   clear();
-  # }
-  #
+
+  @impl GenServer
+  def init(index_location) when is_binary(index_location),
+    do: {:ok, %{live_file: index_location} |> clear()}
+
   # /**
   #  * Create a new builder to update this cache.
   #  * <p>
@@ -411,18 +395,20 @@ defmodule Xgit.DirCache do
   #     return false;
   #   return snapshot == null || snapshot.isModified(liveFile);
   # }
-  #
-  # /**
-  #  * Empty this index, removing all entries.
-  #  */
-  # public void clear() {
-  #   snapshot = null;
-  #   sortedEntries = NO_ENTRIES;
-  #   entryCnt = 0;
-  #   tree = null;
-  #   readIndexChecksum = NO_CHECKSUM;
-  # }
-  #
+
+  # TO DO: Maybe a public version of clear?
+
+  defp clear(state) do
+    %{
+      state
+      | snapshot: nil,
+        sorted_entries: [],
+        entry_count: 0,
+        tree: nil,
+        read_index_checksum: []
+    }
+  end
+
   # private void readFrom(InputStream inStream) throws IOException,
   #     CorruptObjectException {
   #   final BufferedInputStream in = new BufferedInputStream(inStream);

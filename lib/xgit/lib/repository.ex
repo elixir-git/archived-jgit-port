@@ -1205,7 +1205,7 @@ defmodule Xgit.Lib.Repository do
   that this library does not support.
   """
   def read_dir_cache(repository) when is_pid(repository),
-    do: DirCache.read(repository)
+    do: DirCache.from_repository(repository)
 
   # /**
   #  * Create a new in-core index representation, lock it, and read from disk.
