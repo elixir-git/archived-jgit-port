@@ -11,8 +11,6 @@ RevWalk
   RevBlob
   RevCommit
   RevFilter
-  RevFlag
-  RevFlagSet
   RevObject
   RevTag DEFER?
   RevTree
@@ -24,7 +22,6 @@ RevWalk
 
 AbstractRevQueue
   RevCommit
-  RevFlag
 
 AbstractTreeIterator
   AttributesNode DEFER?
@@ -74,7 +71,6 @@ ObjectWalk
   ObjectInserter DEFER?
   RevBlob
   RevCommit
-  RevFlag
   RevObject
   RevTree
   RevWalk
@@ -102,16 +98,7 @@ RevFilter ABSTRACT
   RevCommit
   RevWalk
 
-RevFlag
-  RevWalk
-
-RevFlagSet
-  RevFlag
-  RevWalkTestCase
-
 RevObject ABSTRACT
-  RevFlag
-  RevFlagSet
   RevWalk
 
 RevQueueTestCase
