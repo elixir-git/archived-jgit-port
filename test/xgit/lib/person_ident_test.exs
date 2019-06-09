@@ -1,3 +1,9 @@
+# Copyright (C) 2006-2007, Shawn O. Pearce <spearce@spearce.org>
+# and other copyright owners as documented in the project's IP log.
+#
+# Elixir adaptation from jgit file:
+# org.eclipse.jgit.test/tst/org/eclipse/jgit/lib/T0001_PersonIdentTest.java
+#
 # Copyright (C) 2019, Eric Scouten <eric+xgit@scouten.com>
 #
 # This program and the accompanying materials are made available
