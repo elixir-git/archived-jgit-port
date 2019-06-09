@@ -411,6 +411,7 @@ defmodule Xgit.DirCache do
     File.Error ->
       if File.exists?(live_file) do
         # Panic: the index file exists but we can't read it.
+        # credo:disable-for-next-line Credo.Check.Warning.RaiseInsideRescue
         raise IndexReadError, "The index file #{live_file} exists but cannot be read"
       else
         # Someone must have deleted it between our exists test
