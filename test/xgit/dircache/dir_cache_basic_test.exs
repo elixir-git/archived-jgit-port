@@ -56,8 +56,8 @@ defmodule Xgit.DirCache.DirCacheBasicTest do
     idx = Path.join(Repository.git_dir!(db), "index")
     refute File.exists?(idx)
 
-    # final DirCache dc = db.readDirCache();
-    # assertNotNull(dc);
+    dc = Repository.read_dir_cache(db)
+    assert dc != nil
     # assertEquals(0, dc.getEntryCount());
   end
 
