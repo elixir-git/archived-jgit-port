@@ -61,8 +61,8 @@ defmodule Xgit.DirCache do
 
   use GenServer
 
-  alias Xgit.Errors.IndexReadError
-  alias Xgit.Internal.Storage.File.FileSnapshot
+  # alias Xgit.Errors.IndexReadError
+  # alias Xgit.Internal.Storage.File.FileSnapshot
   alias Xgit.Lib.Repository
   alias Xgit.Util.GenServerUtils
 
@@ -389,37 +389,38 @@ defmodule Xgit.DirCache do
     raise ArgumentError, "DirCache does not have a backing file"
   end
 
-  def handle_read(%{live_file: live_file, snapshot: snapshot} = state) do
-    if File.exists?(live_file) and
-         (snapshot == nil or FileSnapshot.modified?(snapshot, live_file)) do
-      read_index(state)
+  def handle_read(%{live_file: live_file} = state) do
+    if File.exists?(live_file) do
+      raise "reading index file UNIMPLEMENTED"
+      #    and (snapshot == nil or FileSnapshot.modified?(snapshot, live_file)) do
+      # read_index(state)
     else
       {:ok, clear(state)}
     end
   end
 
-  defp read_index(%{live_file: live_file} = state) do
-    new_state =
-      File.open!(live_file, [:read], fn io_device ->
-        state
-        |> clear()
-        |> read_from(io_device)
-      end)
-
-    {:ok, new_state}
-  rescue
-    File.Error ->
-      if File.exists?(live_file) do
-        # Panic: the index file exists but we can't read it.
-        # credo:disable-for-next-line Credo.Check.Warning.RaiseInsideRescue
-        raise IndexReadError, "The index file #{live_file} exists but cannot be read"
-      else
-        # Someone must have deleted it between our exists test
-        # and actually opening the path. That's fine, its empty.
-
-        {:ok, clear(state)}
-      end
-  end
+  # defp read_index(%{live_file: live_file} = state) do
+  #   new_state =
+  #     File.open!(live_file, [:read], fn io_device ->
+  #       state
+  #       |> clear()
+  #       |> read_from(io_device)
+  #     end)
+  #
+  #   {:ok, new_state}
+  # rescue
+  #   File.Error ->
+  #     if File.exists?(live_file) do
+  #       # Panic: the index file exists but we can't read it.
+  #       # credo:disable-for-next-line Credo.Check.Warning.RaiseInsideRescue
+  #       raise IndexReadError, "The index file #{live_file} exists but cannot be read"
+  #     else
+  #       # Someone must have deleted it between our exists test
+  #       # and actually opening the path. That's fine, its empty.
+  #
+  #       {:ok, clear(state)}
+  #     end
+  # end
 
   # /**
   #  * Whether the memory state differs from the index file
@@ -446,97 +447,97 @@ defmodule Xgit.DirCache do
     }
   end
 
-  defp read_from(_io_device, %{} = _state) do
-    raise "UNIMPLEMENTED"
+  # defp read_from(_io_device, %{} = _state) do
+  #   raise "UNIMPLEMENTED"
 
-    # final BufferedInputStream in = new BufferedInputStream(inStream);
-    # final MessageDigest md = Constants.newMessageDigest();
-    #
-    # // Read the index header and verify we understand it.
-    # //
-    # final byte[] hdr = new byte[20];
-    # IO.readFully(in, hdr, 0, 12);
-    # md.update(hdr, 0, 12);
-    # if (!is_DIRC(hdr))
-    #   throw new CorruptObjectException(JGitText.get().notADIRCFile);
-    # final int ver = NB.decodeInt32(hdr, 4);
-    # boolean extended = false;
-    # if (ver == 3)
-    #   extended = true;
-    # else if (ver != 2)
-    #   throw new CorruptObjectException(MessageFormat.format(
-    #       JGitText.get().unknownDIRCVersion, Integer.valueOf(ver)));
-    # entryCnt = NB.decodeInt32(hdr, 8);
-    # if (entryCnt < 0)
-    #   throw new CorruptObjectException(JGitText.get().DIRCHasTooManyEntries);
-    #
-    # snapshot = FileSnapshot.save(liveFile);
-    # int smudge_s = (int) (snapshot.lastModified() / 1000);
-    # int smudge_ns = ((int) (snapshot.lastModified() % 1000)) * 1000000;
-    #
-    # // Load the individual file entries.
-    # //
-    # final int infoLength = DirCacheEntry.getMaximumInfoLength(extended);
-    # final byte[] infos = new byte[infoLength * entryCnt];
-    # sortedEntries = new DirCacheEntry[entryCnt];
-    #
-    # final MutableInteger infoAt = new MutableInteger();
-    # for (int i = 0; i < entryCnt; i++)
-    #   sortedEntries[i] = new DirCacheEntry(infos, infoAt, in, md, smudge_s, smudge_ns);
-    #
-    # // After the file entries are index extensions, and then a footer.
-    # //
-    # for (;;) {
-    #   in.mark(21);
-    #   IO.readFully(in, hdr, 0, 20);
-    #   if (in.read() < 0) {
-    #     // No extensions present; the file ended where we expected.
-    #     //
-    #     break;
-    #   }
-    #
-    #   in.reset();
-    #   md.update(hdr, 0, 8);
-    #   IO.skipFully(in, 8);
-    #
-    #   long sz = NB.decodeUInt32(hdr, 4);
-    #   switch (NB.decodeInt32(hdr, 0)) {
-    #   case EXT_TREE: {
-    #     if (Integer.MAX_VALUE < sz) {
-    #       throw new CorruptObjectException(MessageFormat.format(
-    #           JGitText.get().DIRCExtensionIsTooLargeAt,
-    #           formatExtensionName(hdr), Long.valueOf(sz)));
-    #     }
-    #     final byte[] raw = new byte[(int) sz];
-    #     IO.readFully(in, raw, 0, raw.length);
-    #     md.update(raw, 0, raw.length);
-    #     tree = new DirCacheTree(raw, new MutableInteger(), null);
-    #     break;
-    #   }
-    #   default:
-    #     if (hdr[0] >= 'A' && hdr[0] <= 'Z') {
-    #       // The extension is optional and is here only as
-    #       // a performance optimization. Since we do not
-    #       // understand it, we can safely skip past it, after
-    #       // we include its data in our checksum.
-    #       //
-    #       skipOptionalExtension(in, md, hdr, sz);
-    #     } else {
-    #       // The extension is not an optimization and is
-    #       // _required_ to understand this index format.
-    #       // Since we did not trap it above we must abort.
-    #       //
-    #       throw new CorruptObjectException(MessageFormat.format(JGitText.get().DIRCExtensionNotSupportedByThisVersion
-    #           , formatExtensionName(hdr)));
-    #     }
-    #   }
-    # }
-    #
-    # readIndexChecksum = md.digest();
-    # if (!Arrays.equals(readIndexChecksum, hdr)) {
-    #   throw new CorruptObjectException(JGitText.get().DIRCChecksumMismatch);
-    # }
-  end
+  # final BufferedInputStream in = new BufferedInputStream(inStream);
+  # final MessageDigest md = Constants.newMessageDigest();
+  #
+  # // Read the index header and verify we understand it.
+  # //
+  # final byte[] hdr = new byte[20];
+  # IO.readFully(in, hdr, 0, 12);
+  # md.update(hdr, 0, 12);
+  # if (!is_DIRC(hdr))
+  #   throw new CorruptObjectException(JGitText.get().notADIRCFile);
+  # final int ver = NB.decodeInt32(hdr, 4);
+  # boolean extended = false;
+  # if (ver == 3)
+  #   extended = true;
+  # else if (ver != 2)
+  #   throw new CorruptObjectException(MessageFormat.format(
+  #       JGitText.get().unknownDIRCVersion, Integer.valueOf(ver)));
+  # entryCnt = NB.decodeInt32(hdr, 8);
+  # if (entryCnt < 0)
+  #   throw new CorruptObjectException(JGitText.get().DIRCHasTooManyEntries);
+  #
+  # snapshot = FileSnapshot.save(liveFile);
+  # int smudge_s = (int) (snapshot.lastModified() / 1000);
+  # int smudge_ns = ((int) (snapshot.lastModified() % 1000)) * 1000000;
+  #
+  # // Load the individual file entries.
+  # //
+  # final int infoLength = DirCacheEntry.getMaximumInfoLength(extended);
+  # final byte[] infos = new byte[infoLength * entryCnt];
+  # sortedEntries = new DirCacheEntry[entryCnt];
+  #
+  # final MutableInteger infoAt = new MutableInteger();
+  # for (int i = 0; i < entryCnt; i++)
+  #   sortedEntries[i] = new DirCacheEntry(infos, infoAt, in, md, smudge_s, smudge_ns);
+  #
+  # // After the file entries are index extensions, and then a footer.
+  # //
+  # for (;;) {
+  #   in.mark(21);
+  #   IO.readFully(in, hdr, 0, 20);
+  #   if (in.read() < 0) {
+  #     // No extensions present; the file ended where we expected.
+  #     //
+  #     break;
+  #   }
+  #
+  #   in.reset();
+  #   md.update(hdr, 0, 8);
+  #   IO.skipFully(in, 8);
+  #
+  #   long sz = NB.decodeUInt32(hdr, 4);
+  #   switch (NB.decodeInt32(hdr, 0)) {
+  #   case EXT_TREE: {
+  #     if (Integer.MAX_VALUE < sz) {
+  #       throw new CorruptObjectException(MessageFormat.format(
+  #           JGitText.get().DIRCExtensionIsTooLargeAt,
+  #           formatExtensionName(hdr), Long.valueOf(sz)));
+  #     }
+  #     final byte[] raw = new byte[(int) sz];
+  #     IO.readFully(in, raw, 0, raw.length);
+  #     md.update(raw, 0, raw.length);
+  #     tree = new DirCacheTree(raw, new MutableInteger(), null);
+  #     break;
+  #   }
+  #   default:
+  #     if (hdr[0] >= 'A' && hdr[0] <= 'Z') {
+  #       // The extension is optional and is here only as
+  #       // a performance optimization. Since we do not
+  #       // understand it, we can safely skip past it, after
+  #       // we include its data in our checksum.
+  #       //
+  #       skipOptionalExtension(in, md, hdr, sz);
+  #     } else {
+  #       // The extension is not an optimization and is
+  #       // _required_ to understand this index format.
+  #       // Since we did not trap it above we must abort.
+  #       //
+  #       throw new CorruptObjectException(MessageFormat.format(JGitText.get().DIRCExtensionNotSupportedByThisVersion
+  #           , formatExtensionName(hdr)));
+  #     }
+  #   }
+  # }
+  #
+  # readIndexChecksum = md.digest();
+  # if (!Arrays.equals(readIndexChecksum, hdr)) {
+  #   throw new CorruptObjectException(JGitText.get().DIRCChecksumMismatch);
+  # }
+  # end
 
   # private void skipOptionalExtension(final InputStream in,
   #     final MessageDigest md, final byte[] hdr, long sz)
