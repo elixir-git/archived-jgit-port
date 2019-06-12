@@ -61,7 +61,7 @@ defmodule Xgit.DirCache.DirCacheBasicTest do
     assert dc != nil
     assert DirCache.valid?(dc)
 
-    # assertEquals(0, dc.getEntryCount());
+    assert DirCache.entry_count(dc) == 0
   end
 
   # @Test

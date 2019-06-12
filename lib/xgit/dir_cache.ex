@@ -289,10 +289,9 @@ defmodule Xgit.DirCache do
 
   # /** Individual file index entries, sorted by path name. */
   # private DirCacheEntry[] sortedEntries;
-  #
-  # /** Number of positions within {@link #sortedEntries} that are valid. */
-  # private int entryCnt;
-  #
+
+  # `entry_count`: (Integer) Number of positions within `sorted_entries` that are valid.
+
   # /** Cache tree for this index; null if the cache tree is not available. */
   # private DirCacheTree tree;
   #
@@ -826,24 +825,26 @@ defmodule Xgit.DirCache do
   #   }
   #   return nextIdx;
   # }
-  #
-  # /**
-  #  * Total number of file entries stored in the index.
-  #  * <p>
-  #  * This count includes unmerged stages for a file entry if the file is
-  #  * currently conflicted in a merge. This means the total number of entries
-  #  * in the index may be up to 3 times larger than the number of files in the
-  #  * working directory.
-  #  * <p>
-  #  * Note that this value counts only <i>files</i>.
-  #  *
-  #  * @return number of entries available.
-  #  * @see #getEntry(int)
-  #  */
-  # public int getEntryCount() {
-  #   return entryCnt;
-  # }
-  #
+
+  @doc ~S"""
+  Return the total number of file entries stored in the index.
+
+  This count includes unmerged stages for a file entry if the file is currently
+  conflicted in a merge. This means the total number of entries in the index may
+  be up to 3 times larger than the number of files in the working directory.
+
+  Note that this value counts only _files_.
+  """
+  def entry_count(dir_cache) when is_pid(dir_cache),
+    do: GenServerUtils.call!(dir_cache, :entry_count)
+
+  def handle_entry_count(%{entry_count: entry_count} = state), do: {:ok, entry_count, state}
+
+  def handle_entry_count(x) do
+    IO.inspect(x, label: "WTF", pretty: true)
+    raise "WTF"
+  end
+
   # /**
   #  * Get a specific entry.
   #  *
@@ -1005,4 +1006,7 @@ defmodule Xgit.DirCache do
 
   def handle_call(:read, _from, state),
     do: GenServerUtils.wrap_call(__MODULE__, :handle_read, [state], state)
+
+  def handle_call(:entry_count, _from, state),
+    do: GenServerUtils.wrap_call(__MODULE__, :handle_entry_count, [state], state)
 end
