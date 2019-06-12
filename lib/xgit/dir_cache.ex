@@ -840,11 +840,6 @@ defmodule Xgit.DirCache do
 
   def handle_entry_count(%{entry_count: entry_count} = state), do: {:ok, entry_count, state}
 
-  def handle_entry_count(x) do
-    IO.inspect(x, label: "WTF", pretty: true)
-    raise "WTF"
-  end
-
   # /**
   #  * Get a specific entry.
   #  *
