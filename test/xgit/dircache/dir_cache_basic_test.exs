@@ -48,6 +48,7 @@ defmodule Xgit.DirCache.DirCacheBasicTest do
   use ExUnit.Case, async: true
   use Xgit.Test.RepositoryTestCase
 
+  alias Xgit.DirCache
   alias Xgit.Lib.Repository
 
   test "read missing / real index" do
@@ -58,6 +59,8 @@ defmodule Xgit.DirCache.DirCacheBasicTest do
 
     dc = Repository.read_dir_cache(db)
     assert dc != nil
+    assert DirCache.valid?(dc)
+
     # assertEquals(0, dc.getEntryCount());
   end
 

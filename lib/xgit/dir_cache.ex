@@ -328,12 +328,12 @@ defmodule Xgit.DirCache do
        |> clear()}
 
   @doc ~S"""
-  Returns `true` if the argument is a PID representing a valid `Repository` process.
+  Returns `true` if the argument is a PID representing a valid `DirCache` process.
   """
-  def valid?(dir_cache) when is_pid(dir_cache),
-    do:
-      Process.alive?(dir_cache) &&
-        GenServer.call(dir_cache, :valid_dir_cache?) == :valid_dir_cache
+  def valid?(dir_cache) when is_pid(dir_cache) do
+    Process.alive?(dir_cache) &&
+      GenServer.call(dir_cache, :valid_dir_cache?) == :valid_dir_cache
+  end
 
   def valid?(_), do: false
 
