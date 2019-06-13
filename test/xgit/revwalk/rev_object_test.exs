@@ -4,6 +4,8 @@
 # Elixir adaptation from jgit file:
 # org.eclipse.jgit.test/tst/org/eclipse/jgit/revwalk/RevObjectTest.java
 #
+# Copyright (C) 2019, Eric Scouten <eric+xgit@scouten.com>
+#
 # This program and the accompanying materials are made available
 # under the terms of the Eclipse Distribution License v1.0 which
 # accompanies this distribution, is reproduced below, and is
@@ -43,13 +45,96 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 defmodule Xgit.RevWalk.RevObjectTest do
+  use ExUnit.Case, async: true
+
+  alias Xgit.RevWalk.RevObject
+
   # public class RevObjectTest extends RevWalkTestCase {
-  # @Test
-  # public void testId() throws Exception {
-  #   final RevCommit a = commit();
-  #   assertSame(a, a.getId());
-  # }
-  #
+
+  @commit_id "5cd8074ac04156d8f3663b42a40ddcad7d2574b1"
+  @unparsed_commit %Xgit.RevWalk.RevObject.Unparsed{id: @commit_id, type: 1}
+
+  describe "Unparsed" do
+    test "object_id/1" do
+      assert RevObject.object_id(@unparsed_commit) == @commit_id
+    end
+
+    test "type/1" do
+      assert RevObject.type(@unparsed_commit) == 1
+    end
+  end
+
+  describe "flags" do
+    @unparsed_commit_with_flags %Xgit.RevWalk.RevObject.Unparsed{
+      id: @commit_id,
+      type: 1,
+      flags: MapSet.new([:blah, :boop, :biff])
+    }
+
+    test "add_flag/2" do
+      refute RevObject.has_flag?(@unparsed_commit, :blah)
+
+      with_blah = RevObject.add_flag(@unparsed_commit, :blah)
+      assert RevObject.has_flag?(with_blah, :blah)
+    end
+
+    test "add_flags/2" do
+      refute RevObject.has_flag?(@unparsed_commit, :blah)
+      refute RevObject.has_flag?(@unparsed_commit, :boop)
+      refute RevObject.has_flag?(@unparsed_commit, :biff)
+
+      with_flags = RevObject.add_flags(@unparsed_commit, MapSet.new([:blah, :boop]))
+
+      assert RevObject.has_flag?(with_flags, :blah)
+      assert RevObject.has_flag?(with_flags, :boop)
+      refute RevObject.has_flag?(with_flags, :biff)
+    end
+
+    test "remove_flag/2" do
+      assert RevObject.has_flag?(@unparsed_commit_with_flags, :blah)
+
+      without_blah = RevObject.remove_flag(@unparsed_commit_with_flags, :blah)
+
+      refute RevObject.has_flag?(without_blah, :blah)
+      assert RevObject.has_flag?(without_blah, :boop)
+      assert RevObject.has_flag?(without_blah, :biff)
+    end
+
+    test "remove_flags/2" do
+      assert RevObject.has_flag?(@unparsed_commit_with_flags, :blah)
+      assert RevObject.has_flag?(@unparsed_commit_with_flags, :boop)
+      assert RevObject.has_flag?(@unparsed_commit_with_flags, :biff)
+
+      without_flags =
+        RevObject.remove_flags(@unparsed_commit_with_flags, MapSet.new([:blah, :boop]))
+
+      refute RevObject.has_flag?(without_flags, :blah)
+      refute RevObject.has_flag?(without_flags, :boop)
+      assert RevObject.has_flag?(without_flags, :biff)
+    end
+
+    test "has_any_flag?/2" do
+      refute RevObject.has_any_flag?(@unparsed_commit_with_flags, MapSet.new([:jaskdlf]))
+      assert RevObject.has_any_flag?(@unparsed_commit_with_flags, MapSet.new([:jaskdlf, :blah]))
+    end
+
+    test "has_all_flags?/2" do
+      refute RevObject.has_all_flags?(@unparsed_commit_with_flags, MapSet.new([:jaskdlf]))
+      refute RevObject.has_all_flags?(@unparsed_commit_with_flags, MapSet.new([:jaskdlf, :blah]))
+      assert RevObject.has_all_flags?(@unparsed_commit_with_flags, MapSet.new([:blah, :boop]))
+
+      assert RevObject.has_all_flags?(
+               @unparsed_commit_with_flags,
+               MapSet.new([:blah, :boop, :biff])
+             )
+
+      refute RevObject.has_all_flags?(
+               @unparsed_commit_with_flags,
+               MapSet.new([:blah, :boop, :biff, :more])
+             )
+    end
+  end
+
   # @SuppressWarnings("unlikely-arg-type")
   # @Test
   # public void testEquals() throws Exception {
@@ -81,108 +166,5 @@ defmodule Xgit.RevWalk.RevObjectTest do
   #
   #   assertTrue(AnyObjectId.equals(a1, a2));
   #   assertTrue(AnyObjectId.equals(b1, b2));
-  # }
-  #
-  # @Test
-  # public void testRevObjectTypes() throws Exception {
-  #   assertEquals(Constants.OBJ_TREE, tree().getType());
-  #   assertEquals(Constants.OBJ_COMMIT, commit().getType());
-  #   assertEquals(Constants.OBJ_BLOB, blob("").getType());
-  #   assertEquals(Constants.OBJ_TAG, tag("emptyTree", tree()).getType());
-  # }
-  #
-  # @Test
-  # public void testHasRevFlag() throws Exception {
-  #   final RevCommit a = commit();
-  #   assertFalse(a.has(RevFlag.UNINTERESTING));
-  #   a.flags |= RevWalk.UNINTERESTING;
-  #   assertTrue(a.has(RevFlag.UNINTERESTING));
-  # }
-  #
-  # @Test
-  # public void testHasAnyFlag() throws Exception {
-  #   final RevCommit a = commit();
-  #   final RevFlag flag1 = rw.newFlag("flag1");
-  #   final RevFlag flag2 = rw.newFlag("flag2");
-  #   final RevFlagSet s = new RevFlagSet();
-  #   s.add(flag1);
-  #   s.add(flag2);
-  #
-  #   assertFalse(a.hasAny(s));
-  #   a.flags |= flag1.mask;
-  #   assertTrue(a.hasAny(s));
-  # }
-  #
-  # @Test
-  # public void testHasAllFlag() throws Exception {
-  #   final RevCommit a = commit();
-  #   final RevFlag flag1 = rw.newFlag("flag1");
-  #   final RevFlag flag2 = rw.newFlag("flag2");
-  #   final RevFlagSet s = new RevFlagSet();
-  #   s.add(flag1);
-  #   s.add(flag2);
-  #
-  #   assertFalse(a.hasAll(s));
-  #   a.flags |= flag1.mask;
-  #   assertFalse(a.hasAll(s));
-  #   a.flags |= flag2.mask;
-  #   assertTrue(a.hasAll(s));
-  # }
-  #
-  # @Test
-  # public void testAddRevFlag() throws Exception {
-  #   final RevCommit a = commit();
-  #   final RevFlag flag1 = rw.newFlag("flag1");
-  #   final RevFlag flag2 = rw.newFlag("flag2");
-  #   assertEquals(RevWalk.PARSED, a.flags);
-  #
-  #   a.add(flag1);
-  #   assertEquals(RevWalk.PARSED | flag1.mask, a.flags);
-  #
-  #   a.add(flag2);
-  #   assertEquals(RevWalk.PARSED | flag1.mask | flag2.mask, a.flags);
-  # }
-  #
-  # @Test
-  # public void testAddRevFlagSet() throws Exception {
-  #   final RevCommit a = commit();
-  #   final RevFlag flag1 = rw.newFlag("flag1");
-  #   final RevFlag flag2 = rw.newFlag("flag2");
-  #   final RevFlagSet s = new RevFlagSet();
-  #   s.add(flag1);
-  #   s.add(flag2);
-  #
-  #   assertEquals(RevWalk.PARSED, a.flags);
-  #
-  #   a.add(s);
-  #   assertEquals(RevWalk.PARSED | flag1.mask | flag2.mask, a.flags);
-  # }
-  #
-  # @Test
-  # public void testRemoveRevFlag() throws Exception {
-  #   final RevCommit a = commit();
-  #   final RevFlag flag1 = rw.newFlag("flag1");
-  #   final RevFlag flag2 = rw.newFlag("flag2");
-  #   a.add(flag1);
-  #   a.add(flag2);
-  #   assertEquals(RevWalk.PARSED | flag1.mask | flag2.mask, a.flags);
-  #   a.remove(flag2);
-  #   assertEquals(RevWalk.PARSED | flag1.mask, a.flags);
-  # }
-  #
-  # @Test
-  # public void testRemoveRevFlagSet() throws Exception {
-  #   final RevCommit a = commit();
-  #   final RevFlag flag1 = rw.newFlag("flag1");
-  #   final RevFlag flag2 = rw.newFlag("flag2");
-  #   final RevFlag flag3 = rw.newFlag("flag3");
-  #   final RevFlagSet s = new RevFlagSet();
-  #   s.add(flag1);
-  #   s.add(flag2);
-  #   a.add(flag3);
-  #   a.add(s);
-  #   assertEquals(RevWalk.PARSED | flag1.mask | flag2.mask | flag3.mask, a.flags);
-  #   a.remove(s);
-  #   assertEquals(RevWalk.PARSED | flag3.mask, a.flags);
   # }
 end

@@ -5,6 +5,7 @@
 # org.eclipse.jgit/src/org/eclipse/jgit/revwalk/RevObject.java
 #
 # Copyright (C) 2019, Eric Scouten <eric+xgit@scouten.com>
+#
 # This program and the accompanying materials are made available
 # under the terms of the Eclipse Distribution License v1.0 which
 # accompanies this distribution, is reproduced below, and is
@@ -61,7 +62,7 @@ defmodule Xgit.RevWalk.RevObject do
     @doc ~S"""
     Return the name (object ID) of this object.
     """
-    @spec object_id(object :: t) :: ObjectId.t
+    @spec object_id(object :: t) :: ObjectId.t()
     def object_id(object)
 
     @doc ~S"""
@@ -78,201 +79,132 @@ defmodule Xgit.RevWalk.RevObject do
     @spec type(object :: t) :: integer
     def type(object)
 
-    # abstract void parseHeaders(RevWalk walk) throws MissingObjectException,
-    #     IncorrectObjectTypeException, IOException;
-    #
-    # abstract void parseBody(RevWalk walk) throws MissingObjectException,
-    #     IncorrectObjectTypeException, IOException;
-    #
-    # /**
-    #  * Test to see if the flag has been set on this object.
-    #  *
-    #  * @param flag
-    #  *            the flag to test.
-    #  * @return true if the flag has been added to this object; false if not.
-    #  */
-    # public final boolean has(RevFlag flag) {
-    #   return (flags & flag.mask) != 0;
-    # }
-    #
-    # /**
-    #  * Test to see if any flag in the set has been set on this object.
-    #  *
-    #  * @param set
-    #  *            the flags to test.
-    #  * @return true if any flag in the set has been added to this object; false
-    #  *         if not.
-    #  */
-    # public final boolean hasAny(RevFlagSet set) {
-    #   return (flags & set.mask) != 0;
-    # }
-    #
-    # /**
-    #  * Test to see if all flags in the set have been set on this object.
-    #  *
-    #  * @param set
-    #  *            the flags to test.
-    #  * @return true if all flags of the set have been added to this object;
-    #  *         false if some or none have been added.
-    #  */
-    # public final boolean hasAll(RevFlagSet set) {
-    #   return (flags & set.mask) == set.mask;
-    # }
-    #
-    # /**
-    #  * Add a flag to this object.
-    #  * <p>
-    #  * If the flag is already set on this object then the method has no effect.
-    #  *
-    #  * @param flag
-    #  *            the flag to mark on this object, for later testing.
-    #  */
-    # public final void add(RevFlag flag) {
-    #   flags |= flag.mask;
-    # }
-    #
-    # /**
-    #  * Add a set of flags to this object.
-    #  *
-    #  * @param set
-    #  *            the set of flags to mark on this object, for later testing.
-    #  */
-    # public final void add(RevFlagSet set) {
-    #   flags |= set.mask;
-    # }
-    #
-    # /**
-    #  * Remove a flag from this object.
-    #  * <p>
-    #  * If the flag is not set on this object then the method has no effect.
-    #  *
-    #  * @param flag
-    #  *            the flag to remove from this object.
-    #  */
-    # public final void remove(RevFlag flag) {
-    #   flags &= ~flag.mask;
-    # }
-    #
-    # /**
-    #  * Remove a set of flags from this object.
-    #  *
-    #  * @param set
-    #  *            the flag to remove from this object.
-    #  */
-    # public final void remove(RevFlagSet set) {
-    #   flags &= ~set.mask;
-    # }
+    @doc ~S"""
+    Return the set of flags that has been set on this object.
+    """
+    @spec flags(object :: t) :: MapSet.t()
+    def flags(object)
+
+    @doc ~S"""
+    Returns a new instance of this object with one or more flags added.
+    """
+    @spec add_flags(object :: t, flags :: [atom]) :: t
+    def add_flags(object, flags)
+
+    @doc ~S"""
+    Returns a new instance of this object with one or more flags removed.
+    """
+    @spec remove_flags(object :: t, flags :: [atom]) :: t
+    def remove_flags(object, flags)
   end
 
-  # static final int PARSED = 1;
-  #
-  # int flags;
-  #
-  # RevObject(AnyObjectId name) {
-  #   super(name);
-  # }
-  #
+  defmodule Unparsed do
+    @moduledoc ~S"""
+    An object whose contents have not yet been parsed.
+
+    ## Struct Members
+
+    * `flags`: (MapSet) flags associated with this object
+    * `id`: (String) object ID
+    * `type`: (integer) object type (one of `obj_*` constants)
+    """
+    @enforce_keys [:id, :type]
+    defstruct [{:flags, MapSet.new()}, :id, :type]
+
+    defimpl Xgit.RevWalk.RevObject.Object do
+      @impl true
+      def object_id(%{id: id}), do: id
+
+      @impl true
+      def parsed?(_object), do: false
+
+      @impl true
+      def type(%{type: type}), do: type
+
+      @impl true
+      def flags(%{flags: %MapSet{} = flags}), do: flags
+
+      @impl true
+      def add_flags(%{flags: %MapSet{} = flags} = object, %MapSet{} = new_flags),
+        do: %{object | flags: MapSet.union(flags, new_flags)}
+
+      @impl true
+      def remove_flags(%{flags: %MapSet{} = flags} = object, %MapSet{} = new_flags),
+        do: %{object | flags: MapSet.difference(flags, new_flags)}
+    end
+  end
+
   # abstract void parseHeaders(RevWalk walk) throws MissingObjectException,
   #     IncorrectObjectTypeException, IOException;
   #
   # abstract void parseBody(RevWalk walk) throws MissingObjectException,
   #     IncorrectObjectTypeException, IOException;
-  #
-  # /**
-  #  * Get Git object type. See {@link org.eclipse.jgit.lib.Constants}.
-  #  *
-  #  * @return object type
-  #  */
-  # public abstract int getType();
-  #
-  # /**
-  #  * Get the name of this object.
-  #  *
-  #  * @return unique hash of this object.
-  #  */
-  # public final ObjectId getId() {
-  #   return this;
-  # }
-  #
-  # /**
-  #  * Test to see if the flag has been set on this object.
-  #  *
-  #  * @param flag
-  #  *            the flag to test.
-  #  * @return true if the flag has been added to this object; false if not.
-  #  */
-  # public final boolean has(RevFlag flag) {
-  #   return (flags & flag.mask) != 0;
-  # }
-  #
-  # /**
-  #  * Test to see if any flag in the set has been set on this object.
-  #  *
-  #  * @param set
-  #  *            the flags to test.
-  #  * @return true if any flag in the set has been added to this object; false
-  #  *         if not.
-  #  */
-  # public final boolean hasAny(RevFlagSet set) {
-  #   return (flags & set.mask) != 0;
-  # }
-  #
-  # /**
-  #  * Test to see if all flags in the set have been set on this object.
-  #  *
-  #  * @param set
-  #  *            the flags to test.
-  #  * @return true if all flags of the set have been added to this object;
-  #  *         false if some or none have been added.
-  #  */
-  # public final boolean hasAll(RevFlagSet set) {
-  #   return (flags & set.mask) == set.mask;
-  # }
-  #
-  # /**
-  #  * Add a flag to this object.
-  #  * <p>
-  #  * If the flag is already set on this object then the method has no effect.
-  #  *
-  #  * @param flag
-  #  *            the flag to mark on this object, for later testing.
-  #  */
-  # public final void add(RevFlag flag) {
-  #   flags |= flag.mask;
-  # }
-  #
-  # /**
-  #  * Add a set of flags to this object.
-  #  *
-  #  * @param set
-  #  *            the set of flags to mark on this object, for later testing.
-  #  */
-  # public final void add(RevFlagSet set) {
-  #   flags |= set.mask;
-  # }
-  #
-  # /**
-  #  * Remove a flag from this object.
-  #  * <p>
-  #  * If the flag is not set on this object then the method has no effect.
-  #  *
-  #  * @param flag
-  #  *            the flag to remove from this object.
-  #  */
-  # public final void remove(RevFlag flag) {
-  #   flags &= ~flag.mask;
-  # }
-  #
-  # /**
-  #  * Remove a set of flags from this object.
-  #  *
-  #  * @param set
-  #  *            the flag to remove from this object.
-  #  */
-  # public final void remove(RevFlagSet set) {
-  #   flags &= ~set.mask;
-  # }
-  #
+
+  @doc ~S"""
+  Return the name (object ID) of this object.
+  """
+  defdelegate object_id(object), to: Object
+
+  @doc ~S"""
+  Return the git object type of the object.
+
+  This will be one of the `obj_*` types defined in `Constants`.
+  """
+  defdelegate type(object), to: Object
+
+  @doc ~S"""
+  Returns `true` if the given flag has been set on this object.
+  """
+  def has_flag?(object, flag) when is_atom(flag) do
+    flags = Object.flags(object)
+    MapSet.member?(flags, flag)
+  end
+
+  @doc ~S"""
+  Returns `true` if any of the flags in the list has been set on this object.
+  """
+  def has_any_flag?(object, %MapSet{} = test_flags) do
+    flags = Object.flags(object)
+
+    test_flags
+    |> MapSet.intersection(flags)
+    |> Enum.empty?()
+    |> invert()
+  end
+
+  defp invert(b), do: !b
+
+  @doc ~S"""
+  Returns `true` if all of the flags in the list have been set on this object.
+  """
+  def has_all_flags?(object, %MapSet{} = test_flags) do
+    flags = Object.flags(object)
+
+    test_flags
+    |> MapSet.intersection(flags)
+    |> MapSet.equal?(test_flags)
+  end
+
+  @doc ~S"""
+  Add a flag to this object.
+  """
+  def add_flag(object, flag) when is_atom(flag), do: add_flags(object, MapSet.new([flag]))
+
+  @doc ~S"""
+  Add a set of flags to this object.
+  """
+  defdelegate add_flags(object, flags), to: Object
+
+  @doc ~S"""
+  Remove a flag from this object.
+  """
+  def remove_flag(object, flag) when is_atom(flag), do: remove_flags(object, MapSet.new([flag]))
+
+  @doc ~S"""
+  Remove a set of flags from this object.
+  """
+  defdelegate remove_flags(object, flags), to: Object
+
   # /** {@inheritDoc} */
   # @Override
   # public String toString() {
@@ -299,4 +231,4 @@ defmodule Xgit.RevWalk.RevObject do
   #   s.append((flags & RevWalk.SEEN) != 0 ? 's' : '-');
   #   s.append((flags & RevWalk.PARSED) != 0 ? 'p' : '-');
   # }
-}
+end
