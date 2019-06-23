@@ -46,7 +46,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-defmodule Xgit.RevWalk.RevWalk do
+defmodule Xgit.RevWalk do
   # Walks a commit graph and produces the matching commits in order.
   # <p>
   # A RevWalk instance can only be used once to generate results. Running a
