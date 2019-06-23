@@ -71,7 +71,7 @@ defmodule Xgit.RevWalk.RevWalk do
   # using either the provided Iterator or {@link #next()}, but never use both on
   # the same RevWalk at the same time. The Iterator may buffer RevCommits, while
   # {@link #next()} does not.
-  #/
+  # /
   # public class RevWalk implements Iterable<RevCommit>, AutoCloseable {
   # private static final int MB = 1 << 20;
   #
