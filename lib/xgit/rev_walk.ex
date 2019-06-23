@@ -47,34 +47,39 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 defmodule Xgit.RevWalk do
-  # Walks a commit graph and produces the matching commits in order.
-  # <p>
-  # A RevWalk instance can only be used once to generate results. Running a
-  # second time requires creating a new RevWalk instance, or invoking
-  # {@link #reset()} before starting again. Resetting an existing instance may be
-  # faster for some applications as commit body parsing can be avoided on the
-  # later invocations.
-  # <p>
-  # RevWalk instances are not thread-safe. Applications must either restrict
-  # usage of a RevWalk instance to a single thread, or implement their own
-  # synchronization at a higher level.
-  # <p>
-  # Multiple simultaneous RevWalk instances per
-  # {@link org.eclipse.jgit.lib.Repository} are permitted, even from concurrent
-  # threads. Equality of {@link org.eclipse.jgit.revwalk.RevCommit}s from two
-  # different RevWalk instances is never true, even if their
-  # {@link org.eclipse.jgit.lib.ObjectId}s are equal (and thus they describe the
-  # same commit).
-  # <p>
-  # The offered iterator is over the list of RevCommits described by the
-  # configuration of this instance. Applications should restrict themselves to
-  # using either the provided Iterator or {@link #next()}, but never use both on
-  # the same RevWalk at the same time. The Iterator may buffer RevCommits, while
-  # {@link #next()} does not.
-  # /
-  # public class RevWalk implements Iterable<RevCommit>, AutoCloseable {
+  @moduledoc ~S"""
+  Walks a commit graph and produces the matching commits in order.
+
+  A `RevWalk` instance can only be used once to generate results. Running a
+  second time requires creating a new `RevWalk` instance, or invoking
+  `reset/1` before starting again. Resetting an existing instance may be
+  faster for some applications as commit body parsing can be avoided on the
+  later invocations.
+
+  `RevWalk` instances are not thread-safe. Applications must either restrict
+  usage of a `RevWalk` instance to a single thread, or implement their own
+  synchronization at a higher level.
+
+  TO DO: Verify that claim. Might not fit for Xgit.
+
+  Multiple simultaneous `RevWalk` instances per `Repository` are permitted, even
+  from concurrent threads. Equality of `RevCommit`s from two different `RevWalk`
+  instances is never true, even if their object IDs are equal (and thus they
+  describe the same commit).
+
+  TO DO: Update language to fit Enumerable:
+  The offered iterator is over the list of `RevCommit`s described by the
+  configuration of this instance. Applications should restrict themselves to
+  using either the provided Iterator or {@link #next()}, but never use both on
+  the same RevWalk at the same time. The Iterator may buffer RevCommits, while
+  {@link #next()} does not.
+  """
+  use GenServer
+
+  @type t :: pid
+
   # private static final int MB = 1 << 20;
-  #
+
   # /**
   #  * Set on objects whose important header data has been loaded.
   #  * <p>
@@ -174,6 +179,20 @@ defmodule Xgit.RevWalk do
   # private boolean rewriteParents = true;
   #
   # boolean shallowCommitsInitialized;
+
+  @doc ~S"""
+  Create a new revision walker for a given repository.
+  """
+  def for_repository(repository) when is_pid(repository) do
+    repository
+    |> Repository.index_file!()
+    |> from_index_file()
+
+    # |> set_repository(repository)
+  end
+
+
+
   #
   # /**
   #  * Create a new revision walker for a given repository.
