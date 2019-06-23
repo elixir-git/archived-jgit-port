@@ -51,6 +51,7 @@ defmodule Xgit.Lib.ObjectDatabase do
   An object database stores one or more git objects, indexed by their unique
   `ObjectId`.
   """
+  use GenServer
 
   require Logger
 
@@ -78,6 +79,16 @@ defmodule Xgit.Lib.ObjectDatabase do
       {:stop, reason} -> {:stop, reason}
     end
   end
+
+  @doc ~S"""
+  Returns `true` if the argument is a PID representing a valid `ObjectDatabase` process.
+  """
+  def valid?(database) when is_pid(database) do
+    Process.alive?(database) &&
+      GenServer.call(database, :valid_object_database?) == :valid_object_database
+  end
+
+  def valid?(_), do: false
 
   # TO DO: https://github.com/elixir-git/xgit/issues/132
 
@@ -602,6 +613,9 @@ defmodule Xgit.Lib.ObjectDatabase do
   #   }
   #   return null;
   # }
+
+  def handle_call(:valid_object_database?, _from, state),
+    do: {:reply, :valid_object_database, state}
 
   def handle_call(:exists?, _from, {mod, mod_state}) do
     case mod.handle_exists?(mod_state) do
