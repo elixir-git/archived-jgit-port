@@ -1,7 +1,8 @@
 # Copyright (C) 2009, Google Inc.
 # and other copyright owners as documented in the project's IP log.
 #
-# Elixir adaptation from jgit file:
+# Elixir adaptation from jgit files:
+# org.eclipse.jgit/src/org/eclipse/jgit/internal/storage/file/FileObjectDatabase.java
 # org.eclipse.jgit/src/org/eclipse/jgit/internal/storage/file/ObjectDirectory.java
 #
 # Copyright (C) 2019, Eric Scouten <eric+xgit@scouten.com>
@@ -62,6 +63,8 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
   searched (recursively through all alternates) before the slow half is
   considered.
   """
+
+  # PORTING NOTE: The abstract class FileObjectDatabase is merged into this module.
 
   # TO DO: See if CachedObjectDirectory can be folded into this implementation.
 
