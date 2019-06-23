@@ -69,6 +69,7 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectoryTest do
     assert {:ok, pid} = ObjectDirectory.start_link(config: Config.new(), objects: extra_dir)
     assert is_pid(pid)
 
+    assert ObjectDatabase.valid?(pid) == true
     assert ObjectDatabase.exists?(pid) == false
     assert :ok = ObjectDatabase.create(pid)
     assert ObjectDatabase.exists?(pid) == true
