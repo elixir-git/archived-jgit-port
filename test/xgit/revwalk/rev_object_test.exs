@@ -133,6 +133,13 @@ defmodule Xgit.RevWalk.RevObjectTest do
                MapSet.new([:blah, :boop, :biff, :more])
              )
     end
+
+    test "to_string/1" do
+      assert to_string(@unparsed_commit) == "commit #{@commit_id} ------"
+
+      c = RevObject.add_flag(@unparsed_commit, :rewrite)
+      assert to_string(c) == "commit #{@commit_id} --r---"
+    end
   end
 
   # @SuppressWarnings("unlikely-arg-type")

@@ -51,6 +51,8 @@ defmodule Xgit.RevWalk.RevObject do
   Shared infrastructure for objects accessed during revision walking.
   """
 
+  alias Xgit.Lib.Constants
+
   defprotocol Object do
     @moduledoc ~S"""
     Objects made accessible via revision walking will implement this protocol.
@@ -132,6 +134,11 @@ defmodule Xgit.RevWalk.RevObject do
       def remove_flags(%{flags: %MapSet{} = flags} = object, %MapSet{} = new_flags),
         do: %{object | flags: MapSet.difference(flags, new_flags)}
     end
+
+    defimpl String.Chars do
+      @impl true
+      defdelegate to_string(object), to: Xgit.RevWalk.RevObject
+    end
   end
 
   # abstract void parseHeaders(RevWalk walk) throws MissingObjectException,
@@ -205,30 +212,35 @@ defmodule Xgit.RevWalk.RevObject do
   """
   defdelegate remove_flags(object, flags), to: Object
 
-  # /** {@inheritDoc} */
-  # @Override
-  # public String toString() {
-  #   final StringBuilder s = new StringBuilder();
-  #   s.append(Constants.typeString(getType()));
-  #   s.append(' ');
-  #   s.append(name());
-  #   s.append(' ');
-  #   appendCoreFlags(s);
-  #   return s.toString();
-  # }
-  #
-  # /**
-  #  * Append a debug description of core RevFlags to a buffer.
-  #  *
-  #  * @param s
-  #  *            buffer to append a debug description of core RevFlags onto.
-  #  */
-  # protected void appendCoreFlags(StringBuilder s) {
-  #   s.append((flags & RevWalk.TOPO_DELAY) != 0 ? 'o' : '-');
-  #   s.append((flags & RevWalk.TEMP_MARK) != 0 ? 't' : '-');
-  #   s.append((flags & RevWalk.REWRITE) != 0 ? 'r' : '-');
-  #   s.append((flags & RevWalk.UNINTERESTING) != 0 ? 'u' : '-');
-  #   s.append((flags & RevWalk.SEEN) != 0 ? 's' : '-');
-  #   s.append((flags & RevWalk.PARSED) != 0 ? 'p' : '-');
-  # }
+  @doc ~S"""
+  Render a string from any struct that implements the `RevObject.Object` protocol.
+
+  Intended to be called by those struct modules.
+  """
+  def to_string(rev_object) do
+    type_str =
+      rev_object
+      |> type()
+      |> Constants.type_string()
+
+    name = object_id(rev_object)
+    flags_str = core_flags_str(rev_object)
+
+    "#{type_str} #{name} #{flags_str}"
+  end
+
+  defp core_flags_str(rev_object) do
+    flag_str(rev_object, :topo_delay, "o") <>
+      flag_str(rev_object, :temp_mark, "t") <>
+      flag_str(rev_object, :rewrite, "r") <>
+      flag_str(rev_object, :uninteresting, "u") <>
+      flag_str(rev_object, :seen, "s") <>
+      flag_str(rev_object, :parsed, "p")
+  end
+
+  defp flag_str(rev_object, flag, flag_char) do
+    if has_flag?(rev_object, flag),
+      do: flag_char,
+      else: "-"
+  end
 end
