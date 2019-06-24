@@ -170,15 +170,12 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
   def directory(db) when is_pid(db),
     do: GenServer.call(db, :directory)
 
-  # /**
-  #  * <p>Getter for the field <code>packDirectory</code>.</p>
-  #  *
-  #  * @return the location of the <code>pack</code> directory.
-  #  */
-  # public final File getPackDirectory() {
-  #   return packDirectory;
-  # }
-  #
+  @doc ~S"""
+  Get the location of the `pack` directory.
+  """
+  def pack_directory(db) when is_pid(db),
+    do: GenServer.call(db, :pack_directory)
+
   # /**
   #  * <p>Getter for the field <code>preservedDirectory</code>.</p>
   #  *
@@ -1137,6 +1134,9 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
 
   def handle_extra_call(:directory, _from, %{objects: objects} = state),
     do: {:reply, objects, state}
+
+  def handle_extra_call(:pack_directory, _from, %{pack_dir: pack_dir} = state),
+    do: {:reply, pack_dir, state}
 
   def handle_extra_call(message, _from, state) do
     Logger.warn("ObjectDatabase received unrecognized call #{inspect(message)}")
