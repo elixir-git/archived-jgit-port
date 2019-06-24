@@ -97,6 +97,15 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectoryTest do
     end
   end
 
+  describe "pack_directory/1" do
+    test "returns path to pack directory", %{objects_dir: objects_dir} do
+      assert {:ok, pid} = ObjectDirectory.start_link(config: Config.new(), objects: objects_dir)
+      assert is_pid(pid)
+
+      assert ObjectDirectory.pack_directory(pid) == Path.join(objects_dir, "pack")
+    end
+  end
+
   test "handles unexpected calls", %{objects_dir: objects_dir} do
     assert {:ok, pid} = ObjectDirectory.start_link(config: Config.new(), objects: objects_dir)
     assert is_pid(pid)
