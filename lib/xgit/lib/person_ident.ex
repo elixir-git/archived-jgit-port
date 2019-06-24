@@ -106,4 +106,8 @@ defmodule Xgit.Lib.PersonIdent do
       when is_binary(name) and is_binary(email) and is_integer(whxn) and is_integer(tz_offset) do
     "#{sanitized(name)} <#{sanitized(email)}> #{div(whxn, 1000)} #{format_timezone(tz_offset)}"
   end
+
+  defimpl String.Chars do
+    defdelegate to_string(person_ident), to: Xgit.Lib.PersonIdent, as: :to_external_string
+  end
 end
