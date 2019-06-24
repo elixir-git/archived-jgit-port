@@ -3,7 +3,6 @@ jgit porting dependency tree for getting `RevWalk` up and running:
 RevWalk
   (watch for multiple test case files, including RevWalkTestCase)
   AbstractRevQueue
-  CommitBuilder DEFER?
   DateRevQueue
   FIFORevQueue
   ObjectIdOwnerMap
@@ -102,7 +101,6 @@ RevTree
 
 TestRepository
   (plan to do this as a partial?)
-  CommitBuilder DEFER?
   DirCache
   DirCacheBuilder
   InMemoryRepository DEFER?
