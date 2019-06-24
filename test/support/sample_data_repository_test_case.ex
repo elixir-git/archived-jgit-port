@@ -85,7 +85,7 @@ defmodule Xgit.Test.SampleDataRepositoryTestCase do
   defp copy_c_git_test_packs(repo) do
     pack_dir =
       repo
-      |> Repository.object_database()
+      |> Repository.object_database!()
       |> ObjectDirectory.pack_directory()
 
     Enum.each(@packs, fn pack ->
