@@ -201,7 +201,7 @@ defmodule Xgit.Test.RepositoryTestCase do
       mock_system_reader: mock_system_reader,
       author: author,
       committer: committer
-    } = LocalDiskRepositoryTestCase.setup_test()
+    } = LocalDiskRepositoryTestCase.setup_test!()
 
     db = LocalDiskRepositoryTestCase.create_work_repository!()
     trash = Repository.work_tree!(db)
