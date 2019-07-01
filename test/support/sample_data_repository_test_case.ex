@@ -64,8 +64,8 @@ defmodule Xgit.Test.SampleDataRepositoryTestCase do
   alias Xgit.Lib.Repository
   alias Xgit.Test.RepositoryTestCase
 
-  def setup do
-    %{db: repo} = params = RepositoryTestCase.setup_test()
+  setup do
+    %{db: repo} = params = RepositoryTestCase.setup_test!()
     copy_c_git_test_packs(repo)
     {:ok, params}
   end

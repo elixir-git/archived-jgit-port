@@ -94,19 +94,17 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
     end
   end
 
+  setup do
+    setup_test!()
+  end
+
   # private static final boolean useMMAP = "true".equals(System
   #     .getProperty("jgit.junit.usemmap"));
-  #
-  # /** A fake (but stable) identity for author fields in the test. */
-  # protected PersonIdent author;
-  #
-  # /** A fake (but stable) identity for committer fields in the test. */
-  # protected PersonIdent committer;
-  #
-  # private File tmp;
 
   @doc ~S"""
   Create a test environment with a temporary test directory.
+
+  For test cases that `use` this module, this is done implicitly via `setup`.
 
   Returns a map containing:
   * `mock_system_reader`: A `MockSystemReader` with environment variables set.
@@ -114,7 +112,7 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   * `committer`: A `PersonIdent` for a fake committer.
   * `tmp`: A temporary directory, which will be deleted after the test is done.
   """
-  def setup_test do
+  def setup_test! do
     Temp.track!()
     tmp = Temp.mkdir!(prefix: "tmp_")
 

@@ -45,15 +45,12 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 defmodule Xgit.DirCache.DirCacheBasicTest do
-  use ExUnit.Case, async: true
-  use Xgit.Test.RepositoryTestCase
+  use Xgit.Test.RepositoryTestCase, async: true
 
   alias Xgit.DirCache
   alias Xgit.Lib.Repository
 
-  test "read missing / real index" do
-    %{db: db} = RepositoryTestCase.setup_test()
-
+  test "read missing / real index", %{db: db} do
     idx = Path.join(Repository.git_dir!(db), "index")
     refute File.exists?(idx)
 
