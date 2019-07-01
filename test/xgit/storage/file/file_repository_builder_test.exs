@@ -45,7 +45,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
-  use Xgit.Test.LocalDiskRepositoryTestCase, async: true
+  use ExUnit.Case, async: true
 
   alias Xgit.Lib.Config
   alias Xgit.Lib.ConfigConstants
@@ -53,6 +53,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
   alias Xgit.Lib.Repository
   alias Xgit.Storage.File.FileRepository
   alias Xgit.Storage.File.FileRepositoryBuilder
+  alias Xgit.Test.LocalDiskRepositoryTestCase
   alias Xgit.Test.MockSystemReader
 
   describe "read_environment/2" do
