@@ -67,6 +67,10 @@ defmodule Xgit.Test.RepositoryTestCase do
     end
   end
 
+  setup do
+    setup_test!()
+  end
+
   # TO DO: https://github.com/elixir-git/xgit/issues/147
 
   # /**
@@ -196,7 +200,7 @@ defmodule Xgit.Test.RepositoryTestCase do
   * `db`: A `Repository` in a temporary directory.
   * `trash`: The working directory of the repository.
   """
-  def setup_test do
+  def setup_test! do
     %{
       mock_system_reader: mock_system_reader,
       author: author,

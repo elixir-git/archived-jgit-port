@@ -45,14 +45,10 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 defmodule Xgit.Api.InitCommandTest do
-  use Xgit.Test.RepositoryTestCase
+  use ExUnit.Case, async: true
 
   alias Xgit.Api.InitCommand
   alias Xgit.Lib.Repository
-
-  setup do
-    RepositoryTestCase.setup_test()
-  end
 
   test "basic case" do
     dir = Temp.mkdir!()
