@@ -46,24 +46,24 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 defmodule Xgit.Internal.Storage.File.PackIndex do
-  @moduledoc ~S"""
-  Access path to locate objects by `Xgit.Lib.ObjectId` in a
-  `Xgit.Internal.Storage.File.PackFile`.
-
-  Indexes are strictly redundant information in that we can rebuild all of the
-  data held in the index file from the on-disk representation of the pack file
-  itself, but it is faster to access for random requests because data is stored
-  by `ObjectId`.
-  """
+  @moduledoc false
+  # Access path to locate objects by `Xgit.Lib.ObjectId` in a
+  # `Xgit.Internal.Storage.File.PackFile`.
+  #
+  # Indexes are strictly redundant information in that we can rebuild all of the
+  # data held in the index file from the on-disk representation of the pack file
+  # itself, but it is faster to access for random requests because data is stored
+  # by `ObjectId`.
 
   alias Xgit.Internal.Storage.File.PackIndexV1
   alias Xgit.Internal.Storage.File.PackIndexV2
   alias Xgit.Util.NB
 
   defprotocol Reader do
-    @moduledoc ~S"""
-    Provides access to data in the index for different index format versions.
-    """
+    @moduledoc false
+    # Provides access to data in the index for different index format versions.
+
+    @type t :: struct
 
     @doc ~S"""
     Get object ID for the nth object entry returned by enumerating this index.
@@ -75,13 +75,15 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
     name
     ```
     """
+    @spec get_object_id_at_index(pack_index :: t, nth_position :: non_neg_integer) :: String.t()
     def get_object_id_at_index(pack_index, nth_position)
 
     @doc ~S"""
     Get offset in a pack for the n-th (zero-based) object entry returned by
     enumerating this index.
     """
-    def get_offset_at_index(index, nth_position)
+    @spec get_offset_at_index(pack_index :: t, nth_position :: non_neg_integer) :: non_neg_integer
+    def get_offset_at_index(pack_index, nth_position)
 
     @doc ~S"""
     Locate the file offset position for the requested object.
@@ -89,6 +91,7 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
     Returns -1 if the object does not exist in this index and is thus not stored
     in the associated pack.
     """
+    @spec find_offset(pack_index :: t, object_id :: String.t()) :: integer
     def find_offset(pack_index, object_id)
 
     @doc ~S"""
@@ -99,13 +102,17 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
 
     Raises `UnsupportedOperationError` if this index doesn't support CRC32 checksum.
     """
-    def crc32_checksum_for_object(index, object_id)
+    @spec crc32_checksum_for_object(pack_index :: t, object_id :: String.t()) :: String.t()
+    def crc32_checksum_for_object(pack_index, object_id)
 
     @doc ~S"""
     Returns `true` if this index supports (has) CRC32 checksums for objects.
     """
-    def has_crc32_support?(index)
+    @spec has_crc32_support?(pack_index :: t) :: boolean
+    def has_crc32_support?(pack_index)
   end
+
+  @type t :: __MODULE__.Reader.t()
 
   @doc ~S"""
   Open an existing pack `.idx` file for reading.
@@ -117,6 +124,7 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   Returns a struct that implements `PackIndex.Reader` and can be used to
   read the requested file.
   """
+  @spec open(idx_file_path :: String.t()) :: Reader.t()
   def open(idx_file_path) when is_binary(idx_file_path) do
     try do
       idx_file_path
@@ -134,6 +142,7 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   implementation for that format will be constructed and returned to the
   caller. The file may or may not be held open by the returned instance.
   """
+  @spec read(file_pid :: pid) :: Reader.t()
   def read(file_pid) when is_pid(file_pid) do
     header = IO.read(file_pid, 8)
 
@@ -202,12 +211,14 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   name
   ```
   """
+  @spec get_object_id_at_index(pack_index :: t, nth_position :: non_neg_integer) :: String.t()
   defdelegate get_object_id_at_index(pack_index, nth_position), to: __MODULE__.Reader
 
   @doc ~S"""
   Get offset in a pack for the n-th (zero-based) object entry returned by
   enumerating this index.
   """
+  @spec get_offset_at_index(pack_index :: t, nth_position :: non_neg_integer) :: non_neg_integer
   defdelegate get_offset_at_index(pack_index, nth_position), to: __MODULE__.Reader
 
   @doc ~S"""
@@ -216,6 +227,7 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   Returns -1 if the object does not exist in this index and is thus not stored
   in the associated pack.
   """
+  @spec find_offset(pack_index :: t, object_id :: String.t()) :: integer
   defdelegate find_offset(pack_index, object_id), to: __MODULE__.Reader
 
   @doc ~S"""
@@ -226,11 +238,13 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
 
   Raises `???` if this index doesn't support CRC32 checksum.
   """
+  @spec crc32_checksum_for_object(pack_index :: t, object_id :: String.t()) :: String.t()
   defdelegate crc32_checksum_for_object(index, object_id), to: __MODULE__.Reader
 
   @doc ~S"""
   Returns `true` if this index supports (has) CRC32 checksums for objects.
   """
+  @spec has_crc32_support?(pack_index :: t) :: boolean
   defdelegate has_crc32_support?(index), to: __MODULE__.Reader
 
   # /**
@@ -251,16 +265,16 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   #     int matchLimit) throws IOException;
 
   defmodule Entry do
-    @moduledoc ~S"""
-    Represents a single entry of pack index consisting of object ID and offset
-    in pack.
+    @moduledoc false
+    # Represents a single entry of pack index consisting of object ID and offset
+    # in pack.
+    #
+    # (Unlike jgit, these entries are not mutable.)
+    #
+    # Struct members:
+    # * `:name` (string): Hex string containing the object ID of this entry.
+    # * `:offset` (integer): Offset for this index object entry.
 
-    (Unlike jgit, these entries are not mutable.)
-
-    Struct members:
-    * `:name` (string): Hex string containing the object ID of this entry.
-    * `:offset` (integer): Offset for this index object entry.
-    """
     @enforce_keys [:name, :offset]
     defstruct [:name, :offset]
   end
