@@ -53,18 +53,20 @@ defprotocol Xgit.Lib.ObjectLoader do
   Protocol that allows for different storage representations of git objects.
   """
 
-  @type t :: term
+  @type t :: struct
 
   @doc ~S"""
   Get in-pack object type.
 
-  See `Constants.obj_*`.
+  See the `obj_*` functions in `Xgit.Lib.Constants`.
   """
+  @spec type(loader :: t) :: 0..7
   def type(loader)
 
   @doc ~S"""
   Get the size of the object in bytes.
   """
+  @spec size(loader :: t) :: non_neg_integer
   def size(loader)
 
   @doc ~S"""
@@ -73,6 +75,7 @@ defprotocol Xgit.Lib.ObjectLoader do
   If so, the caller should use a stream returned by `open_stream/1` to
   prevent overflowing the VM heap.
   """
+  @spec large?(loader :: t) :: boolean
   def large?(loader)
 
   @doc ~S"""
@@ -81,11 +84,13 @@ defprotocol Xgit.Lib.ObjectLoader do
   This function offers direct access to the internal caches, potentially
   saving on data copies between the internal cache and higher level code.
   """
+  @spec cached_bytes(loader :: t) :: [byte]
   def cached_bytes(loader)
 
   @doc ~S"""
   Obtain an `Enumerable` (typically a stream) to read this object's data.
   """
+  @spec stream(loader :: t) :: Enumerable.t()
   def stream(loader)
 
   # PORTING NOTE: It is expected that the `copyTo` function in jgit's ObjectLoader
