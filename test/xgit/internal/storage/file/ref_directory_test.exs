@@ -65,7 +65,7 @@ defmodule Xgit.Internal.Storage.File.RefDirectoryTest do
 
   describe "create/1" do
     test "creates appropriate subdirectories", %{git_dir: git_dir, ref_directory: ref_directory} do
-      assert :ok = RefDatabase.create(ref_directory)
+      assert :ok = RefDatabase.create!(ref_directory)
       assert File.dir?(Path.join(git_dir, "refs"))
       assert File.dir?(Path.join(git_dir, "refs/heads"))
       assert File.dir?(Path.join(git_dir, "refs/tags"))

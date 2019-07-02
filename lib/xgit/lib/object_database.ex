@@ -64,7 +64,7 @@ defmodule Xgit.Lib.ObjectDatabase do
 
   `module` is the name of a module that implements the callbacks defined in this module.
 
-  `args` is a set of arguments passed to the `init/1` function of `module`.
+  `init_arg` is passed to the `init/1` function of `module`.
 
   `options` are passed to `GenServer.start_link/3`.
 
@@ -72,13 +72,14 @@ defmodule Xgit.Lib.ObjectDatabase do
 
   See `GenServer.start_link/3`.
   """
-  @spec start_link(module, term, GenServer.options()) :: GenServer.on_start()
-  def start_link(module, args, options) when is_atom(module) and is_list(options),
-    do: GenServer.start_link(__MODULE__, {module, args}, options)
+  @spec start_link(module :: module, init_arg :: term, GenServer.options()) ::
+          GenServer.on_start()
+  def start_link(module, init_arg, options) when is_atom(module) and is_list(options),
+    do: GenServer.start_link(__MODULE__, {module, init_arg}, options)
 
   @doc false
-  def init({mod, args}) do
-    case mod.init(args) do
+  def init({mod, mod_init_arg}) do
+    case mod.init(mod_init_arg) do
       {:ok, state} -> {:ok, {mod, state}}
       {:stop, reason} -> {:stop, reason}
     end
