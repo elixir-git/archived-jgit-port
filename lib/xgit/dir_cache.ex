@@ -141,24 +141,25 @@ defmodule Xgit.DirCache do
   Create a new in-core index representation and read an index from disk.
 
   The new index will be read before it is returned to the caller. Read
-  failures are reported as exceptions and therefore prevent the function from
+  failures are reported as errors and therefore prevent the function from
   returning a partially-populated index.
 
-  Returns a `DirCache` process representing the contents of the specified index
+  ## Parameters
+
+  `repository` is the PID for an `Xgit.Lib.Repository`.
+
+  ## Return Value
+
+  PID for an `Xgit.DirCache` process representing the contents of the specified index
   file (if it exists) or an empty cache if the file does not exist.
 
-  TO DO: What errors are thrown? (Add GH issue number.)
-
-  #  * @throws java.io.IOException
-  #  *             the index file is present but could not be read.
-  #  * @throws org.eclipse.jgit.errors.CorruptObjectException
-  #  *             the index file is using a format or extension that this
-  #  *             library does not support.
+  Raises an error if unable to open the index file.
   """
-  def from_repository(repository) when is_pid(repository) do
+  @spec from_repository!(repository :: pid) :: pid
+  def from_repository!(repository) when is_pid(repository) do
     repository
     |> Repository.index_file!()
-    |> from_index_file()
+    |> from_index_file!()
 
     # |> set_repository(repository)
   end
@@ -170,15 +171,19 @@ defmodule Xgit.DirCache do
   failures are reported as exceptions and therefore prevent the function from
   returning a partially-populated index.
 
-  TO DO: What errors are thrown? (Add GH issue number.)
+  ## Parameters
 
-  #  * @throws java.io.IOException
-  #  *             the index file is present but could not be read.
-  #  * @throws org.eclipse.jgit.errors.CorruptObjectException
-  #  *             the index file is using a format or extension that this
-  #  *             library does not support.
+  `path` is the file path for an index file.
+
+  ## Return Value
+
+  PID for an `Xgit.DirCache` process representing the contents of the specified index
+  file (if it exists) or an empty cache if the file does not exist.
+
+  Raises an error if unable to open the index file.
   """
-  def from_index_file(path) when is_binary(path) do
+  @spec from_index_file!(path :: String.t()) :: pid
+  def from_index_file!(path) when is_binary(path) do
     {:ok, pid} = GenServer.start_link(__MODULE__, path)
     read!(pid)
     pid
@@ -329,8 +334,9 @@ defmodule Xgit.DirCache do
        |> clear()}
 
   @doc ~S"""
-  Returns `true` if the argument is a PID representing a valid `DirCache` process.
+  Returns `true` if the argument is a PID representing a valid `Xgit.DirCache` process.
   """
+  @spec valid?(dir_cache :: pid) :: boolean
   def valid?(dir_cache) when is_pid(dir_cache) do
     Process.alive?(dir_cache) &&
       GenServer.call(dir_cache, :valid_dir_cache?) == :valid_dir_cache
@@ -371,21 +377,25 @@ defmodule Xgit.DirCache do
   # }
 
   @doc ~S"""
-  Read the index from disk, if it has changed on disk.
+  Read the index from disk if it has changed.
 
   This method tries to avoid loading the index if it has not changed since
   the last time we consulted it. A missing index file will be treated as
   though it were present but had no file entries in it.
 
+  ## Errors
+
   Raises `File.Error` if the index file is present but could not be read.
   This `DirCache` instance may not be populated correctly.
 
-  Raises `CorruptObjectException` if the index file is using a format or
+  Raises `Xgit.Errors.CorruptObjectError` if the index file is using a format or
   extension that this library does not support.
   """
+  @spec read!(dir_cache :: pid) :: :ok
   def read!(dir_cache) when is_pid(dir_cache),
     do: GenServerUtils.call!(dir_cache, :read)
 
+  @doc false
   def handle_read(%{live_file: nil}) do
     raise ArgumentError, "DirCache does not have a backing file"
   end
@@ -837,9 +847,11 @@ defmodule Xgit.DirCache do
 
   Note that this value counts only _files_.
   """
+  @spec entry_count(dir_cache :: pid) :: non_neg_integer
   def entry_count(dir_cache) when is_pid(dir_cache),
     do: GenServerUtils.call!(dir_cache, :entry_count)
 
+  @doc false
   def handle_entry_count(%{entry_count: entry_count} = state), do: {:ok, entry_count, state}
 
   # /**
