@@ -46,10 +46,20 @@
 
 defmodule Xgit.Lib.GitmoduleEntry do
   @moduledoc ~S"""
-  A .gitmodules file found in the pack. Stores the blob of the file itself (e.g.
-  to access its contents) and the tree where it was found (e.g. to check if it
-  is in the root).
+  A `.gitmodules` file found in the pack. Stores the blob of the file itself
+  (e.g. to access its contents) and the tree where it was found (e.g. to check
+  if it is in the root).
   """
+
+  @typedoc ~S"""
+  A `.gitmodules` entry found in the pack.
+
+  ## Struct Members
+
+  * `:tree_id`: (String)
+  * `:blob_id`: (String)
+  """
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:tree_id, :blob_id]
   defstruct [:tree_id, :blob_id]
