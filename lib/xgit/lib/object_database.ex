@@ -49,7 +49,7 @@ defmodule Xgit.Lib.ObjectDatabase do
   Abstraction of arbitrary object storage.
 
   An object database stores one or more git objects, indexed by their unique
-  `ObjectId`.
+  `Xgit.Lib.ObjectId`.
   """
   use GenServer
 
@@ -60,13 +60,17 @@ defmodule Xgit.Lib.ObjectDatabase do
   @doc """
   Starts an `ObjectDatabase` process linked to the current process.
 
-  Once the server is started, the `init/1` function of the given `module` is
-  called with `args` as its arguments to initialize the stage. To ensure a
-  synchronized start-up procedure, this function does not return until `init/1`
-  has returned.
+  ## Parameters
 
-  The lifetime of this process is similar to that for `GenServer` or `GenStage`
-  processes.
+  `module` is the name of a module that implements the callbacks defined in this module.
+
+  `args` is a set of arguments passed to the `init/1` function of `module`.
+
+  `options` are passed to `GenServer.start_link/3`.
+
+  ## Return Value
+
+  See `GenServer.start_link/3`.
   """
   @spec start_link(module, term, GenServer.options()) :: GenServer.on_start()
   def start_link(module, args, options) when is_atom(module) and is_list(options),
@@ -83,6 +87,7 @@ defmodule Xgit.Lib.ObjectDatabase do
   @doc ~S"""
   Returns `true` if the argument is a PID representing a valid `ObjectDatabase` process.
   """
+  @spec valid?(database :: term) :: boolean
   def valid?(database) when is_pid(database) do
     Process.alive?(database) &&
       GenServer.call(database, :valid_object_database?) == :valid_object_database
@@ -132,30 +137,40 @@ defmodule Xgit.Lib.ObjectDatabase do
   @doc ~S"""
   Invoked when `exists?/1` is called on this database.
 
+  ## Return Value
+
   Should return `{true, mod_state}` if the database exists or `{false, mod_state}` if not.
   """
   @callback handle_exists?(state :: term) :: {exists? :: boolean, state :: term}
 
   @doc ~S"""
-  Initialize a new object database at this location.
+  Initialize a new object database.
+
+  ## Return Value
+
+  `:ok`
+
+  ## Errors
 
   May raise `File.Error` or similar if the database could not be created.
-
-  Returns `:ok`.
   """
-  @spec create(database :: t) :: t
-  def create(database) when is_pid(database), do: GenServer.call(database, :create)
+  @spec create!(database :: t) :: :ok
+  def create!(database) when is_pid(database), do: GenServer.call(database, :create)
 
   @doc ~S"""
-  Invoked when `create/1` is called on this database.
+  Invoked when `create!/1` is called on this database.
 
   Should initialize a new reference database at this location.
 
-  May raise `File.Error` or similar if the database could not be created.
+  ## Return Value
 
   Should return `{:ok, mod_state}` for function chaining or (TBD) if not.
 
-  TO DO: Finalize error-handling strategy here. https://github.com/elixir-git/xgit/issues/132
+  _TO DO:_ Finalize error-handling strategy here. https://github.com/elixir-git/xgit/issues/132
+
+  ## Error
+
+  May raise `File.Error` or similar if the database could not be created.
   """
   @callback handle_create(state :: term) :: {:ok, state :: term} | {:error, reason :: term}
 

@@ -285,7 +285,7 @@ defmodule Xgit.Storage.File.FileRepository do
     #   getFS().setHidden(getDirectory(), true);
 
     RefDatabase.create(ref_database_pid)
-    ObjectDatabase.create(object_database_pid)
+    ObjectDatabase.create!(object_database_pid)
 
     File.mkdir_p!(Path.join(git_dir, "branches"))
     File.mkdir_p!(Path.join(git_dir, "hooks"))
