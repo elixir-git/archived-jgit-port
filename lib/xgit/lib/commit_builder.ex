@@ -52,10 +52,21 @@ defmodule Xgit.Lib.CommitBuilder do
 
   Applications should use this module when they need to manually construct a
   commit and want precise control over its fields. For a higher-level interface
-  see `Xgit.Api.CommitCommand`.
+  see `Xgit.Api.CommitCommand` (not yet ported).
 
   To read a commit object, use the `Xgit.RevWalk` module and obtain an
   `Xgit.RevWalk.RevCommit` struct by calling `parse_commit`.
+
+  ## TO DO: UNIMPLEMENTED
+
+  * encodings other than UTF-8
+  * GPG signatures
+
+  https://github.com/elixir-git/xgit/issues/171
+  """
+
+  @typedoc ~S"""
+  Represents a commit being built.
 
   ## Struct Members
 
@@ -65,14 +76,8 @@ defmodule Xgit.Lib.CommitBuilder do
   * `committer`: (PersonIdent)
   * `message`: (String) commit message
   * `encoding`: (atom) encoding (currently must be :utf8)
-
-  ## TO DO: UNIMPLEMENTED
-
-  * encodings other than UTF-8
-  * GPG signatures
-
-  https://github.com/elixir-git/xgit/issues/171
   """
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:tree_id, :author, :committer]
 
@@ -103,11 +108,12 @@ defmodule Xgit.Lib.CommitBuilder do
   @doc ~S"""
   Format this builder's state as a commit object.
 
-  ## Return value
+  ## Return Value
 
   A byte list containing this object in the canonical commit format, suitable
   for storage in a repository.
   """
+  @spec build(commit :: t) :: iolist
   def build(%__MODULE__{
         tree_id: tree_id,
         parent_ids: parent_ids,
