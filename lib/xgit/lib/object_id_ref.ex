@@ -47,9 +47,14 @@
 
 defmodule Xgit.Lib.ObjectIdRef do
   @moduledoc ~S"""
-  A `Ref` that points directly at an `ObjectId`.
+  An `Xgit.Lib.Ref` that points directly at an object ID.
+  """
 
-  Struct members:
+  @typedoc ~S"""
+  An implementation of `Xgit.Lib.Ref` for a specific object ID.
+
+  ## Struct Members
+
   * `name`: name of this ref
   * `storage`: method used to store this ref (See `t:Xgit.Lib.Ref.storage/0`.)
   * `object_id`: current value of the ref. May be `nil` to indicate a ref that
@@ -61,6 +66,7 @@ defmodule Xgit.Lib.ObjectIdRef do
   * `update_index`: number that increases with each ref update. Set to `:undefined` if the
     storage doesn't support versioning.
   """
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:name, :storage]
   defstruct [
