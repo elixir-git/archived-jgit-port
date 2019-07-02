@@ -49,13 +49,19 @@ defprotocol Xgit.Lib.BitmapObject do
   This protocol defines an object type accessed during bitmap expansion.
   """
 
+  alias Xgit.Lib.ObjectId
+
+  @type t :: struct
+
   @doc ~S"""
-  Get git object type. See `Xgit.Lib.Constants`.
+  Get git object type. See `type_*` functions in `Xgit.Lib.Constants`.
   """
+  @spec type(bitmap_object :: t) :: integer
   def type(bitmap_object)
 
   @doc ~S"""
   Get the name (object ID) of this object.
   """
+  @spec object_id(bitmap_object :: t) :: ObjectId.t()
   def object_id(bitmap_object)
 end
