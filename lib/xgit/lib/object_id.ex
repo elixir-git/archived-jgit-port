@@ -49,9 +49,9 @@ defmodule Xgit.Lib.ObjectId do
   @moduledoc ~S"""
   An object ID is a string that matches the format for a SHA-1 hash.
 
-  PORTING NOTE: Compared to jgit's ObjectID, we do not implement a separate data
-  type. Instead an ObjectID is simply an Elixir string. In this module, we provide
-  mechanisms for manipulating and validating such strings.
+  _PORTING NOTE:_ Compared to jgit's `ObjectID` class, we do not implement a
+  separate data type. Instead an `ObjectID` is simply an Elixir `String`.
+  This module provides mechanisms for manipulating and validating such strings.
   """
 
   alias Xgit.Lib.Constants
@@ -59,14 +59,18 @@ defmodule Xgit.Lib.ObjectId do
   @type t :: String.t()
 
   @doc ~S"""
-  Get the special all-null ObjectId, often used to stand-in for no object.
+  Get the special all-null object ID, often used to stand-in for no object.
   """
+  @spec zero :: t
   def zero, do: "0000000000000000000000000000000000000000"
 
   @doc ~S"""
-  Return true if the string or charlist is a valid ObjectID. (In other words,
-  is it 40 characters of lowercase hex?)
+  Returns `true` if the string or charlist is a valid object ID.
+  (In other words, is it 40 characters of lowercase hex?)
   """
+  @spec valid?(id :: String.t() | charlist | nil) :: boolean
+  def valid?(id)
+
   def valid?(s) when is_binary(s), do: String.length(s) == 40 && String.match?(s, ~r/^[0-9a-f]+$/)
   def valid?(b) when is_list(b), do: Enum.count(b) == 40 && Enum.all?(b, &valid_hex_digit?/1)
   def valid?(nil), do: false
@@ -74,10 +78,11 @@ defmodule Xgit.Lib.ObjectId do
   defp valid_hex_digit?(c), do: (c >= ?0 && c <= ?9) || (c >= ?a && c <= ?f)
 
   @doc ~S"""
-  Read a raw ObjectID from a byte list.
+  Read a raw object ID from a byte list.
 
   Ignores any content in the byte list beyond the first 20 bytes.
   """
+  @spec from_raw_bytes(b :: charlist) :: t
   def from_raw_bytes(b) when length(b) >= 20 do
     b
     |> Enum.take(20)
@@ -86,8 +91,9 @@ defmodule Xgit.Lib.ObjectId do
   end
 
   @doc ~S"""
-  Convert a ObjectID to a raw byte list.
+  Convert an object ID to a raw byte list.
   """
+  @spec to_raw_bytes(id :: t) :: charlist
   def to_raw_bytes(<<id::binary-size(40)>>) do
     id
     |> Base.decode16!(case: :lower)
@@ -95,13 +101,16 @@ defmodule Xgit.Lib.ObjectId do
   end
 
   @doc ~S"""
-  Read an ObjectID from a hex string (charlist).
+  Read an object ID from a hex string (charlist).
+
+  ## Return Value
 
   If a valid ID is found, returns `{id, next}` where `id` is the matched ID string
   and `next` is the remainder of the charlist after the matched ID.
 
   If no such ID is found, returns `false`.
   """
+  @spec from_hex_charlist(b :: charlist) :: {t, charlist} | false
   def from_hex_charlist(b) when is_list(b) do
     {maybe_id, remainder} = Enum.split(b, 40)
 
@@ -116,6 +125,7 @@ defmodule Xgit.Lib.ObjectId do
   `obj_type` is the type of the object. Must be one of the `obj_*()` values from
   `Xgit.Lib.Constants`.
   """
+  @spec id_for(obj_type :: 0..7, data :: charlist) :: t
   def id_for(obj_type, data) when is_integer(obj_type) and is_list(data) do
     # FYI :sha in Erlang parlance == SHA-1.
 
