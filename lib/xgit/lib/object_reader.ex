@@ -46,10 +46,10 @@
 
 defmodule Xgit.Lib.ObjectReader do
   @moduledoc ~S"""
-  Reads an `ObjectDatabase` for a single process.
+  Reads an `Xgit.Lib.ObjectDatabase` for a single process.
 
   Readers that can support efficient reuse of pack encoded objects should also
-  implement the companion protocol `ObjectReuseAsIs`.
+  implement the companion protocol `ObjectReuseAsIs` _(not yet ported)_.
 
   TO DO: https://github.com/elixir-git/xgit/issues/133
 
@@ -70,20 +70,21 @@ defmodule Xgit.Lib.ObjectReader do
 
   defprotocol Strategy do
     @moduledoc ~S"""
-    Strategy for `ObjectReader` instances.
+    Strategy for `Xgit.Lib.ObjectReader` instances.
     """
 
     alias Xgit.Lib.AbbreviatedObjectId
     alias Xgit.Lib.ObjectId
 
-    # should implement Strategy protocol
-    @type t :: term()
+    @type t :: struct
 
     @doc ~S"""
-    Resolve an abbreviated `ObjectId` to its full form.
+    Resolve an abbreviated object ID to its full form.
 
-    This method searches for an `ObjectId` that begins with the abbreviation,
+    This method searches for an object ID that begins with the abbreviation,
     and returns at least some matching candidates.
+
+    ## Return Values
 
     If the returned collection is empty, no objects start with this
     abbreviation. The abbreviation doesn't belong to this repository, or the
@@ -95,7 +96,7 @@ defmodule Xgit.Lib.ObjectReader do
 
     If the collection contains 2 or more members, the abbreviation is not
     unique. In this case the implementation is only required to return at
-    least 2 candidates to signal the abbreviation has conflicts. User- friendly
+    least 2 candidates to signal the abbreviation has conflicts. User-friendly
     implementations should return as many candidates as reasonably possible,
     as the caller may be able to disambiguate further based on context. However,
     since databases can be very large (e.g. 10 million objects) returning 625,000
@@ -108,44 +109,61 @@ defmodule Xgit.Lib.ObjectReader do
     @doc ~S"""
     Does the requested object exist in this database?
 
-    `type_hint` may be one of the `obj_*` constants from `Constants` or
+    ## Parameters
+
+    `type_hint` may be one of the `obj_*` constants from `Xgit.Lib.Constants` or
     the wildcard term `:any` if the caller does not know the object type.
     """
-    @spec has_object?(reader :: term, object_id :: ObjectId.t(), type_hint :: term) :: boolean
+    @spec has_object?(reader :: t, object_id :: ObjectId.t(), type_hint :: 0..7 | :any) :: boolean
     def has_object?(reader, object_id, type_hint)
 
     @doc ~S"""
     Open an object from this database.
 
-    `type_hint` may be one of the `obj_*` constants from `Constants` or
+    ## Parameters
+
+    `type_hint` may be one of the `obj_*` constants from `Xgit.Lib.Constants` or
     the wildcard term `:any` if the caller does not know the object type.
 
-    Should return a struct that implements `ObjectLoader` protocol.
+    ## Return Value
 
-    Should raise `MissingObjectError` if no such object exists in the database.
+    Should return a struct that implements `Xgit.Lib.ObjectLoader` protocol.
+
+    ## Errors
+
+    Should raise `Xgit.Errors.MissingObjectError` if no such object exists in the database.
     """
-    @spec open(reader :: term, object_id :: ObjectId.t(), type_hint :: term) :: ObjectLoader.t()
+    @spec open(reader :: t, object_id :: ObjectId.t(), type_hint :: 0..7 | :any) ::
+            ObjectLoader.t()
     def open(reader, object_id, type_hint)
 
     @doc ~S"""
     Get only the size of an object.
 
-    `type_hint` may be one of the `obj_*` constants from `Constants` or
+    ## Parameters
+
+    `type_hint` may be one of the `obj_*` constants from `Xgit.Lib.Constants` or
     the wildcard term `:any` if the caller does not know the object type.
+
+    ## Return Value
 
     Should return the size of the object in bytes.
 
     A default implementation exists. It will call `open/3` and use the resulting
-    `ObjectLoader` to determine the object's size. If an implementation wishes
+    `Xgit.Lib.ObjectLoader` to determine the object's size. If an implementation wishes
     to use this implementation, it can simply return `:default` from this
     function.
 
-    Should raise `MissingObjectError` if no such object exists.
+    ## Error
+
+    Should raise `Xgit.Errors.MissingObjectError` if no such object exists.
     """
-    @spec object_size(reader :: term, object_id :: ObjectId.t(), type_hint :: term) ::
+    @spec object_size(reader :: t, object_id :: ObjectId.t(), type_hint :: 0..7 | :any) ::
             non_neg_integer() | :default
     def object_size(reader, object_id, type_hint)
   end
+
+  @type t :: __MODULE__.Strategy.t()
 
   @doc ~S"""
   Obtain a unique abbreviation (prefix) of an object SHA-1.
@@ -161,7 +179,7 @@ defmodule Xgit.Lib.ObjectReader do
   passed to `resolve/2`, assuming no new objects are added to this repository
   between calls.
   """
-  @spec abbreviate(reader :: term, object_id :: ObjectId.t(), length :: 2..40) ::
+  @spec abbreviate(reader :: t, object_id :: ObjectId.t(), length :: 2..40) ::
           AbbreviatedObjectId.t()
   def abbreviate(reader, object_id, length \\ 7)
 
@@ -187,10 +205,12 @@ defmodule Xgit.Lib.ObjectReader do
   end
 
   @doc ~S"""
-  Resolve an abbreviated `ObjectId` to its full form.
+  Resolve an abbreviated object ID to its full form.
 
-  This method searches for an `ObjectId` that begins with the abbreviation,
+  This method searches for an object ID that begins with the abbreviation,
   and returns at least some matching candidates.
+
+  ## Return Value
 
   If the returned collection is empty, no objects start with this
   abbreviation. The abbreviation doesn't belong to this repository, or the
@@ -209,31 +229,32 @@ defmodule Xgit.Lib.ObjectReader do
   candidates for the abbreviation "0" is simply unreasonable. Implementers
   should draw the line at around 256 matches.
   """
-  @spec resolve(reader :: term, abbreviated_id :: AbbreviatedObjectId.t()) :: [ObjectId.t()]
+  @spec resolve(reader :: t, abbreviated_id :: AbbreviatedObjectId.t()) :: [ObjectId.t()]
   defdelegate resolve(reader, abbreviated_id), to: Strategy
 
   @doc ~S"""
   Does the requested object exist in this database?
 
-  `type_hint` should be one of the `obj_*` constants from `Constants` or
+  `type_hint` should be one of the `obj_*` constants from `Xgit.Lib.Constants` or
   the wildcard term `:any` if the object type is not known. (The default value
   is `:any`.)
   """
-  @spec has_object?(reader :: term, object_id :: ObjectId.t(), type_hint :: term) :: boolean
+  @spec has_object?(reader :: t, object_id :: ObjectId.t(), type_hint :: 0..7 | :any) :: boolean
   defdelegate has_object?(reader, object_id, type_hint \\ :any), to: Strategy
 
   @doc ~S"""
   Open an object from this database.
 
-  `type_hint` should be one of the `obj_*` constants from `Constants` or
+  `type_hint` should be one of the `obj_*` constants from `Xgit.Lib.Constants` or
   the wildcard term `:any` if the object type is not known. (The default value
   is `:any`.)
 
-  Returns a struct that implements `ObjectLoader` protocol.
+  Returns a struct that implements `Xgit.Lib.ObjectLoader` protocol.
 
-  Raises `MissingObjectError` if no such object exists in the database.
+  Raises `Xgit.Errors.MissingObjectError` if no such object exists in the database.
   """
-  @spec open(reader :: term, object_id :: ObjectId.t(), type_hint :: term) :: ObjectLoader.t()
+  @spec open(reader :: term, object_id :: ObjectId.t(), type_hint :: 0..7 | :any) ::
+          ObjectLoader.t()
   defdelegate open(reader, object_id, type_hint \\ :any), to: Strategy
 
   # /**
@@ -307,15 +328,15 @@ defmodule Xgit.Lib.ObjectReader do
   @doc ~S"""
   Get only the size of an object.
 
-  `type_hint` should be one of the `obj_*` constants from `Constants` or
+  `type_hint` should be one of the `obj_*` constants from `Xgit.Lib.Constants` or
   the wildcard term `:any` if the object type is not known. (The default value
   is `:any`.)
 
   Returns the size of the object in bytes.
 
-  Raises `MissingObjectError` if no such object exists.
+  Raises `Xgit.Errors.MissingObjectError` if no such object exists.
   """
-  @spec object_size(reader :: term, object_id :: ObjectId.t(), type_hint :: term) ::
+  @spec object_size(reader :: term, object_id :: ObjectId.t(), type_hint :: 0..7 | :any) ::
           ObjectLoader.t()
   def object_size(reader, object_id, type_hint \\ :any) do
     case Strategy.object_size(reader, object_id, type_hint) do
