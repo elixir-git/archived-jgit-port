@@ -46,7 +46,7 @@
 
 defmodule Xgit.Lib.AbbreviatedObjectId do
   @moduledoc ~S"""
-  A prefix abbreviation of an `ObjectId`.
+  A prefix abbreviation of an `Xgit.Lib.ObjectId`.
 
   Sometimes git produces abbreviated SHA-1 strings, using sufficient leading
   digits from the `ObjectId` name to still be unique within the repository the
@@ -57,16 +57,18 @@ defmodule Xgit.Lib.AbbreviatedObjectId do
   @type t :: String.t()
 
   @doc ~S"""
-  Test a string of characters to verify it is a valid abbreviated ID.
+  Return `true` if a string of characters is a valid abbreviated ID.
   """
+  @spec valid?(id :: t) :: boolean
   def valid?(id) when is_binary(id) do
     length = String.length(id)
     length >= 2 && length <= 40 && String.match?(id, ~r/^[0-9a-f]+$/)
   end
 
   @doc ~S"""
-  Is this abbreviated object ID actually a complete ID?
+  Return `true` if this abbreviated object ID actually a complete ID.
   """
+  @spec complete?(id :: t) :: boolean
   def complete?(id) when is_binary(id), do: String.length(id) == 40
 
   @doc ~S"""
@@ -77,6 +79,7 @@ defmodule Xgit.Lib.AbbreviatedObjectId do
   * `:eq` if the abbreviation `a` exactly matches the first `length/1` digits of `other`
   * `:gt` if the abbreviation `a` names an object that is after `other`
   """
+  @spec prefix_compare(a :: t, other :: t) :: :lt | :eq | :gt
   def prefix_compare(a, other) when is_binary(a) and is_binary(other) do
     if String.starts_with?(other, a),
       do: :eq,
