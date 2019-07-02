@@ -165,7 +165,7 @@ defprotocol Xgit.Lib.Ref do
   to point to another ref, regardless of how many times `refs/heads/master` is updated.
 
   Should not be used unless the `Xgit.Lib.RefDatabase` that instantiated the ref
-  supports versioning. (See `Xgit.Lib.RefDatabase.has_versioning?/1`.)
+  supports versioning. (See `RefDatabase.has_versioning?/1`.)
 
   Can throw `RuntimeError` if the creator of the instance (e.g. `Xgit.Lib.RefDatabase`)
   doesn't support versioning.
