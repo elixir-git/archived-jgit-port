@@ -50,7 +50,7 @@ defmodule Xgit.Lib.ObjectChecker do
   Verifies that an object is formatted correctly.
 
   Verifications made by this module only check that the fields of an object are
-  formatted correctly. The ObjectId checksum of the object is not verified, and
+  formatted correctly. The `ObjectId` checksum of the object is not verified, and
   connectivity links between objects are also not verified. It's assumed that
   the caller can provide both of these validations on its own.
   """
@@ -66,25 +66,55 @@ defmodule Xgit.Lib.ObjectChecker do
     @doc ~S"""
     Check a commit for errors.
 
-    Return `:ok` if commit is validated.
+    ## Return Value
 
-    Return `:default` to reuse the default implementation.
+    * `:ok` if commit is validated.
+    * `:default` to reuse the default implementation.
 
-    Raise `CorruptObjectError` if the commit is invalid.
+    ## Errors
+
+    Raise `Xgit.Errors.CorruptObjectError` if the commit is invalid.
     """
     def check_commit!(strategy, commit_data)
 
     @doc ~S"""
     Check a blob for errors.
 
-    Return `:ok` if blob is validated.
+    ## Return Value
 
-    Return `:default` to reuse the default implementation.
+    * `:ok` if blob is validated.
+    * `:default` to reuse the default implementation.
 
-    Raise `CorruptObjectError` if the blob is invalid.
+    ## Errors
+
+    Raise `Xgit.Errors.CorruptObjectError` if the blob is invalid.
     """
     def check_blob!(strategy, blob_data)
   end
+
+  @typedoc ~S"""
+  Specification for how object checking should be performed.
+
+  ## Struct Members
+
+  * `:strategy`: A struct for which `Xgit.Lib.ObjectChecker.Strategy` is implemented.
+  * `:skiplist`: A `MapSet` of object IDs to ignore when checking.
+  * `:ignore_error_types`: A map containing zero or more of the following values:
+    * `bad_tree_sha1: true`: Ignore a malformed tree object ID
+    * `null_sha1: true`: Ignore an object ID that is all zeros
+    * `zero_padded_filemode: true`: Ignore file mode that has leading zeros
+    * `full_pathname: true`: Ignore a file path that has a `/` in it
+    * `empty_name: true`: Ignore a file path that is empty
+    * `has_dot: true`: Ignore a file path that is just `.`
+    * `has_dotdot: true`: Ignore a file path that is just `..`
+    * `has_dotgit: true`: Ignore a file path that is `.git`
+    * `tree_not_sorted: true`: Ignore a tree where the file paths are not sorted
+    * `duplicate_entries: true`: Ignore duplicate entries in the tree
+  * `:allow_invalid_person_ident?`: (boolean) `true` to ignore errors in the formation of author / committer IDs
+  * `:windows?`: (boolean) `true` to enforce Windows file naming conventions.
+  * `:macosx?`: (boolean) `true` to enforce Mac OS X file naming conventions.
+  """
+  @type t :: %__MODULE__{}
 
   defstruct strategy: nil,
             skiplist: nil,
@@ -96,14 +126,16 @@ defmodule Xgit.Lib.ObjectChecker do
   @doc ~S"""
   Check an object for parsing errors.
 
-  `type` is the type of the object. Must be one of the `obj_*()` values from
+  ## Parameters
+
+  `obj_type` is the type of the object. Must be one of the `obj_*()` values from
   `Xgit.Lib.Constants`.
 
   `data` is the raw data which comprises the object. This should be in the
   canonical format (that is the format used to generate the `object_id` of
   the object).
 
-  Raises `Xgit.Errors.CorruptObjectError` if an error is identified.
+  ## Return Values
 
   If the object is of type `tree`, returns `{:ok, gitsubmodules}` where `gitsubmodules`
   is a list of all submodule entries found. `gitsubmodules` is a list of tuples
@@ -112,6 +144,10 @@ defmodule Xgit.Lib.ObjectChecker do
   submodule that was referenced.
 
   For all other object types, returns `:ok` if the object is successfully validated.
+
+  ## Errors
+
+  Raises `Xgit.Errors.CorruptObjectError` if an error is identified.
   """
   def check!(%__MODULE__{} = checker, obj_type, data)
       when is_integer(obj_type) and is_list(data) do
@@ -121,8 +157,7 @@ defmodule Xgit.Lib.ObjectChecker do
   @doc ~S"""
   Check an object for parsing errors.
 
-  Like `check/3` but `id` has already been calculated.
-  def
+  Like `check!/3` but `id` has already been calculated.
   """
   def check!(checker, id, obj_type, data)
 
@@ -577,12 +612,20 @@ defmodule Xgit.Lib.ObjectChecker do
   @doc ~S"""
   Check tree path entry for validity.
 
+  ## Parameters
+
   `path` may be either a `String` or a byte list.
 
-  Unlike `check_path_segment/2`, this version scans a multi-directory path
+  Unlike `check_path_segment!/2`, this version scans a multi-directory path
   string such as `"src/main.c"`.
 
-  Raises `CorruptObjectError` if the path is invalid.
+  ## Return Values
+
+  Returns `:ok` if the path is deemed valid.
+
+  ## Errors
+
+  Raises `Xgit.Errors.CorruptObjectError` if the path is invalid.
   """
   def check_path!(checker, path)
 
@@ -598,17 +641,29 @@ defmodule Xgit.Lib.ObjectChecker do
   def check_path!(%__MODULE__{} = checker, path) when is_list(path) do
     if Enum.any?(path, &(&1 == ?/)) do
       {this, remainder} = Enum.split_while(path, &(&1 != ?/))
-      check_path_segment(checker, this)
+      check_path_segment!(checker, this)
       check_path!(checker, Enum.drop(remainder, 1))
     else
-      check_path_segment(checker, path)
+      check_path_segment!(checker, path)
     end
   end
 
   @doc ~S"""
   Check tree path segment for validity.
+
+  ## Parameters
+
+  `path` may be either a `String` or a byte list.
+
+  ## Return Values
+
+  Returns `:ok` if the path is deemed valid.
+
+  ## Errors
+
+  Raises `Xgit.Errors.CorruptObjectError` if the path is invalid.
   """
-  def check_path_segment(%__MODULE__{} = checker, data) when is_list(data) do
+  def check_path_segment!(%__MODULE__{} = checker, data) when is_list(data) do
     if Enum.any?(data, &(&1 == 0)),
       do: raise(CorruptObjectError, why: "name contains byte 0x00")
 
