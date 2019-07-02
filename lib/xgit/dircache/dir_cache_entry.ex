@@ -49,17 +49,24 @@
 
 defmodule Xgit.DirCache.DirCacheEntry do
   @moduledoc ~S"""
-  A single file (or stage of a file) in a `DirCache`.
+  A single file (or stage of a file) in an `Xgit.DirCache`.
 
   An entry represents exactly one stage of a file. If a file path is unmerged
-  then multiple `DirCacheEntry` instances may appear for the same path name.
+  then multiple `Xgit.DirCache.DirCacheEntry` instances may appear for the same
+  path name.
+  """
 
-  Struct members:
+  @typedoc ~S"""
+  Represents a single file (or stage of a file) in an `Xgit.DirCache`.
+
+  ## Struct Members
+
   * `info`: (binary, not UTF-8 encoded) header information
   * `info_offset`: (integer) byte offset within `info` where our header starts.
   * `path`: (charlist) our encoded path name, from the root of the repository.
   * `in_core_flags`: (integer, bit flags) flags which are never stored to disk.
   """
+  @type t :: %__MODULE__{}
 
   @enforce_keys [:info, :info_offset, :path, :in_core_flags]
   defstruct [:path, :in_core_flags, info: '', info_offset: 0]
@@ -196,13 +203,23 @@ defmodule Xgit.DirCache.DirCacheEntry do
   @doc ~S"""
   Create an empty entry at the specified stage.
 
+  ## Parameters
+
   `path` is the name of the cache entry. It may be either a String or a byte list.
 
   `stage` is the stage index of the new entry (must be an integer in the range 0..3, default 0).
 
+  ## Return Values
+
+  Returns an `Xgit.DirCache.DirCacheEntry` struct for the specified entry and stage.
+
+  ## Errors
+
   Raises `ArgumentError` if the path starts or ends with `"/"`, or contains `"//"`
-  or `"\0"`. These sequences are not permitted in a git tree object or `DirCache` file.
+  or `"\0"`. These sequences are not permitted in a git tree object or
+  `Xgit.DirCache` file.
   """
+  @spec new(path :: String.t(), stage :: 0..3) :: t
   def new(path, stage \\ 0)
 
   def new(path, stage)
@@ -325,7 +342,12 @@ defmodule Xgit.DirCache.DirCacheEntry do
   Most entries in the index do not have this flag set. Users may however enable
   this flag if the file system `stat()` costs are too high on this working
   directory, such as on NFS or SMB volumes.
+
+  ## Return Value
+
+  `true` if this entry has the assume-valid flag set; `false` if not.
   """
+  @spec assume_valid?(entry :: t) :: boolean
   def assume_valid?(%__MODULE__{} = entry) do
     entry
     |> flags_byte()
@@ -340,9 +362,17 @@ defmodule Xgit.DirCache.DirCacheEntry do
   @doc ~S"""
   Return a new entry, replacing the assume-valid flag from this entry.
 
+  ## Parameters
+
   `assume?` should be `true` to ignore apparent modifications or `false` to
   look at last modified to detect file modifications.
+
+  ## Return Value
+
+  A new `Xgit.DirCache.DirCacheEntry` struct with the assume-value flag
+  updated as requested.
   """
+  @spec set_assume_valid(entry :: t, assume? :: boolean) :: t
   def set_assume_valid(%__MODULE__{info: info, info_offset: info_offset} = entry, assume?)
       when is_boolean(assume?) do
     new_flags_byte =
@@ -384,8 +414,11 @@ defmodule Xgit.DirCache.DirCacheEntry do
   @doc ~S"""
   Get the stage of this entry.
 
-  This will be an integer in the range 0..3.
+  ## Return Value
+
+  The stage for this entry, which will be an integer in the range 0..3.
   """
+  @spec stage(entry :: t) :: 0..3
   def stage(%__MODULE__{} = entry) do
     entry
     |> flags_byte()
@@ -423,8 +456,9 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # }
 
   @doc ~S"""
-  Obtain the raw `FileMode` bits for this entry.
+  Obtain the raw `Xgit.Lib.FileMode` bits for this entry.
   """
+  @spec raw_file_mode_bits(entry :: t) :: non_neg_integer
   def raw_file_mode_bits(%__MODULE__{info: info, info_offset: info_offset}) do
     info
     |> :binary.bin_to_list(info_offset + @p_mode, 4)
@@ -433,8 +467,9 @@ defmodule Xgit.DirCache.DirCacheEntry do
   end
 
   @doc ~S"""
-  Obtain the `FileMode` for this entry.
+  Obtain the `Xgit.Lib.FileMode` for this entry.
   """
+  @spec file_mode(entry :: t) :: FileMode.t()
   def file_mode(%__MODULE__{} = entry) do
     entry
     |> raw_file_mode_bits()
@@ -450,6 +485,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
   Will raise `ArgumentError` if `mode` represents "missing", "tree", or any
   other code that is not permitted in a tree object.
   """
+  @spec set_file_mode(entry :: t, mode :: FileMode.t()) :: t
   def set_file_mode(%__MODULE__{} = entry, %FileMode{mode_bits: mode_bits} = mode) do
     unless valid_file_mode?(mode_bits &&& FileMode.type_mask()) do
       raise ArgumentError, "Invalid mode #{inspect(mode)} for path #{path(entry)}"
@@ -483,17 +519,23 @@ defmodule Xgit.DirCache.DirCacheEntry do
   @doc ~S"""
   Get the cached creation time of this file.
 
-  The timestamp is interpreted as milliseconds since the Unix/Java epoch
-  (midnight Jan 1, 1970 UTC).
+  ## Return Value
+
+  The creation time for this file. The timestamp is interpreted as milliseconds
+  since the Unix/Java epoch (midnight Jan 1, 1970 UTC).
   """
+  @spec creation_time(entry :: t) :: integer
   def creation_time(%__MODULE__{} = entry), do: decode_ts(entry, @p_ctime)
 
   @doc ~S"""
   Return a new entry, replacing the cached creation time from this entry.
 
-  The timestamp must be expressed as milliseconds since the Unix/Java epoch
-  (midnight Jan 1, 1970 UTC).
+  ## Parameters
+
+  `new_ts` is the new timestamp, which must be expressed as milliseconds since
+  the Unix/Java epoch (midnight Jan 1, 1970 UTC).
   """
+  @spec set_creation_time(entry :: t, new_ts :: integer) :: t
   def set_creation_time(%__MODULE__{} = entry, new_ts) when is_integer(new_ts),
     do: entry_with_new_ts(entry, @p_ctime, new_ts)
 
@@ -504,17 +546,23 @@ defmodule Xgit.DirCache.DirCacheEntry do
   changing the working tree is if the last modification time for the file
   differs from the time stored in this entry.
 
-  The timestamp is interpreted as milliseconds since the Unix/Java epoch
-  (midnight Jan 1, 1970 UTC).
+  ## Return Value
+
+  The modification time for this file. The timestamp is interpreted as milliseconds
+  since the Unix/Java epoch (midnight Jan 1, 1970 UTC).
   """
+  @spec last_modified_time(entry :: t) :: integer
   def last_modified_time(%__MODULE__{} = entry), do: decode_ts(entry, @p_mtime)
 
   @doc ~S"""
   Return a new entry, replacing the cached last modification time from this entry.
 
-  The timestamp must be expressed as milliseconds since the Unix/Java epoch
-  (midnight Jan 1, 1970 UTC).
+  ## Parameters
+
+  `new_ts` is the new timestamp, which must be expressed as milliseconds since
+  the Unix/Java epoch (midnight Jan 1, 1970 UTC).
   """
+  @spec set_last_modified_time(entry :: t, new_ts :: integer) :: t
   def set_last_modified_time(%__MODULE__{} = entry, new_ts) when is_integer(new_ts),
     do: entry_with_new_ts(entry, @p_mtime, new_ts)
 
@@ -610,6 +658,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
   If the entry is in a subtree there will be at least one '/' in the returned
   string.
   """
+  @spec path(entry :: t) :: String.t()
   def path(%__MODULE__{path: path}), do: to_string(path)
 
   # /**
