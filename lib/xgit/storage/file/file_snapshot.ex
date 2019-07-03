@@ -44,7 +44,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-defmodule Xgit.Internal.Storage.File.FileSnapshot do
+defmodule Xgit.Storage.File.FileSnapshot do
   @moduledoc ~S"""
   Caches when a file was last read, making it possible to detect future edits.
 
@@ -185,7 +185,7 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
     do: ConCache.put(:xgit_file_snapshot, ref, time)
 
   defimpl String.Chars do
-    alias Xgit.Internal.Storage.File.FileSnapshot
+    alias Xgit.Storage.File.FileSnapshot
 
     def to_string(%FileSnapshot{last_modified: :dirty}), do: "DIRTY"
 
