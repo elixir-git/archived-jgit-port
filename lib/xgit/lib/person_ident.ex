@@ -62,7 +62,12 @@ defmodule Xgit.Lib.PersonIdent do
   * `:when`: (integer) time in the Unix epoch in milliseconds
   * `:tz_offset`: (integer) time zone offset from GMT in minutes
   """
-  @type t :: %__MODULE__{name: String.t(), email: String.t(), when: integer, tz_offset: -840..840}
+  @type t :: %__MODULE__{
+          name: String.t(),
+          email: String.t(),
+          when: integer,
+          tz_offset: Xgit.Lib.Constants.tz_offset()
+        }
 
   @enforce_keys [:name, :email, :when, :tz_offset]
   defstruct [:name, :email, :when, :tz_offset]
@@ -83,7 +88,7 @@ defmodule Xgit.Lib.PersonIdent do
   @doc ~S"""
   Formats a timezone offset.
   """
-  @spec format_timezone(offset :: -840..840) :: String.t()
+  @spec format_timezone(offset :: Xgit.Lib.Constants.tz_offset()) :: String.t()
   def format_timezone(offset) when is_integer(offset) do
     sign =
       if offset < 0,

@@ -576,4 +576,7 @@ defmodule Xgit.Lib.Constants do
   @doc "Suffix of lock file name."
   @spec lock_suffix :: String.t()
   def lock_suffix, do: ".lock"
+
+  @typedoc "Time zone offset (in minutes +/- from GMT."
+  @type tz_offset :: -720..840
 end
