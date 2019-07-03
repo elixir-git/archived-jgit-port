@@ -63,7 +63,7 @@ defmodule Xgit.RevWalk.RevObject do
     alias Xgit.Lib.ObjectId
 
     @typedoc "Any struct that implements `Xgit.RevWalk.RevObject.Object`."
-    @type t :: Xgit.RevWalk.RevObject.t
+    @type t :: Xgit.RevWalk.RevObject.t()
 
     @doc ~S"""
     Return the name (object ID) of this object.
@@ -82,7 +82,7 @@ defmodule Xgit.RevWalk.RevObject do
 
     This will be one of the `obj_*` types defined in `Xgit.Lib.Constants`.
     """
-    @spec type(object :: t) :: 0..7
+    @spec type(object :: t) :: Xgit.Lib.Constants.obj_type()
     def type(object)
 
     @doc ~S"""
@@ -118,7 +118,7 @@ defmodule Xgit.RevWalk.RevObject do
     * `id`: (string) object ID
     * `type`: (integer) object type (one of `obj_*` constants from `Xgit.Lib.Constants`)
     """
-    @type t :: %__MODULE__{flags: MapSet.t(), id: String.t(), type: 0..7}
+    @type t :: %__MODULE__{flags: MapSet.t(), id: String.t(), type: Xgit.Lib.Constants.obj_type()}
 
     @enforce_keys [:id, :type]
     defstruct [{:flags, MapSet.new()}, :id, :type]
@@ -168,7 +168,7 @@ defmodule Xgit.RevWalk.RevObject do
 
   This will be one of the `obj_*` types defined in `Xgit.Lib.Constants`.
   """
-  @spec type(object :: t) :: 0..7
+  @spec type(object :: t) :: Xgit.Lib.Constants.obj_type()
   defdelegate type(object), to: Object
 
   @doc ~S"""

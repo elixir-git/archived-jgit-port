@@ -95,7 +95,7 @@ defmodule Xgit.Lib.Constants do
   @doc ~S"""
   Text string that identifies an object as a tree.
 
-  Trees attach object ids (hashes) to names and file modes. The normal use
+  Trees attach object IDs (hashes) to names and file modes. The normal use
   for a tree is to store a version of a directory and its contents.
   """
   @spec type_tree :: String.t()
@@ -110,6 +110,10 @@ defmodule Xgit.Lib.Constants do
   """
   @spec type_tag :: String.t()
   def type_tag, do: "tag"
+
+  @typedoc "In-pack object type values. See `obj_*` functions."
+  @type obj_type :: 0..7
+  # Intentionally not including obj_bad because that isn't a valid type.
 
   @doc "An unknown or invalid object type code."
   @spec obj_bad :: integer
@@ -201,7 +205,7 @@ defmodule Xgit.Lib.Constants do
   changes needed to apply to the base object in order to recover the
   original object.
 
-  A reference delta uses a full object id (hash) to reference the delta
+  A reference delta uses a full object ID (hash) to reference the delta
   base. The base object is allowed to be omitted from the packfile, but
   only in the case of a thin pack being transferred over the network.
 

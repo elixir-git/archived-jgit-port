@@ -64,7 +64,7 @@ defmodule Xgit.Lib.SmallObjectLoader do
   * `:type`: One of the `obj_*` values from `Xgit.Lib.Constants`.
   * `:data`: (byte list) The full content of the data. Should be "reasonably" small.
   """
-  @type t :: %__MODULE__{type: 0..7, data: [byte]}
+  @type t :: %__MODULE__{type: Xgit.Lib.Constants.obj_type(), data: [byte]}
 
   @enforce_keys [:type, :data]
   defstruct [:type, :data]

@@ -60,7 +60,7 @@ defprotocol Xgit.Lib.ObjectLoader do
 
   See the `obj_*` functions in `Xgit.Lib.Constants`.
   """
-  @spec type(loader :: t) :: 0..7
+  @spec type(loader :: t) :: Xgit.Lib.Constants.obj_type()
   def type(loader)
 
   @doc ~S"""

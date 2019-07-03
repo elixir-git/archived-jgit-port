@@ -114,7 +114,11 @@ defmodule Xgit.Lib.ObjectReader do
     `type_hint` may be one of the `obj_*` constants from `Xgit.Lib.Constants` or
     the wildcard term `:any` if the caller does not know the object type.
     """
-    @spec has_object?(reader :: t, object_id :: ObjectId.t(), type_hint :: 0..7 | :any) :: boolean
+    @spec has_object?(
+            reader :: t,
+            object_id :: ObjectId.t(),
+            type_hint :: Xgit.Lib.Constants.obj_type() | :any
+          ) :: boolean
     def has_object?(reader, object_id, type_hint)
 
     @doc ~S"""
@@ -133,7 +137,11 @@ defmodule Xgit.Lib.ObjectReader do
 
     Should raise `Xgit.Errors.MissingObjectError` if no such object exists in the database.
     """
-    @spec open(reader :: t, object_id :: ObjectId.t(), type_hint :: 0..7 | :any) ::
+    @spec open(
+            reader :: t,
+            object_id :: ObjectId.t(),
+            type_hint :: Xgit.Lib.Constants.obj_type() | :any
+          ) ::
             ObjectLoader.t()
     def open(reader, object_id, type_hint)
 
@@ -158,7 +166,11 @@ defmodule Xgit.Lib.ObjectReader do
 
     Should raise `Xgit.Errors.MissingObjectError` if no such object exists.
     """
-    @spec object_size(reader :: t, object_id :: ObjectId.t(), type_hint :: 0..7 | :any) ::
+    @spec object_size(
+            reader :: t,
+            object_id :: ObjectId.t(),
+            type_hint :: Xgit.Lib.Constants.obj_type() | :any
+          ) ::
             non_neg_integer() | :default
     def object_size(reader, object_id, type_hint)
   end
@@ -239,7 +251,11 @@ defmodule Xgit.Lib.ObjectReader do
   the wildcard term `:any` if the object type is not known. (The default value
   is `:any`.)
   """
-  @spec has_object?(reader :: t, object_id :: ObjectId.t(), type_hint :: 0..7 | :any) :: boolean
+  @spec has_object?(
+          reader :: t,
+          object_id :: ObjectId.t(),
+          type_hint :: Xgit.Lib.Constants.obj_type() | :any
+        ) :: boolean
   defdelegate has_object?(reader, object_id, type_hint \\ :any), to: Strategy
 
   @doc ~S"""
@@ -253,7 +269,11 @@ defmodule Xgit.Lib.ObjectReader do
 
   Raises `Xgit.Errors.MissingObjectError` if no such object exists in the database.
   """
-  @spec open(reader :: term, object_id :: ObjectId.t(), type_hint :: 0..7 | :any) ::
+  @spec open(
+          reader :: term,
+          object_id :: ObjectId.t(),
+          type_hint :: Xgit.Lib.Constants.obj_type() | :any
+        ) ::
           ObjectLoader.t()
   defdelegate open(reader, object_id, type_hint \\ :any), to: Strategy
 
@@ -336,7 +356,11 @@ defmodule Xgit.Lib.ObjectReader do
 
   Raises `Xgit.Errors.MissingObjectError` if no such object exists.
   """
-  @spec object_size(reader :: term, object_id :: ObjectId.t(), type_hint :: 0..7 | :any) ::
+  @spec object_size(
+          reader :: term,
+          object_id :: ObjectId.t(),
+          type_hint :: Xgit.Lib.Constants.obj_type() | :any
+        ) ::
           ObjectLoader.t()
   def object_size(reader, object_id, type_hint \\ :any) do
     case Strategy.object_size(reader, object_id, type_hint) do

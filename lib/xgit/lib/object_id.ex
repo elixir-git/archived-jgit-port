@@ -125,7 +125,7 @@ defmodule Xgit.Lib.ObjectId do
   `obj_type` is the type of the object. Must be one of the `obj_*()` values from
   `Xgit.Lib.Constants`.
   """
-  @spec id_for(obj_type :: 0..7, data :: charlist) :: t
+  @spec id_for(obj_type :: Xgit.Lib.Constants.obj_type(), data :: charlist) :: t
   def id_for(obj_type, data) when is_integer(obj_type) and is_list(data) do
     # FYI :sha in Erlang parlance == SHA-1.
 
