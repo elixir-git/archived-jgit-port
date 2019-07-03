@@ -57,12 +57,12 @@ defmodule Xgit.Lib.PersonIdent do
 
   ## Struct Members
 
-  * `:name`: (String) human-readable name of the author or committer
-  * `:email`: (String) e-mail address for this person
+  * `:name`: (string) human-readable name of the author or committer
+  * `:email`: (string) e-mail address for this person
   * `:when`: (integer) time in the Unix epoch in milliseconds
   * `:tz_offset`: (integer) time zone offset from GMT in minutes
   """
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{name: String.t(), email: String.t(), when: integer, tz_offset: -840..840}
 
   @enforce_keys [:name, :email, :when, :tz_offset]
   defstruct [:name, :email, :when, :tz_offset]

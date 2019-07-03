@@ -70,14 +70,21 @@ defmodule Xgit.Lib.CommitBuilder do
 
   ## Struct Members
 
-  * `tree_id`: (String) SHA hash of tree structure
-  * `parent_ids`: (list of String) parents of this commit
-  * `author`: (PersonIdent)
-  * `committer`: (PersonIdent)
-  * `message`: (String) commit message
-  * `encoding`: (atom) encoding (currently must be :utf8)
+  * `tree_id`: (string) SHA hash of tree structure
+  * `parent_ids`: (list of string) parents of this commit
+  * `author`: (`Xgit.Lib.PersonIdent`)
+  * `committer`: (`Xgit.Lib.PersonIdent`)
+  * `message`: (string) commit message
+  * `encoding`: (atom) encoding (currently must be `:utf8`)
   """
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{
+          tree_id: String.t(),
+          parent_ids: [String.t()] | nil,
+          author: Xgit.Lib.PersonIdent.t(),
+          committer: Xgit.Lib.PersonIdent.t(),
+          message: String.t() | nil,
+          encoding: :utf8
+        }
 
   @enforce_keys [:tree_id, :author, :committer]
 

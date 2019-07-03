@@ -66,7 +66,12 @@ defmodule Xgit.DirCache.DirCacheEntry do
   * `path`: (charlist) our encoded path name, from the root of the repository.
   * `in_core_flags`: (integer, bit flags) flags which are never stored to disk.
   """
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{
+          info: binary,
+          info_offset: non_neg_integer,
+          path: charlist,
+          in_core_flags: integer
+        }
 
   @enforce_keys [:info, :info_offset, :path, :in_core_flags]
   defstruct [:path, :in_core_flags, info: '', info_offset: 0]

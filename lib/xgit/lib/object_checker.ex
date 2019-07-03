@@ -97,6 +97,8 @@ defmodule Xgit.Lib.ObjectChecker do
 
   ## Struct Members
 
+  _(All members are optional.)_
+
   * `:strategy`: A struct for which `Xgit.Lib.ObjectChecker.Strategy` is implemented.
   * `:skiplist`: A `MapSet` of object IDs to ignore when checking.
   * `:ignore_error_types`: A map containing zero or more of the following values:
@@ -114,7 +116,14 @@ defmodule Xgit.Lib.ObjectChecker do
   * `:windows?`: (boolean) `true` to enforce Windows file naming conventions.
   * `:macosx?`: (boolean) `true` to enforce Mac OS X file naming conventions.
   """
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{
+          strategy: struct | nil,
+          skiplist: MapSet.t() | nil,
+          ignore_error_types: %{} | nil,
+          allow_invalid_person_ident?: boolean | nil,
+          windows?: boolean | nil,
+          macosx?: boolean | nil
+        }
 
   defstruct strategy: nil,
             skiplist: nil,

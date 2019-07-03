@@ -61,10 +61,10 @@ defmodule Xgit.Storage.File.FileBasedConfig do
 
   ## Struct Members
 
-  * `path`: Path to the config file.
+  * `path`: (string) Path to the config file.
   * `snapshot`: An `Xgit.Storage.File.FileSnapshot` for this path.
   """
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{path: String.t(), snapshot: Xgit.Storage.File.FileSnapshot.t()}
 
   @enforce_keys [:path, :snapshot]
   defstruct [:path, :snapshot]

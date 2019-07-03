@@ -56,10 +56,10 @@ defmodule Xgit.Lib.GitmoduleEntry do
 
   ## Struct Members
 
-  * `:tree_id`: (String)
-  * `:blob_id`: (String)
+  * `:tree_id`: (string)
+  * `:blob_id`: (string)
   """
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{tree_id: String.t(), blob_id: String.t()}
 
   @enforce_keys [:tree_id, :blob_id]
   defstruct [:tree_id, :blob_id]

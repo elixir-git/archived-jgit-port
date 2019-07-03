@@ -62,7 +62,7 @@ defmodule Xgit.Lib.FileMode do
   * `:object_type`: (integer) the file type (as an `obj_*` value from `Xgit.Lib.Constants`)
   * `:octal_bytes`: (charlist) `:mode_bits` rendered as an octal value
   """
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{mode_bits: non_neg_integer, object_type: 0..7, octal_bytes: charlist}
 
   @enforce_keys [:mode_bits, :object_type, :octal_bytes]
   defstruct [:mode_bits, :object_type, :octal_bytes]

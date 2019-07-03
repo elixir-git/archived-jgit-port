@@ -62,15 +62,23 @@ defmodule Xgit.Lib.ConfigLine do
 
   ## Struct Members
 
-  * `prefix`: The text content before entry.
-  * `section`: The section name for the entry.
-  * `subsection`: Subsection name.
-  * `name`: The key name.
-  * `value`: The value.
-  * `suffix`: The text content after entry.
-  * `included_from`: The source from which this line was included from.
+  * `prefix`: (optional, string) The text content before entry.
+  * `section`: (optional, string) The section name for the entry.
+  * `subsection`: (optional, string) Subsection name.
+  * `name`: (optional, string) The key name.
+  * `value`: (optional, string) The value.
+  * `suffix`: (optional, string) The text content after entry.
+  * `included_from`: (optional, string) The source from which this line was included from.
   """
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{
+          prefix: String.t() | nil,
+          section: String.t() | nil,
+          subsection: String.t() | nil,
+          name: String.t() | nil,
+          value: String.t() | nil,
+          suffix: String.t() | nil,
+          included_from: String.t() | nil
+        }
 
   defstruct [:prefix, :section, :subsection, :name, :value, :suffix, :included_from]
 

@@ -62,7 +62,8 @@ defmodule Xgit.RevWalk.RevObject do
     """
     alias Xgit.Lib.ObjectId
 
-    @type t :: struct
+    @typedoc "Any struct that implements `Xgit.RevWalk.RevObject.Object`."
+    @type t :: Xgit.RevWalk.RevObject.t
 
     @doc ~S"""
     Return the name (object ID) of this object.
@@ -106,13 +107,19 @@ defmodule Xgit.RevWalk.RevObject do
   defmodule Unparsed do
     @moduledoc ~S"""
     An object whose contents have not yet been parsed.
+    """
+
+    @typedoc ~S"""
+    Implements `Xgit.RevWalk.RevObject.Object` for an object that has not yet been parsed.
 
     ## Struct Members
 
     * `flags`: (`MapSet`) flags associated with this object
-    * `id`: (`String`) object ID
+    * `id`: (string) object ID
     * `type`: (integer) object type (one of `obj_*` constants from `Xgit.Lib.Constants`)
     """
+    @type t :: %__MODULE__{flags: MapSet.t(), id: String.t(), type: 0..7}
+
     @enforce_keys [:id, :type]
     defstruct [{:flags, MapSet.new()}, :id, :type]
 

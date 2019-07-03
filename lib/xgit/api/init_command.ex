@@ -49,8 +49,6 @@ defmodule Xgit.Api.InitCommand do
   Creates an empty git repository or reinitalizes an existing one.
   """
 
-  defstruct dir: nil, git_dir: nil, bare?: false
-
   @typedoc ~S"""
   Describes the operation to be performed.
 
@@ -62,7 +60,9 @@ defmodule Xgit.Api.InitCommand do
   * `:bare?`(optional, boolean): Set to `true` if the repository should be bare (i.e. have
     no working directory)
   """
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{dir: String.t() | nil, git_dir: String.t() | nil, bare?: boolean | nil}
+
+  defstruct dir: nil, git_dir: nil, bare?: false
 
   alias Xgit.Lib.Constants
   alias Xgit.Lib.ObjectDatabase
