@@ -44,7 +44,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-defmodule Xgit.Internal.Storage.File.FileSnapshot do
+defmodule Xgit.Storage.File.FileSnapshot do
   @moduledoc false
   # *INTERNAL:* Caches when a file was last read, making it possible to detect future edits.
   #
@@ -74,7 +74,7 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
   defstruct [:last_modified, :ref]
 
   @doc ~S"""
-  An `Xgit.Internal.Storage.File.FileSnapshot` that is considered to always be modified.
+  An `Xgit.Storage.File.FileSnapshot` that is considered to always be modified.
 
   This instance is useful for application code that wants to lazily read a
   file, but only after `modified?/2` gets invoked. This snapshot instance
@@ -84,7 +84,7 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
   def dirty, do: %__MODULE__{last_modified: :dirty, ref: nil}
 
   @doc ~S"""
-  An `Xgit.Internal.Storage.File.FileSnapshot` that is clean if the file does not exist.
+  An `Xgit.Storage.File.FileSnapshot` that is clean if the file does not exist.
 
   This instance is useful if the application wants to consider a missing
   file to be clean. `modified?/2` will return `false` if the file path
@@ -200,7 +200,7 @@ defmodule Xgit.Internal.Storage.File.FileSnapshot do
     do: ConCache.put(:xgit_file_snapshot, ref, time)
 
   defimpl String.Chars do
-    alias Xgit.Internal.Storage.File.FileSnapshot
+    alias Xgit.Storage.File.FileSnapshot
 
     def to_string(%FileSnapshot{last_modified: :dirty}), do: "DIRTY"
 

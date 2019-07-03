@@ -62,8 +62,8 @@ defmodule Xgit.DirCache do
   use GenServer
 
   # alias Xgit.Errors.IndexReadError
-  # alias Xgit.Internal.Storage.File.FileSnapshot
   alias Xgit.Lib.Repository
+  # alias Xgit.Storage.File.FileSnapshot
   alias Xgit.Util.GenServerUtils
 
   # TO DO: Finish porting this module. https://github.com/elixir-git/xgit/issues/164

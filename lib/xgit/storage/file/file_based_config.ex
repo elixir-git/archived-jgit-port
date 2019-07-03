@@ -62,15 +62,15 @@ defmodule Xgit.Storage.File.FileBasedConfig do
   ## Struct Members
 
   * `path`: Path to the config file.
-  * `snapshot`: An `Xgit.Internal.Storage.File.FileSnapshot` for this path.
+  * `snapshot`: An `Xgit.Storage.File.FileSnapshot` for this path.
   """
   @type t :: %__MODULE__{}
 
   @enforce_keys [:path, :snapshot]
   defstruct [:path, :snapshot]
 
-  alias Xgit.Internal.Storage.File.FileSnapshot
   alias Xgit.Lib.Config
+  alias Xgit.Storage.File.FileSnapshot
 
   @doc ~S"""
   Create a configuration for a file path with no default fallback.
