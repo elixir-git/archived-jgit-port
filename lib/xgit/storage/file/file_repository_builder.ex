@@ -46,26 +46,53 @@
 
 defmodule Xgit.Storage.File.FileRepositoryBuilder do
   @moduledoc ~S"""
-  A module for finding and/or creating file-based repositories.
+  A specification for finding and/or creating a file-based repository.
 
-  Struct members:
-  * `git_dir`: The `.git` directory storing the repository metadata.
-  * `object_dir`: The directory storing the repository's objects.
-  * `alternate_object_directories`: List of alternate object directories to search.
-  * `bare?`: True only if the caller wants to force bare behavior.
-  * `must_exist?`: True if the caller requires the repository to exist.
-  * `work_tree`: The top level directory of the working files.
-  * `index_file`: The local index file that is caching checked out file status.
-  * `ceiling_directories`: A list of directories limiting the search for a git repository.
+  A typical invocation will look like this:
 
-  PORTING NOTE: Unlike the jgit implementation, this version has no setters or getters
+  ```
+  {:ok, repo} =
+    %Xgit.Storage.File.FileRepositoryBuilder{git_dir: git_dir}
+    |> Xgit.Storage.File.FileRepositoryBuilder.setup!()
+    |> Xgit.Storage.File.FileRepository.start_link()
+  ```
+  """
+
+  @typedoc ~S"""
+  Specification for a file-based repository.
+
+  ## Struct Members
+
+  All members are initially optional, but must be populated before
+  `Xgit.Storage.File.FileRepository.start_link/2` is invoked. Typically this
+  is accomplished by using `setup!/1`.
+
+  * `git_dir`: (string) The `.git` directory storing the repository metadata.
+  * `object_dir`: (string) The directory storing the repository's objects.
+  * `alternate_object_directories`: (list of string) List of alternate object directories to search.
+  * `bare?`: (boolean) `true` only if the caller wants to force bare behavior.
+  * `must_exist?`: (boolean) `true` if the caller requires the repository to exist.
+  * `work_tree`: (string) The top level directory of the working files.
+  * `index_file`: (string) The local index file that is caching checked out file status.
+  * `ceiling_directories`: (list of string) A list of directories limiting the search for a git repository.
+
+  _PORTING NOTE:_ Unlike the jgit implementation, this version has no setters or getters
   for the configuration options. Set up the struct directly and then call the
   functions on this module to set up the repository.
 
-  PORTING NOTE: Unlike the jgit implementation, we do not have a polymorphic mechanism
+  _PORTING NOTE:_ Unlike the jgit implementation, we do not have a polymorphic mechanism
   for repository builders. Implementations that use other storage mechanisms should
   be built independently.
   """
+  @type t :: %__MODULE__{
+          git_dir: String.t() | nil,
+          object_dir: String.t() | nil,
+          alternate_object_directories: [String.t()] | nil,
+          bare?: boolean | nil,
+          must_exist?: boolean | nil,
+          index_file: String.t() | nil,
+          ceiling_directories: [String.t()] | nil
+        }
 
   defstruct git_dir: nil,
             object_dir: nil,
@@ -90,7 +117,9 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   `GIT_DIR` and `GIT_WORK_TREE` to configure this builder struct. If a property
   is already set in the struct, the environment variable is not used.
 
-  Returns an updated copy of the builder struct.
+  ## Return Value
+
+  A copy of the builder struct with any updates from environment variables applied.
   """
   def read_environment(%__MODULE__{} = builder, system_reader \\ nil) do
     builder
@@ -165,21 +194,20 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   entries to `ceiling_directories`, or inheriting the list through a prior call
   to `read_environment/2`.
 
-  Returns an updated builder struct with `:git_dir` populated if successful.
+  ## Return Value
+
+  Returns a copy of the builder struct with `:git_dir` populated if successful.
   """
-  def find_git_dir(builder, current \\ nil)
+  def find_git_dir(builder, current)
 
   def find_git_dir(%__MODULE__{git_dir: dir} = builder, _current) when is_binary(dir),
     do: builder
 
-  def find_git_dir(%__MODULE__{git_dir: nil} = _builder, nil) do
-    raise "FileRepositoryBuilder: git_dir must be explicitly specified"
-  end
-
   def find_git_dir(
         %__MODULE__{git_dir: nil, ceiling_directories: ceiling_directories} = builder,
         current
-      ) do
+      )
+      when is_binary(current) do
     maybe_git_dir = Path.join(current, Constants.dot_git())
     parent = Path.dirname(current)
 
@@ -210,6 +238,10 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
   If an option was not set, the setup method will try to default the option
   based on other options. If insufficient information is available, an
   exception is thrown to the caller.
+
+  ## Return Value
+
+  Returns a copy of the builder struct with all members populated if successful.
   """
   def setup!(%__MODULE__{} = builder) do
     builder
