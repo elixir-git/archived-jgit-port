@@ -2137,6 +2137,8 @@ defmodule Xgit.Lib.Repository do
       alias Xgit.Errors.NoWorkTreeError
       alias Xgit.Lib.Repository
 
+      @behaviour Repository
+
       def handle_git_dir(state), do: {:ok, nil, state}
       def handle_bare?(state), do: {:ok, true, state}
       def handle_work_tree(state), do: {:ok, nil, state}

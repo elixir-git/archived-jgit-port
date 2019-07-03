@@ -88,5 +88,7 @@ defmodule Xgit.Lib.RepositoryTest do
 
     def start_link, do: Repository.start_link(__MODULE__, nil, [])
     def init(_), do: {:ok, nil}
+    def handle_config(_), do: {:ok, nil, nil}
+    def handle_create(_, _opts), do: {:ok, nil}
   end
 end
