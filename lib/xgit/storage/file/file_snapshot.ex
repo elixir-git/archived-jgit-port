@@ -45,20 +45,21 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 defmodule Xgit.Storage.File.FileSnapshot do
-  @moduledoc false
-  # *INTERNAL:* Caches when a file was last read, making it possible to detect future edits.
-  #
-  # This object tracks the last modified time of a file. Later during an
-  # invocation of `modified?/2` the object will return `true` if the file may have
-  # been modified and should be re-read from disk.
-  #
-  # A snapshot does not "live update" when the underlying filesystem changes.
-  # Callers must poll for updates by periodically invoking `modified?/2`.
-  #
-  # To work around the "racy git" problem (where a file may be modified multiple
-  # times within the granularity of the filesystem modification clock) this class
-  # may return `true` from `modified?/2` if the last modification time of the
-  # file is less than 3 seconds ago.
+  @moduledoc ~S"""
+  Caches when a file was last read, making it possible to detect future edits.
+
+  This object tracks the last modified time of a file. Later during an
+  invocation of `modified?/2` the object will return `true` if the file may have
+  been modified and should be re-read from disk.
+
+  A snapshot does not "live update" when the underlying filesystem changes.
+  Callers must poll for updates by periodically invoking `modified?/2`.
+
+  To work around the "racy git" problem (where a file may be modified multiple
+  times within the granularity of the filesystem modification clock) this class
+  may return `true` from `modified?/2` if the last modification time of the
+  file is less than 3 seconds ago.
+  """
 
   @typedoc ~S"""
   Cache for when a file was last saved.
@@ -66,9 +67,9 @@ defmodule Xgit.Storage.File.FileSnapshot do
   ## Struct Members
 
   * `last_modified`: Last observed modification time of the path.
-  * `last_read`: When was the modification time last read?
+  * `ref`: Reference into a cache for when this file was last read.
   """
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{last_modified: integer, ref: reference}
 
   @enforce_keys [:last_modified, :ref]
   defstruct [:last_modified, :ref]
@@ -96,7 +97,7 @@ defmodule Xgit.Storage.File.FileSnapshot do
   @doc ~S"""
   Record a snapshot for a specific file path.
 
-  This method should be invoked before the file is accessed.
+  This function should be invoked before the file is accessed.
   """
   @spec save(path :: String.t()) :: t
   def save(path) when is_binary(path) do
@@ -128,7 +129,7 @@ defmodule Xgit.Storage.File.FileSnapshot do
   the content is identical, it can use to make a future call to `modified?/2`
   return `false`.
 
-  The logic goes something like this:
+  A typical invocation looks something like this:
 
   ```
   new_snapshot =
