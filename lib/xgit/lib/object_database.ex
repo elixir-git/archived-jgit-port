@@ -653,6 +653,21 @@ defmodule Xgit.Lib.ObjectDatabase do
     {:reply, dir, {mod, mod_state}}
   end
 
+  @doc ~S"""
+  Respond to any messages that may not be handled by `ObjectDatabase`'s
+  `handle_call/3` function.
+
+  See `c:GenServer.handle_call/3`.
+  """
+  @callback handle_extra_call(message :: term, from :: pid, state :: term) ::
+              {:reply, reply, new_state}
+              | {:reply, reply, new_state, timeout() | :hibernate | {:continue, term()}}
+              | {:noreply, new_state}
+              | {:noreply, new_state, timeout() | :hibernate | {:continue, term()}}
+              | {:stop, reason, reply, new_state}
+              | {:stop, reason, new_state}
+            when reply: term(), new_state: term(), reason: term()
+
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
       use GenServer, opts

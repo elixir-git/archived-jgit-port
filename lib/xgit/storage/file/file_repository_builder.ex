@@ -245,7 +245,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
 
   Returns a copy of the builder struct with all members populated if successful.
   """
-  @spec setup!(builder || t) :: t
+  @spec setup!(builder :: t) :: t
   def setup!(%__MODULE__{} = builder) do
     builder
     |> require_git_dir_or_work_tree!()

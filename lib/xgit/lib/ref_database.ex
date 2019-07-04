@@ -55,6 +55,8 @@ defmodule Xgit.Lib.RefDatabase do
 
   require Logger
 
+  use GenServer
+
   @type t :: pid
 
   @doc """
@@ -643,6 +645,8 @@ defmodule Xgit.Lib.RefDatabase do
     quote location: :keep, bind_quoted: [opts: opts] do
       use GenServer, opts
       alias Xgit.Lib.RefDatabase
+
+      @behaviour RefDatabase
     end
   end
 end

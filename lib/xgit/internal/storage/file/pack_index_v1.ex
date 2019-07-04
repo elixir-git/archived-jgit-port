@@ -50,12 +50,12 @@
 defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   @moduledoc false
 
-  @type t(%__MODULE__{
+  @type t :: %__MODULE__{
           idx_header: tuple,
           idx_data: [[byte]],
           object_count: non_neg_integer,
           pack_checksum: [byte]
-        })
+        }
 
   @enforce_keys [:idx_header, :idx_data, :object_count, :pack_checksum]
   defstruct [:idx_header, :idx_data, :object_count, :pack_checksum]

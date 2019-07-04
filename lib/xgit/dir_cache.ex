@@ -395,7 +395,7 @@ defmodule Xgit.DirCache do
   def read!(dir_cache) when is_pid(dir_cache),
     do: GenServerUtils.call!(dir_cache, :read)
 
-  @impl true
+  @spec handle_read(state :: term) :: {:ok, term}
   def handle_read(%{live_file: nil}) do
     raise ArgumentError, "DirCache does not have a backing file"
   end

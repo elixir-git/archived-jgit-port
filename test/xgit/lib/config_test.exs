@@ -97,7 +97,7 @@ defmodule Xgit.Lib.ConfigTest do
       |> Config.set_string("sec", "ext", "name", "value")
       |> Config.set_string("sec", "ext", "name2", "value2")
 
-    assert Config.to_text(c) == ~s("[sec "ext"]\n\tname = value\n\tname2 = value2\n)
+    assert Config.to_text(c) == ~s([sec "ext"]\n\tname = value\n\tname2 = value2\n)
   end
 
   test "put+get simple" do
@@ -1258,7 +1258,7 @@ defmodule Xgit.Lib.ConfigTest do
     assert_subsection_round_trip("x y", "\"x y\"")
     assert_subsection_round_trip("x  y", "\"x  y\"")
     assert_subsection_round_trip("x\\y", "\"x\\\\y\"")
-    assert_subsection_round_trip("x\"y", ~s("x\"y"))
+    assert_subsection_round_trip("x\"y", ~s("x\\"y"))
 
     # Unlike for values, \b and \t are not escaped.
     assert_subsection_round_trip("x\by", "\"x\by\"")
