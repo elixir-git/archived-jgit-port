@@ -49,10 +49,25 @@
 defmodule Xgit.Lib.PersonIdent do
   @moduledoc ~S"""
   A combination of a person identity and time in git.
-
-  Git combines Name + email + time + time zone to specify who wrote or
-  committed something.
   """
+
+  @typedoc ~S"""
+  The tuple of name, email, time, and time zone that specifies who wrote or
+  committed something.
+
+  ## Struct Members
+
+  * `:name`: (string) human-readable name of the author or committer
+  * `:email`: (string) e-mail address for this person
+  * `:when`: (integer) time in the Unix epoch in milliseconds
+  * `:tz_offset`: (integer) time zone offset from GMT in minutes
+  """
+  @type t :: %__MODULE__{
+          name: String.t(),
+          email: String.t(),
+          when: integer,
+          tz_offset: Xgit.Lib.Constants.tz_offset()
+        }
 
   @enforce_keys [:name, :email, :when, :tz_offset]
   defstruct [:name, :email, :when, :tz_offset]
@@ -63,6 +78,7 @@ defmodule Xgit.Lib.PersonIdent do
   Trims whitespace from both ends and special characters `\n < >` that
   interfere with parsing; appends all other characters to the output.
   """
+  @spec sanitized(s :: String.t()) :: String.t()
   def sanitized(s) when is_binary(s) do
     s
     |> String.trim()
@@ -72,6 +88,7 @@ defmodule Xgit.Lib.PersonIdent do
   @doc ~S"""
   Formats a timezone offset.
   """
+  @spec format_timezone(offset :: Xgit.Lib.Constants.tz_offset()) :: String.t()
   def format_timezone(offset) when is_integer(offset) do
     sign =
       if offset < 0,
@@ -102,6 +119,9 @@ defmodule Xgit.Lib.PersonIdent do
   @doc ~S"""
   Formats the person identity for git storage.
   """
+  @spec to_external_string(person_ident :: t) :: String.t()
+  def to_external_string(person_ident)
+
   def to_external_string(%__MODULE__{name: name, email: email, when: whxn, tz_offset: tz_offset})
       when is_binary(name) and is_binary(email) and is_integer(whxn) and is_integer(tz_offset) do
     "#{sanitized(name)} <#{sanitized(email)}> #{div(whxn, 1000)} #{format_timezone(tz_offset)}"

@@ -101,27 +101,31 @@ defmodule Xgit.Lib.Repository do
   # private final File indexFile;
 
   @doc """
-  Starts a `Repository` process based on settings derived in a `RepositoryBuilder`
-  struct.
+  Starts a `Repository` process linked to the current process.
 
-  This should be called by the `start_link` function for a specific implementation
-  module.
+  This should be typically called by the `start_link` function for a specific
+  implementation module.
 
-  Once the server is started, the `init/1` function of the given `module` is
-  called with `args` as its arguments to initialize the stage. To ensure a
-  synchronized start-up procedure, this function does not return until `init/1`
-  has returned.
+  ## Parameters
 
-  The lifetime of this process is similar to that for `GenServer` or `GenStage`
-  processes.
+  `module` is the name of a module that implements the callbacks defined in this module.
+
+  `init_arg` is passed to the `init/1` function of `module`.
+
+  `options` are passed to `GenServer.start_link/3`.
+
+  ## Return Value
+
+  See `GenServer.start_link/3`.
   """
-  @spec start_link(module, term, GenServer.options()) :: GenServer.on_start()
-  def start_link(module, args, options) when is_atom(module) and is_list(options),
-    do: GenServer.start_link(__MODULE__, {module, args}, options)
+  @spec start_link(module :: module, init_arg :: term, GenServer.options()) ::
+          GenServer.on_start()
+  def start_link(module, init_arg, options) when is_atom(module) and is_list(options),
+    do: GenServer.start_link(__MODULE__, {module, init_arg}, options)
 
   @doc false
-  def init({mod, args}) do
-    case mod.init(args) do
+  def init({mod, mod_init_arg}) do
+    case mod.init(mod_init_arg) do
       {:ok, state} -> {:ok, {mod, state}}
       {:stop, reason} -> {:stop, reason}
     end
@@ -130,6 +134,7 @@ defmodule Xgit.Lib.Repository do
   @doc ~S"""
   Returns `true` if the argument is a PID representing a valid `Repository` process.
   """
+  @spec valid?(repository :: term) :: boolean
   def valid?(repository) when is_pid(repository),
     do:
       Process.alive?(repository) &&
@@ -163,36 +168,51 @@ defmodule Xgit.Lib.Repository do
   # }
 
   @doc ~S"""
-  Creates a new git repository; raises if unable to complete.
+  Creates a new git repository.
 
-  Options (`opts`) are:
-  * `bare?`: If `true`, a bare repository (without a working tree) is created.
+  ## Options
 
-  Returns `repository` for function chaining; raises an error if not.
+  * `bare?`: (boolean) If `true`, a bare repository (without a working tree) is created.
+
+  ## Return Value
+
+  Returns `repository` for function chaining.
+
+  ## Error
+
+  Will raise an error if unable to create the repository. What error will depend
+  on the specific implementatino module.
   """
   @spec create!(repository :: t, opts :: Keyword.t()) :: t
   def create!(repository, opts \\ []) when is_pid(repository) and is_list(opts),
     do: GenServerUtils.call!(repository, {:create, opts})
 
   @doc ~S"""
-  Invoked when `create/2` is called on this repository.
+  Invoked when `create!/2` is called on this repository.
 
   Should initialize a new repository at this location.
 
-  May raise `File.Error` or similar if the repository could not be created.
+  ## Return Value
 
   Should return `:ok`.
+
+  ## Error
+
+  May raise `File.Error` or similar if the repository could not be created.
   """
   @callback handle_create(state :: term, opts :: Keyword.t()) ::
               {:ok, state :: term} | {:error, reason :: term}
 
   @doc ~S"""
-  Get local metadata directory.
+  Get local metadata directory.  This is typically the `.git` directory in a local repository.
 
-  This is typically the `.git` directory in a local repository.
+  ## Return Value
 
-  Will return `nil` if the repository isn't local.
+  The full path to the local metadata directory, if there is one.
+
+  Returns `nil` if the repository isn't local.
   """
+  @spec git_dir!(repository :: t) :: String.t() | nil
   def git_dir!(repository) when is_pid(repository),
     do: GenServerUtils.call!(repository, :git_dir)
 
@@ -205,12 +225,18 @@ defmodule Xgit.Lib.Repository do
 
   @doc ~S"""
   Get the object database which stores this repository's data.
+
+  ## Return Value
+
+  PID for the object database process. Use `Xgit.Lib.ObjectDatabase` to interact
+  with this process.
   """
+  @spec object_database!(repository :: t) :: Xgit.Lib.ObjectDatabase.t()
   def object_database!(repository) when is_pid(repository),
     do: GenServerUtils.call!(repository, :object_database)
 
   @doc ~S"""
-  Invoked when `object_database/1` is called on this repository.
+  Invoked when `object_database!/1` is called on this repository.
 
   Must return the PID for the object database or raise if unable.
   """
@@ -246,16 +272,21 @@ defmodule Xgit.Lib.Repository do
 
   @doc ~S"""
   Get the configuration of this repository.
+
+  ## Return Value
+
+  An `Xgit.Lib.Config` struct.
   """
+  @spec config!(repository :: t) :: Xgit.Lib.Config.t()
   def config!(repository) when is_pid(repository),
     do: GenServerUtils.call!(repository, :config)
 
   @doc ~S"""
   Invoked when `config!/1` is called on this repository.
 
-  Should return the `Config` instance for this repository.
+  Should return the `Xgit.Lib.Config` instance for this repository.
   """
-  @callback handle_config(state :: term) :: String.t() | nil
+  @callback handle_config(state :: term) :: Xgit.Lib.Config.t() | nil
 
   # /**
   #  * Create a new {@link org.eclipse.jgit.attributes.AttributesNodeProvider}.
@@ -1149,16 +1180,16 @@ defmodule Xgit.Lib.Repository do
   Will return `nil` if there is no working tree (i.e. the repository is bare or
   there is no local representation of the repository).
   """
+  @spec index_file!(repository :: t) :: String.t() | nil
   def index_file!(repository) when is_pid(repository),
     do: GenServerUtils.call!(repository, :index_file)
 
   @doc ~S"""
   Invoked when `index_file!/1` is called on this repository.
 
-  Should return the path to the index file if applicable, or raise
-  `NoWorkTreeError` if not.
+  Should return the path to the index file if applicable or `nil` if not.
   """
-  @callback handle_index_file(state :: term) :: String.t()
+  @callback handle_index_file(state :: term) :: String.t() | nil
 
   # /**
   #  * Locate a reference to a commit and immediately parse its content.
@@ -1194,18 +1225,25 @@ defmodule Xgit.Lib.Repository do
   failures are reported as exceptions and therefore prevent the method from
   returning a partially-populated index.
 
-  Returns a `DirCache` struct representing the contents of the specified index
-  file (if it exists) or an empty cache if the file does not exist.
+  ## Return Value
 
-  Raises `NoWorkTreeException` if this is bare, which implies it has no working directory.
+  Returns the PID for an `Xgit.DirCache` process that represents the contents
+  of the specified index file (if it exists) or an empty cache if the file does
+  not exist.
 
-  Raises `IOException` if the index file is present but could not be read.
+  ## Errors
 
-  Raises `CorruptObjectException` if the index file is using a format or extension
-  that this library does not support.
+  Raises `Xgit.Errors.NoWorkTreeError` if this is bare, which implies it has no
+  working directory.
+
+  Raises `File.Error` if the index file is present but could not be read.
+
+  Raises `Xgit.Errors.CorruptObjectError` if the index file is using a format
+  or extension that this library does not support.
   """
-  def read_dir_cache(repository) when is_pid(repository),
-    do: DirCache.from_repository(repository)
+  @spec read_dir_cache!(repository :: t) :: Xgit.DirCache.t()
+  def read_dir_cache!(repository) when is_pid(repository),
+    do: DirCache.from_repository!(repository)
 
   # /**
   #  * Create a new in-core index representation, lock it, and read from disk.
@@ -1512,6 +1550,7 @@ defmodule Xgit.Lib.Repository do
   @doc ~S"""
   Return `true` if this repository is bare (i.e. has no working directory).
   """
+  @spec bare?(repository :: t) :: boolean
   def bare?(repository) when is_pid(repository),
     do: GenServerUtils.call!(repository, :bare?)
 
@@ -1530,6 +1569,7 @@ defmodule Xgit.Lib.Repository do
   Will return `nil` if there is no working tree (i.e. the repository is bare or
   there is no local representation of the repository).
   """
+  @spec work_tree!(repository :: t) :: String.t() | nil
   def work_tree!(repository) when is_pid(repository),
     do: GenServerUtils.call!(repository, :work_tree)
 
@@ -2061,6 +2101,7 @@ defmodule Xgit.Lib.Repository do
   #   // default does nothing
   # }
 
+  @doc false
   def handle_call(:valid_repository?, _from, state), do: {:reply, :valid_repository, state}
 
   def handle_call({:create, opts}, _from, {mod, mod_state}) when is_list(opts),
@@ -2095,6 +2136,8 @@ defmodule Xgit.Lib.Repository do
 
       alias Xgit.Errors.NoWorkTreeError
       alias Xgit.Lib.Repository
+
+      @behaviour Repository
 
       def handle_git_dir(state), do: {:ok, nil, state}
       def handle_bare?(state), do: {:ok, true, state}

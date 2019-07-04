@@ -56,16 +56,16 @@ defmodule Xgit.Lib.Config do
   @moduledoc ~S"""
   Git-style `.config`, `.gitconfig`, `.gitmodules` file.
 
-  INCOMPLETE IMPLEMENTATION: The following features have not yet been ported from jgit:
+  _INCOMPLETE IMPLEMENTATION:_ The following features have not yet been ported from jgit:
 
   * parsing time units
   * change notification
   * include file support
   * a few edge cases
 
-  TO DO: https://github.com/elixir-git/xgit/issues/129
+  _TO DO:_ https://github.com/elixir-git/xgit/issues/129
 
-  PORTING NOTE: Xgit does not have explicit enum support, unlike jgit. There is very
+  _PORTING NOTE:_ Xgit does not have explicit enum support, unlike jgit. There is very
   little about the various `ConfigEnum` implementations that is sharable, so it did
   not seem worth it to port that mechanism. Xgit instead stores the enum values
   directly as strings. Some one-off modules may provide additional support for
@@ -74,7 +74,10 @@ defmodule Xgit.Lib.Config do
   @enforce_keys [:config_pid]
   defstruct [:config_pid, :storage]
 
-  @type t :: %__MODULE__{}
+  @typedoc ~S"""
+  Represents a config file.
+  """
+  @opaque t :: %__MODULE__{}
 
   use GenServer
 
@@ -94,11 +97,13 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Create a configuration with no default fallback.
 
-  Options:
-  * `base_config`: A base configuration to be consulted when a key is
-    missing from this configuration instance.
-  * `storage`: Ties this configuration to a storage approach.
+  ## Options
+
+  * `base_config`: (`Xgit.Lib.Config`) A base configuration to be consulted when
+    a key is missing from this configuration instance.
+  * `storage`: (`Xgit.Lib.Config.Storage`) Ties this configuration to a storage approach.
   """
+  @spec new(options :: Keyword.t()) :: t
   def new(options \\ []) when is_list(options) do
     base_config =
       case Keyword.get(options, :base_config, nil) do
@@ -120,6 +125,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Escape the value before saving.
   """
+  @spec escape_value(String.t()) :: String.t()
   def escape_value(""), do: ""
 
   def escape_value(s) when is_binary(s) do
@@ -185,6 +191,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Escape a subsection name before saving.
   """
+  @spec escape_subsection(String.t()) :: String.t()
   def escape_subsection(""), do: "\"\""
 
   def escape_subsection(x) when is_binary(x) do
@@ -220,6 +227,13 @@ defmodule Xgit.Lib.Config do
 
   If no value was present, returns `default`.
   """
+  @spec get_int(
+          config :: t,
+          section :: String.t(),
+          subection :: String.t() | nil,
+          name :: String.t(),
+          default :: integer
+        ) :: integer
   def get_int(config, section, subsection \\ nil, name, default)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_integer(default) do
@@ -266,9 +280,18 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Get a boolean value from the git config.
 
-  Returns `true` if any value or `default` if `true`; `false` for missing or
-  an explicit `false`.
+  ## Return Value
+
+  * `true` if any value other than `false` is present, or if `default` is `true`
+  * `false` if missing or there is an explicit `false` in the config
   """
+  @spec get_boolean(
+          config :: t,
+          section :: String.t(),
+          subsection :: String.t() | nil,
+          name :: String.t(),
+          default :: boolean
+        ) :: boolean
   def get_boolean(config, section, subsection \\ nil, name, default)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_boolean(default) do
@@ -292,6 +315,12 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Get a single string value from the git config (or `nil` if not found).
   """
+  @spec get_string(
+          config :: t,
+          section :: String.t(),
+          subsection :: String.t() | nil,
+          name :: String.t()
+        ) :: String.t() | nil
   def get_string(config, section, subsection \\ nil, name)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
@@ -314,6 +343,12 @@ defmodule Xgit.Lib.Config do
   If this instance was created with a base, the base's values (if any) are
   returned first.
   """
+  @spec get_string_list(
+          config :: t,
+          section :: String.t(),
+          subsection :: String.t() | nil,
+          name :: String.t()
+        ) :: [String.t()]
   def get_string_list(config, section, subsection \\ nil, name)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) do
@@ -371,11 +406,9 @@ defmodule Xgit.Lib.Config do
   Get set of all subsections of specified section within this configuration
   and its base configuration.
   """
+  @spec subsections(config :: t, section :: String.t()) :: [String.t()]
   def subsections(config, section) when is_binary(section),
     do: config |> config_pid() |> GenServer.call({:subsections, section})
-
-  # IMPORTANT: subsections_impl/2 runs in GenServer process.
-  # See handle_call/3 below.
 
   defp subsections_impl(config_lines, section) do
     config_lines
@@ -387,12 +420,10 @@ defmodule Xgit.Lib.Config do
   end
 
   @doc ~S"""
-  Get the sections defined in this `Config`.
+  Get the sections defined in this config.
   """
+  @spec sections(config :: t) :: [String.t()]
   def sections(config), do: config |> config_pid() |> GenServer.call(:sections)
-
-  # IMPORTANT: sections_impl/1 runs in GenServer process.
-  # See handle_call/3 below.
 
   defp sections_impl(config_lines) do
     config_lines
@@ -406,15 +437,16 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Get the list of names defined for this section.
 
-  Options:
-  * `recursive`: Include matching names from base config.
+  ## Options
+
+  * `recursive?`: (boolean) `true` to include matching names from base config.
   """
+  @spec names_in_section(config :: t, section :: String.t(), options :: Keyword.t()) :: [
+          String.t()
+        ]
   def names_in_section(config, section, options \\ [])
       when is_binary(section) and is_list(options),
       do: config |> config_pid() |> GenServer.call({:names_in_section, section, options})
-
-  # IMPORTANT: names_in_section_impl/4 runs in GenServer process.
-  # See handle_call/3 below.
 
   defp names_in_section_impl(config_lines, section, base_config, options) do
     config_lines
@@ -422,32 +454,36 @@ defmodule Xgit.Lib.Config do
     |> Enum.reject(&(&1.name == nil))
     |> Enum.map(&String.downcase(&1.name))
     |> Enum.dedup()
-    |> names_in_section_recurse(section, base_config, Keyword.get(options, :recursive, false))
+    |> names_in_section_recurse(section, base_config, Keyword.get(options, :recursive?, false))
 
     # TBD: Dedup globally?
   end
 
   defp names_in_section_recurse(names, _section, _base_config, false), do: names
-  defp names_in_section_recurse(names, _section, nil, _recursive), do: names
+  defp names_in_section_recurse(names, _section, nil, _recursive?), do: names
 
-  defp names_in_section_recurse(names, section, base_config, _recursive),
-    do: names ++ names_in_section(base_config, section, recursive: true)
+  defp names_in_section_recurse(names, section, base_config, _recursive?),
+    do: names ++ names_in_section(base_config, section, recursive?: true)
 
   @doc ~S"""
   Get the list of names defined for this subsection.
 
-  Options:
-  * `recursive`: Include matching names from base config.
+  ## Options
+
+  * `recursive?`: (boolean) `true` to include matching names from base config.
   """
+  @spec names_in_subsection(
+          config :: t,
+          section :: String.t(),
+          subsection :: String.t(),
+          options :: Keyword.t()
+        ) :: [String.t()]
   def names_in_subsection(config, section, subsection, options \\ [])
       when is_binary(section) and is_binary(subsection) and is_list(options),
       do:
         config
         |> config_pid()
         |> GenServer.call({:names_in_subsection, section, subsection, options})
-
-  # IMPORTANT: names_in_subsection_impl/5 runs in GenServer process.
-  # See handle_call/3 below.
 
   defp names_in_subsection_impl(config_lines, section, subsection, base_config, options) do
     config_lines
@@ -459,17 +495,17 @@ defmodule Xgit.Lib.Config do
       section,
       subsection,
       base_config,
-      Keyword.get(options, :recursive, false)
+      Keyword.get(options, :recursive?, false)
     )
 
     # TBD: Dedup globally?
   end
 
   defp names_in_subsection_recurse(names, _section, _subsection, _base_config, false), do: names
-  defp names_in_subsection_recurse(names, _section, _subsection, nil, _recursive), do: names
+  defp names_in_subsection_recurse(names, _section, _subsection, nil, _recursive?), do: names
 
-  defp names_in_subsection_recurse(names, section, subsection, base_config, _recursive),
-    do: names ++ names_in_subsection(base_config, section, subsection, recursive: true)
+  defp names_in_subsection_recurse(names, section, subsection, base_config, _recursive?),
+    do: names ++ names_in_subsection(base_config, section, subsection, recursive?: true)
 
   # /**
   #  * Obtain a handle to a parsed set of configuration values.
@@ -590,6 +626,13 @@ defmodule Xgit.Lib.Config do
     name = value
   ```
   """
+  @spec set_int(
+          config :: t,
+          section :: String.t(),
+          subsectin :: String.t() | nil,
+          name :: String.t(),
+          value :: integer
+        ) :: t
   def set_int(config, section, subsection \\ nil, name, value)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_integer(value) do
@@ -602,7 +645,7 @@ defmodule Xgit.Lib.Config do
     config
   end
 
-  def to_string_with_units(value) do
+  defp to_string_with_units(value) do
     cond do
       value >= @gib and rem(value, @gib) == 0 -> "#{div(value, @gib)}g"
       value >= @mib and rem(value, @mib) == 0 -> "#{div(value, @mib)}m"
@@ -620,6 +663,13 @@ defmodule Xgit.Lib.Config do
     name = value
   ```
   """
+  @spec set_boolean(
+          config :: t,
+          section :: String.t(),
+          subsection :: String.t() | nil,
+          name :: String.t(),
+          value :: boolean
+        ) :: t
   def set_boolean(config, section, subsection \\ nil, name, value)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_boolean(value) do
@@ -641,6 +691,13 @@ defmodule Xgit.Lib.Config do
     name = value
   ```
   """
+  @spec set_string(
+          config :: t,
+          section :: String.t(),
+          subsection :: String.t() | nil,
+          name :: String.t(),
+          value :: String.t()
+        ) :: t
   def set_string(config, section, subsection \\ nil, name, value)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_binary(value) do
@@ -670,6 +727,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Remove all configuration values under a single section.
   """
+  @spec unset_section(config :: t, section :: String.t(), subsection :: String.t() | nil) :: t
   def unset_section(config, section, subsection \\ nil)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) do
     config
@@ -678,9 +736,6 @@ defmodule Xgit.Lib.Config do
 
     config
   end
-
-  # IMPORTANT: unset_section_impl/5 runs in GenServer process.
-  # See handle_call/3 below.
 
   defp unset_section_impl(%__MODULE__.State{config_lines: config_lines}, section, subsection),
     do: Enum.reject(config_lines, &ConfigLine.match_section?(&1, section, subsection))
@@ -697,6 +752,13 @@ defmodule Xgit.Lib.Config do
     name = value2
   ```
   """
+  @spec set_string_list(
+          config :: t,
+          section :: String.t(),
+          subsection :: String.t() | nil,
+          name :: String.t(),
+          values :: [String.t()]
+        ) :: t
   def set_string_list(config, section, subsection \\ nil, name, values)
       when is_binary(section) and (is_binary(subsection) or is_nil(subsection)) and
              is_binary(name) and is_list(values) do
@@ -707,16 +769,13 @@ defmodule Xgit.Lib.Config do
     config
   end
 
-  # IMPORTANT: set_string_list_impl/5 runs in GenServer process.
-  # See handle_call/3 below.
-
-  def set_string_list_impl(
-        %__MODULE__.State{config_lines: old_config_lines},
-        section,
-        subsection,
-        name,
-        values
-      ) do
+  defp set_string_list_impl(
+         %__MODULE__.State{config_lines: old_config_lines},
+         section,
+         subsection,
+         name,
+         values
+       ) do
     new_config_lines =
       old_config_lines
       |> replace_matching_config_lines(values, [], section, subsection, name)
@@ -839,6 +898,7 @@ defmodule Xgit.Lib.Config do
   If the configuration does not exist, this configuration is cleared, and
   thus behaves the same as though the backing store exists, but is empty.
   """
+  @spec load(config :: t) :: t
   def load(%__MODULE__{storage: nil}) do
     raise(ArgumentError,
       message: "Config.load() called for a Config that doesn't have a storage mechanism defined"
@@ -850,7 +910,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Save the configuration to the persistent store (if any).
   """
-
+  @spec save(config :: t) :: t
   def save(%__MODULE__{storage: nil}) do
     raise(ArgumentError,
       message: "Config.save() called for a Config that doesn't have a storage mechanism defined"
@@ -861,8 +921,11 @@ defmodule Xgit.Lib.Config do
 
   defprotocol Storage do
     @moduledoc ~S"""
-    Describes how a `Config` struct can be stored and loaded from a location.
+    Describes how an `Xgit.Lib.Config` struct can be stored and loaded from a location.
     """
+    alias Xgit.Lib.Config
+
+    @type t :: struct
 
     @doc ~S"""
     Load the configuration from the persistent store.
@@ -870,21 +933,21 @@ defmodule Xgit.Lib.Config do
     If the configuration does not exist, this configuration is cleared, and
     thus behaves the same as though the backing store exists, but is empty.
     """
+    @spec load(storage :: t, config :: Config.t()) :: Config.t()
     def load(storage, config)
 
     @doc ~S"""
     Save the configuration to the persistent store.
     """
+    @spec save(storage :: t, config :: Config.t()) :: Config.t()
     def save(storage, config)
   end
 
   @doc ~S"""
   Get this configuration, formatted as a git-style text file.
   """
+  @spec to_text(config :: t) :: String.t()
   def to_text(config), do: GenServer.call(config_pid(config), :to_text)
-
-  # IMPORTANT: to_text_impl/1 runs in GenServer process.
-  # See handle_call/3 below.
 
   defp to_text_impl(config_lines) do
     config_lines
@@ -965,15 +1028,13 @@ defmodule Xgit.Lib.Config do
 
   Raises `ConfigInvalidError` if unable to parse string.
   """
+  @spec from_text(config :: t, text :: String.t()) :: t
   def from_text(config, text) when is_binary(text) do
     case GenServer.call(config_pid(config), {:from_text, text}) do
       {:error, e} -> raise(e)
       _ -> config
     end
   end
-
-  # IMPORTANT: from_text_impl/3 runs in GenServer process.
-  # See handle_call/3 below.
 
   # UNIMPLEMENTED: Restore this guard when we add support for included config files.
   # defp from_text_impl(_text, 10, _included_from) do
@@ -1351,6 +1412,7 @@ defmodule Xgit.Lib.Config do
   @doc ~S"""
   Clear the configuration file.
   """
+  @spec clear(config :: t) :: t
   def clear(config), do: config |> config_pid() |> GenServer.call(:clear)
 
   # /**

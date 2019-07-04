@@ -59,38 +59,47 @@ defmodule Xgit.Storage.File.FileSnapshot do
   times within the granularity of the filesystem modification clock) this class
   may return `true` from `modified?/2` if the last modification time of the
   file is less than 3 seconds ago.
-
-  Struct members:
-  * `last_modified`: Last observed modification time of the path.
-  * `last_read`: When was the modification time last read?
   """
+
+  @typedoc ~S"""
+  Cache for when a file was last saved.
+
+  ## Struct Members
+
+  * `last_modified`: Last observed modification time of the path.
+  * `ref`: Reference into a cache for when this file was last read.
+  """
+  @type t :: %__MODULE__{last_modified: integer, ref: reference}
 
   @enforce_keys [:last_modified, :ref]
   defstruct [:last_modified, :ref]
 
   @doc ~S"""
-  A FileSnapshot that is considered to always be modified.
+  An `Xgit.Storage.File.FileSnapshot` that is considered to always be modified.
 
   This instance is useful for application code that wants to lazily read a
   file, but only after `modified?/2` gets invoked. This snapshot instance
   contains only invalid status information.
   """
+  @spec dirty() :: t
   def dirty, do: %__MODULE__{last_modified: :dirty, ref: nil}
 
   @doc ~S"""
-  A FileSnapshot that is clean if the file does not exist.
+  An `Xgit.Storage.File.FileSnapshot` that is clean if the file does not exist.
 
   This instance is useful if the application wants to consider a missing
   file to be clean. `modified?/2` will return `false` if the file path
   does not exist.
   """
+  @spec missing_file :: t
   def missing_file, do: %__MODULE__{last_modified: :missing, ref: nil}
 
   @doc ~S"""
   Record a snapshot for a specific file path.
 
-  This method should be invoked before the file is accessed.
+  This function should be invoked before the file is accessed.
   """
+  @spec save(path :: String.t()) :: t
   def save(path) when is_binary(path) do
     %{mtime: last_modified} = File.stat!(path, time: :posix)
 
@@ -101,8 +110,9 @@ defmodule Xgit.Storage.File.FileSnapshot do
   end
 
   @doc ~S"""
-  Check if the path may have been modified since the snapshot was saved.
+  Return `true` if the path may have been modified since the snapshot was saved.
   """
+  @spec modified?(snapshot :: t, path :: String.t()) :: boolean
   def modified?(%__MODULE__{last_modified: last_modified, ref: ref}, path)
       when is_binary(path) and is_reference(ref) do
     %{mtime: curr_last_modified} = File.stat!(path, time: :posix)
@@ -119,17 +129,23 @@ defmodule Xgit.Storage.File.FileSnapshot do
   the content is identical, it can use to make a future call to `modified?/2`
   return `false`.
 
-  The logic goes something like this:
+  A typical invocation looks something like this:
 
   ```
-  if FileSnapshot.modified?(snapshot, path) do
-    other = FileSnapshot.save(path)
-    if old_content_matches_new_content? and snapshot.last_modified == other.last_modified do
-      FileSnapshot.set_clean(snapshot, other)
+  new_snapshot =
+    if FileSnapshot.modified?(snapshot, path) do
+      other = FileSnapshot.save(path)
+      if old_content_matches_new_content? and snapshot.last_modified == other.last_modified do
+        FileSnapshot.set_clean(snapshot, other)
+      else
+        snapshot
+      end
+    else
+      snapshot
     end
-  end
   ```
   """
+  @spec set_clean(snapshot :: t, other :: t) :: t
   def set_clean(
         %__MODULE__{last_modified: last_modified, ref: ref},
         %__MODULE__{ref: other_ref}

@@ -48,7 +48,7 @@ defmodule Xgit.Util.StringUtils do
   @moduledoc ~S"""
   Miscellaneous string comparison utility methods.
 
-  PORTING NOTE: This jgit class is being ported on an as-needed basis.
+  _PORTING NOTE:_ This jgit class is being ported on an as-needed basis.
   """
 
   # TO DO: https://github.com/elixir-git/xgit/issues/143
@@ -297,6 +297,7 @@ defmodule Xgit.Util.StringUtils do
   @doc ~S"""
   Return `true` if the string is empty or `nil`.
   """
+  @spec empty_or_nil?(s :: String.t() | nil) :: boolean
   def empty_or_nil?(nil), do: true
   def empty_or_nil?(""), do: true
   def empty_or_nil?(s) when is_binary(s), do: false

@@ -131,7 +131,7 @@ defmodule Xgit.Lib.ConfigConstantsTest do
     assert_constant(:config_renamelimit_copy, "copy")
     assert_constant(:config_renamelimit_copies, "copies")
     assert_constant(:config_key_renames, "renames")
-    assert_constant(:config_key_usexgitbuiltin, "useXGitBuiltin")
+    assert_constant(:config_key_usexgitbuiltin, "useXgitBuiltin")
     assert_constant(:config_key_fetch_recurse_submodules, "fetchRecurseSubmodules")
     assert_constant(:config_key_recurse_submodules, "recurseSubmodules")
     assert_constant(:config_key_required, "required")

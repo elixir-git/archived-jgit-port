@@ -54,35 +54,52 @@
 
 defmodule Xgit.Lib.ConfigLine do
   @moduledoc ~S"""
-  A line in a git `Config` file.
-
-  Struct members:
-  * `prefix`: The text content before entry.
-  * `section`: The section name for the entry.
-  * `subsection`: Subsection name.
-  * `name`: The key name.
-  * `value`: The value.
-  * `suffix`: The text content after entry.
-  * `included_from`: The source from which this line was included from.
+  A line in a git `Xgit.Lib.Config` file.
   """
+
+  @typedoc ~S"""
+  Represents a line in a git config file.
+
+  ## Struct Members
+
+  * `prefix`: (optional, string) The text content before entry.
+  * `section`: (optional, string) The section name for the entry.
+  * `subsection`: (optional, string) Subsection name.
+  * `name`: (optional, string) The key name.
+  * `value`: (optional, string) The value.
+  * `suffix`: (optional, string) The text content after entry.
+  * `included_from`: (optional, string) The source from which this line was included from.
+  """
+  @type t :: %__MODULE__{
+          prefix: String.t() | nil,
+          section: String.t() | nil,
+          subsection: String.t() | nil,
+          name: String.t() | nil,
+          value: String.t() | nil,
+          suffix: String.t() | nil,
+          included_from: String.t() | nil
+        }
 
   defstruct [:prefix, :section, :subsection, :name, :value, :suffix, :included_from]
 
   @doc ~S"""
-  Return `true` if this config line matches the section and subection.
+  Return `true` if this config line matches the section and subsection.
   """
+  @spec match_section?(line :: t, sec2 :: String.t(), sub2 :: String.t()) :: boolean
   def match_section?(%__MODULE__{section: sec1, subsection: sub1}, sec2, sub2),
     do: match_ignore_case?(sec1, sec2) && sub1 == sub2
 
   @doc ~S"""
-  Return `true` if this config line matches the section, subection, and key.
+  Return `true` if this config line matches the section, subsection, and key.
   """
+  @spec match?(line :: t, sec2 :: String.t(), sub2 :: String.t(), key2 :: String.t()) :: boolean
   def match?(%__MODULE__{section: sec1, subsection: sub1, name: key1}, sec2, sub2, key2),
     do: match_ignore_case?(sec1, sec2) && sub1 == sub2 && match_ignore_case?(key1, key2)
 
   @doc ~S"""
   Return `true` if this config line matches the section and key.
   """
+  @spec match?(line :: t, sec2 :: String.t(), key2 :: String.t()) :: boolean
   def match?(%__MODULE__{section: sec1, name: key1}, sec2, key2),
     do: match_ignore_case?(sec1, sec2) && match_ignore_case?(key1, key2)
 

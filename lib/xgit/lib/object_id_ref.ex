@@ -47,20 +47,35 @@
 
 defmodule Xgit.Lib.ObjectIdRef do
   @moduledoc ~S"""
-  A `Ref` that points directly at an `ObjectId`.
-
-  Struct members:
-  * `name`: name of this ref
-  * `storage`: method used to store this ref (See `t:Xgit.Lib.Ref.storage/0`.)
-  * `object_id`: current value of the ref. May be `nil` to indicate a ref that
-    does not exist yet.
-  * `peeled?`: `true` if the ref has been peeled (implied if `peeled_object_id` is not `nil`)
-  * `peeled_object_id`: current peeled value of the ref. If `nil`, indicates that
-    the object ref hasn't been peeled yet.
-  * `tag?`: `true` if the peeled value points to a tag
-  * `update_index`: number that increases with each ref update. Set to `:undefined` if the
-    storage doesn't support versioning.
+  An `Xgit.Lib.Ref` that points directly at an object ID.
   """
+
+  @typedoc ~S"""
+  An implementation of `Xgit.Lib.Ref` for a specific object ID.
+
+  ## Struct Members
+
+  * `name`: (string) name of this ref
+  * `storage`: method used to store this ref (See `t:Xgit.Lib.Ref.storage/0`.)
+  * `object_id`: (optional, string) current value of the ref. May be `nil` to indicate a ref that
+    does not exist yet.
+  * `peeled?`: (optional, boolean) `true` if the ref has been peeled (implied if
+    `peeled_object_id` is not `nil`)
+  * `peeled_object_id`: (optional, string) current peeled value of the ref.
+    If `nil`, indicates that the object ref hasn't been peeled yet.
+  * `tag?`: (optional, boolean ) `true` if the peeled value points to a tag
+  * `update_index`: (integer or `:undefined`) number that increases with each ref update.
+    Set to `:undefined` if the storage doesn't support versioning.
+  """
+  @type t :: %__MODULE__{
+          name: String.t(),
+          storage: Xgit.Lib.Ref.storage(),
+          object_id: String.t() | nil,
+          peeled?: boolean | nil,
+          peeled_object_id: String.t() | nil,
+          tag?: boolean | nil,
+          update_index: non_neg_integer | :undefined
+        }
 
   @enforce_keys [:name, :storage]
   defstruct [

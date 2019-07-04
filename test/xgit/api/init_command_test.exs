@@ -55,7 +55,7 @@ defmodule Xgit.Api.InitCommandTest do
 
     repo =
       %InitCommand{dir: dir}
-      |> InitCommand.run()
+      |> InitCommand.run!()
 
     assert Repository.valid?(repo)
   end
@@ -68,14 +68,14 @@ defmodule Xgit.Api.InitCommandTest do
 
     assert File.regular?(some_file)
 
-    repo = InitCommand.run(%InitCommand{dir: dir})
+    repo = InitCommand.run!(%InitCommand{dir: dir})
     assert Repository.valid?(repo)
   end
 
   test "bare repository" do
     dir = Temp.mkdir!(prefix: "testInitBareRepository")
 
-    repo = InitCommand.run(%InitCommand{dir: dir, bare?: true})
+    repo = InitCommand.run!(%InitCommand{dir: dir, bare?: true})
 
     assert Repository.valid?(repo)
     assert Repository.bare?(repo)
@@ -87,7 +87,7 @@ defmodule Xgit.Api.InitCommandTest do
     work_tree = Temp.mkdir!(prefix: "testInitRepositoryWT")
     git_dir = Temp.mkdir!(prefix: "testInitRepositoryGIT")
 
-    repo = InitCommand.run(%InitCommand{dir: work_tree, git_dir: git_dir})
+    repo = InitCommand.run!(%InitCommand{dir: work_tree, git_dir: git_dir})
 
     assert Repository.valid?(repo)
     assert Repository.bare?(repo) == false
@@ -110,7 +110,7 @@ defmodule Xgit.Api.InitCommandTest do
     git_dir = Path.dirname(dir)
 
     assert_raise ArgumentError, fn ->
-      InitCommand.run(%InitCommand{dir: dir, git_dir: git_dir, bare?: true})
+      InitCommand.run!(%InitCommand{dir: dir, git_dir: git_dir, bare?: true})
     end
   end
 
@@ -119,7 +119,7 @@ defmodule Xgit.Api.InitCommandTest do
     # working directory, so this is an error case.
 
     assert_raise ArgumentError, fn ->
-      InitCommand.run(%InitCommand{})
+      InitCommand.run!(%InitCommand{})
     end
   end
 
@@ -128,7 +128,7 @@ defmodule Xgit.Api.InitCommandTest do
     # working directory, so this is an error case.
 
     assert_raise ArgumentError, fn ->
-      InitCommand.run(%InitCommand{bare?: true})
+      InitCommand.run!(%InitCommand{bare?: true})
     end
   end
 
@@ -138,7 +138,7 @@ defmodule Xgit.Api.InitCommandTest do
     dir = Temp.mkdir!(prefix: "testInitBareRepository")
 
     assert_raise ArgumentError, fn ->
-      InitCommand.run(%InitCommand{dir: dir, git_dir: dir})
+      InitCommand.run!(%InitCommand{dir: dir, git_dir: dir})
     end
   end
 end

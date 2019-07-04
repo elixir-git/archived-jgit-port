@@ -46,23 +46,22 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 defmodule Xgit.Internal.Storage.File.ObjectDirectory do
-  @moduledoc """
-  Traditional file-system based `ObjectDatabase`.
-
-  This is the classical object database representation for a git repository,
-  where objects are stored loose by hashing them into directories by their
-  `ObjectId`, or are stored in compressed containers known as `PackFile`s.
-
-  Optionally an object database can reference one or more alternates; other
-  `ObjectDatabase` instances that are searched in addition to the current
-  database.
-
-  Databases are divided into two halves: a half that is considered to be fast
-  to search (the `PackFile`s), and a half that is considered to be slow
-  to search (loose objects). When alternates are present the fast half is fully
-  searched (recursively through all alternates) before the slow half is
-  considered.
-  """
+  @moduledoc false
+  # _INTERNAL:_ Traditional file-system based `ObjectDatabase`.
+  #
+  # This is the classical object database representation for a git repository,
+  # where objects are stored loose by hashing them into directories by their
+  # `ObjectId`, or are stored in compressed containers known as `PackFile`s.
+  #
+  # Optionally an object database can reference one or more alternates; other
+  # `ObjectDatabase` instances that are searched in addition to the current
+  # database.
+  #
+  # Databases are divided into two halves: a half that is considered to be fast
+  # to search (the `PackFile`s), and a half that is considered to be slow
+  # to search (loose objects). When alternates are present the fast half is fully
+  # searched (recursively through all alternates) before the slow half is
+  # considered.
 
   # PORTING NOTE: The abstract class FileObjectDatabase is merged into this module.
 
@@ -167,12 +166,14 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
   @doc ~S"""
   Get the object database which stores this repository's data.
   """
+  @spec directory(db :: pid) :: pid
   def directory(db) when is_pid(db),
     do: GenServer.call(db, :directory)
 
   @doc ~S"""
   Get the location of the `pack` directory.
   """
+  @spec pack_directory(db :: pid) :: String.t()
   def pack_directory(db) when is_pid(db),
     do: GenServer.call(db, :pack_directory)
 

@@ -57,6 +57,7 @@ defmodule Xgit.Util.TupleUtils do
   This function is intended to match the semantics of Java's `Arrays.binarySearch`
   method.
   """
+  @spec binary_search(tuple :: tuple, value :: term) :: integer
   def binary_search(tuple, value) when is_tuple(tuple),
     do: binary_search(tuple, value, 0, tuple_size(tuple))
 

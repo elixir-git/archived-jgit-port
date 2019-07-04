@@ -139,12 +139,15 @@ defmodule Xgit.Util.NB do
   # }
 
   @doc ~S"""
-  Convert sequence of 4 bytes (network byte order) into signed value.
+  Parses a sequence of 4 bytes (network byte order) as a signed integer.
 
   Reads the first four bytes from `intbuf` and returns `{value, buf}`
   where value is the integer value from the first four bytes at `intbuf`
   and `buf` is the remainder of the byte array after those bytes.
   """
+  @spec decode_int32(intbuf :: [byte]) :: {integer, [byte]}
+  def decode_int32(intbuf)
+
   def decode_int32([b1, b2, b3, b4 | tail]) when b1 >= 128,
     do: {b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100 + b4 - 0x100000000, tail}
 
@@ -186,12 +189,15 @@ defmodule Xgit.Util.NB do
   # }
 
   @doc ~S"""
-  Convert sequence of 4 bytes (network byte order) into unsigned value.
+  Parses a sequence of 4 bytes (network byte order) as an unsigned integer.
 
   Reads the first four bytes from `intbuf` and returns `{value, buf}`
   where value is the unsigned integer value from the first four bytes at `intbuf`
   and `buf` is the remainder of the byte array after those bytes.
   """
+  @spec decode_uint32(intbuf :: [byte]) :: {integer, [byte]}
+  def decode_uint32(intbuf)
+
   def decode_uint32([b1, b2, b3, b4 | tail]),
     do: {b1 * 0x1000000 + b2 * 0x10000 + b3 * 0x100 + b4, tail}
 
@@ -214,6 +220,7 @@ defmodule Xgit.Util.NB do
   @doc ~S"""
   Convert a 16-bit integer to a sequence of two bytes in network byte order.
   """
+  @spec encode_int16(v :: integer) :: [byte]
   def encode_int16(v) when is_integer(v) and v >= -32_768 and v <= 65_535,
     do: [v >>> 8 &&& 0xFF, v &&& 0xFF]
 
@@ -243,6 +250,7 @@ defmodule Xgit.Util.NB do
   @doc ~S"""
   Convert a 32-bit integer to a sequence of four bytes in network byte order.
   """
+  @spec encode_int32(v :: integer) :: [byte]
   def encode_int32(v) when is_integer(v) and v >= -2_147_483_647 and v <= 4_294_967_296,
     do: [v >>> 24 &&& 0xFF, v >>> 16 &&& 0xFF, v >>> 8 &&& 0xFF, v &&& 0xFF]
 

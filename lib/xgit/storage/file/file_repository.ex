@@ -49,7 +49,10 @@
 
 defmodule Xgit.Storage.File.FileRepository do
   @moduledoc ~S"""
-  Represents a git repository.
+  Implements `Xgit.Lib.Repository` for an on-disk (local) file-based repositority.
+
+  Use `Xgit.Storage.File.FileRepositoryBuilder` to describe the repository with
+  the desired options and then call `start_link/3` to spawn the respository process.
 
   A repository holds all objects and refs used for managing source code (could be
   any type of file, but source code is what SCMs are typically used for).
@@ -65,19 +68,19 @@ defmodule Xgit.Storage.File.FileRepository do
     * `info/` - more configurations
 
   This implementation only handles a subtly undocumented subset of git features.
-
-  Struct members:
-  * `system_reader`: The `SystemReader` instance used by this repository.
-    (Typically `nil`; sometimes used for testing.)
-  * `git_dir`: The `.git` directory storing the repository metadata.
-  * `object_dir`: The directory storing the repository's objects.
-  * `alternate_object_directories`: List of alternate object directories to search.
-  * `bare?`: True only if the caller wants to force bare behavior.
-  * `must_exist?`: True if the caller requires the repository to exist.
-  * `work_tree`: The top level directory of the working files.
-  * `index_file`: The local index file that is caching checked out file status.
-  * `ceiling_directories`: A list of directories limiting the search for a git repository.
   """
+
+  # The `state` value for this module is a map containing:
+  # * `system_reader`: The `SystemReader` instance used by this repository.
+  #   (Typically `nil`; sometimes used for testing.)
+  # * `git_dir`: The `.git` directory storing the repository metadata.
+  # * `object_dir`: The directory storing the repository's objects.
+  # * `alternate_object_directories`: List of alternate object directories to search.
+  # * `bare?`: True only if the caller wants to force bare behavior.
+  # * `must_exist?`: True if the caller requires the repository to exist.
+  # * `work_tree`: The top level directory of the working files.
+  # * `index_file`: The local index file that is caching checked out file status.
+  # * `ceiling_directories`: A list of directories limiting the search for a git repository.
 
   use Xgit.Lib.Repository
 
@@ -97,22 +100,31 @@ defmodule Xgit.Storage.File.FileRepository do
   @doc ~S"""
   Start an on-disk git repository.
 
+  ## Parameters
+
   `builder` should be a `FileRepositoryBuilder` which has been fully configured
   (typically by calling `FileRepositoryBuilder.setup!/1`.
 
-  `opts` corresponds to the options recognized by `GenServer.start_link/3`.
+  ## Options
 
-  The following additonal options may be specified:
+  * `:system_reader`: An `Xgit.Lib.SystemReader` struct which will overrides
+    default system behavior (mostly used for testing).
 
-  * `system_reader`: A `SystemReader` instance which overrides default system behavior
-    (mostly for testing).
+  Any other options are passed through to `GenServer.start_link/3`.
 
-  Returns a PID for the repository process or raises if unable to do so.
+  ## Return Value
+
+  See `GenServer.start_link/3`.
+
+  Use the functions in `Xgit.Lib.Repository` to interact with this repository process.
   """
-  def start_link(builder, opts \\ []),
+  @spec start_link(builder :: FileRepositoryBuilder.t(), opts :: Keyword.t()) ::
+          GenServer.on_start()
+  def start_link(%FileRepositoryBuilder{} = builder, opts \\ []),
     do: Repository.start_link(__MODULE__, {builder, opts}, opts)
 
-  @doc false
+  # actually called by Xgit.Lib.Repository.init/1
+  @impl GenServer
   def init(
         {%FileRepositoryBuilder{
            git_dir: git_dir,
@@ -258,6 +270,8 @@ defmodule Xgit.Storage.File.FileRepository do
   #   return refs;
   # }
 
+  # @doc false
+  @impl Xgit.Lib.Repository
   def handle_create(
         %{
           git_dir: git_dir,
@@ -284,8 +298,8 @@ defmodule Xgit.Storage.File.FileRepository do
     #     && getDirectory().getName().startsWith(".")) //$NON-NLS-1$
     #   getFS().setHidden(getDirectory(), true);
 
-    RefDatabase.create(ref_database_pid)
-    ObjectDatabase.create(object_database_pid)
+    RefDatabase.create!(ref_database_pid)
+    ObjectDatabase.create!(object_database_pid)
 
     File.mkdir_p!(Path.join(git_dir, "branches"))
     File.mkdir_p!(Path.join(git_dir, "hooks"))
@@ -369,17 +383,23 @@ defmodule Xgit.Storage.File.FileRepository do
     {:ok, state}
   end
 
+  @impl Xgit.Lib.Repository
   def handle_git_dir(%{git_dir: git_dir} = state), do: {:ok, git_dir, state}
 
+  @impl Xgit.Lib.Repository
   def handle_bare?(%{bare?: bare?} = state), do: {:ok, bare?, state}
 
+  @impl Xgit.Lib.Repository
   def handle_work_tree(%{work_tree: work_tree} = state), do: {:ok, work_tree, state}
 
+  @impl Xgit.Lib.Repository
   def handle_index_file(%{index_file: index_file} = state), do: {:ok, index_file, state}
 
+  @impl Xgit.Lib.Repository
   def handle_object_database(%{object_database: object_database} = state),
     do: {:ok, object_database, state}
 
+  @impl Xgit.Lib.Repository
   def handle_config(%{repo_config: repo_config} = state),
     do: {:ok, repo_config, state}
 

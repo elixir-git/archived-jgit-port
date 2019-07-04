@@ -50,20 +50,32 @@ defmodule Xgit.Transport.RefSpec do
 
   A ref specification provides matching support and limited rules to rewrite a
   reference in one repository to another reference in another repository.
+  """
 
-  Struct members:
-  * `force?`: Does this specification ask for forced updated (rewind/reset)?
-  * `allow_mismatched_wildcards?`: Whether a wildcard is allowed on one side but not the other.
+  @typedoc ~S"""
+  A specification for mapping refs from one repository into another repository.
+
+  ## Struct Members
+
+  * `force?`: (boolean) Does this specification ask for forced updates (rewind/reset)?
+  * `allow_mismatched_wildcards?`: (boolean) Whether a wildcard is allowed on one side
+      but not the other:
     * `false`: Reject refspecs with an asterisk on the source side and not the
       destination side or vice versa. This is the mode used by `FetchCommand`
       and `PushCommand` to create a one-to-one mapping between source and
       destination refs.
-    * `true`: Allow refspecs with an asterisk on only one side. This can create a
-      many-to-one mapping between source and destination refs, so `expandFromSource`
-      and `expandFromDestination` are not usable in this mode.
-  * `src_name`: Name of the ref(s) we would copy from.
-  * `dst_name`: Name of the ref(s) we would copy into.
+    * `true` (default): Allow refspecs with an asterisk on only one side. This can
+      create a many-to-one mapping between source and destination refs, so
+      `expand_from_source/2` and `expand_from_destination/2` are not usable in this mode.
+  * `src_name`: (string) Name of the ref(s) we would copy from.
+  * `dst_name`: (string) Name of the ref(s) we would copy into.
   """
+  @type t :: %__MODULE__{
+          src_name: String.t(),
+          dst_name: String.t() | nil,
+          allow_mismatched_wildcards?: boolean,
+          force?: boolean
+        }
 
   defstruct src_name: Xgit.Lib.Constants.head(),
             dst_name: nil,
@@ -76,6 +88,7 @@ defmodule Xgit.Transport.RefSpec do
   Suffix for wildcard ref spec component, that indicates matching all refs
   ith specified prefix.
   """
+  @spec wildcard_suffix() :: String.t()
   def wildcard_suffix, do: "/*"
 
   @doc ~S"""
@@ -88,16 +101,18 @@ defmodule Xgit.Transport.RefSpec do
   * `+refs/heads/master`
   * `+refs/heads/master:refs/remotes/origin/master`
   * `+refs/heads/*:refs/remotes/origin/*`
-  * `+refs/pull/&#42;/head:refs/remotes/origin/pr/*`
+  * `+refs/pull/*/head:refs/remotes/origin/pr/*`
   * `:refs/heads/master`
 
   If `allow_mismatched_wildcards?` is `true`, then these ref specs are also valid:
   * `refs/heads/*`
   * `refs/heads/*:refs/heads/master`
 
-  Options may be:
-  * `allow_mismatched_wildcards?`: `true`
+  ## Options
+
+  * `allow_mismatched_wildcards?`: `true` to allow wildcards on only one side of the ref spec.
   """
+  @spec from_string(spec :: String.t(), opts :: Keyword.t()) :: t
   def from_string(spec, opts \\ []) when is_binary(spec) and is_list(opts) do
     allow_mismatched_wildcards? = Keyword.get(opts, :allow_mismatched_wildcards?, false)
 
@@ -140,6 +155,7 @@ defmodule Xgit.Transport.RefSpec do
 
   Raises `ArgumentError` if destination and source are not compatible.
   """
+  @spec replace_source(ref_spec :: t, source :: String.t()) :: t
   def replace_source(%__MODULE__{dst_name: dst} = ref_spec, source) do
     assert_valid(source)
 
@@ -157,6 +173,7 @@ defmodule Xgit.Transport.RefSpec do
 
   Raises `ArgumentError` if destination and source are not compatible.
   """
+  @spec replace_destination(ref_spec :: t, destination :: String.t()) :: t
   def replace_destination(%__MODULE__{src_name: src} = ref_spec, destination) do
     assert_valid(destination)
 
@@ -171,6 +188,11 @@ defmodule Xgit.Transport.RefSpec do
 
   Raises `ArgumentError` if destination and source are not compatible.
   """
+  @spec replace_source_and_destination(
+          ref_spec :: t,
+          source :: String.t(),
+          destination :: String.t()
+        ) :: t
   def replace_source_and_destination(%__MODULE__{} = ref_spec, source, destination) do
     assert_valid(source)
     assert_valid(destination)
@@ -184,6 +206,9 @@ defmodule Xgit.Transport.RefSpec do
   @doc ~S"""
   Does this specification's source description match the ref name?
   """
+  @spec match_source?(ref_spec :: t, source_ref_name :: String.t() | nil) :: boolean
+  def match_source?(ref_spec, ref_name)
+
   def match_source?(%__MODULE__{src_name: src}, r) when is_binary(r) or is_nil(r),
     do: match_name?(r, src)
 
@@ -193,6 +218,7 @@ defmodule Xgit.Transport.RefSpec do
   @doc ~S"""
   Does this specification's destination description match the ref name?
   """
+  @spec match_destination?(ref_spec :: t, dest_ref_name :: String.t() | nil) :: boolean
   def match_destination?(%__MODULE__{dst_name: dst}, r) when is_binary(r) or is_nil(r),
     do: match_name?(r, dst)
 
@@ -206,7 +232,8 @@ defmodule Xgit.Transport.RefSpec do
   otherwise expansion results may be unpredictable.
 
   `r` must be a ref name that matched our source specification. Could be a
-  wildcard also. (It can also be a struct that implements the `Ref` protocol.)
+  wildcard also. It can also be a struct that implements the `Xgit.Lib.Ref`
+  protocol.
 
   Returns a new `RefSpec` expanded from provided ref name. Result specification
   is wildcard if and only if provided ref name is wildcard.
@@ -214,6 +241,7 @@ defmodule Xgit.Transport.RefSpec do
   Raises `ArgumentError` when the `RefSpec` was constructed with wildcard mode that
   doesn't require matching wildcards.
   """
+  @spec expand_from_source(ref_spec :: t, r :: String.t()) :: t
   def expand_from_source(
         %__MODULE__{src_name: src, dst_name: dst, allow_mismatched_wildcards?: false} = ref_spec,
         r
@@ -238,7 +266,8 @@ defmodule Xgit.Transport.RefSpec do
   otherwise expansion results may be unpredictable.
 
   `r` must be a ref name that matched our destination specification. Could be a
-  wildcard also. (It can also be a struct that implements the `Ref` protocol.)
+  wildcard also. It can also be a struct that implements the `Xgit.Lib.Ref`
+  protocol.
 
   Returns a new `RefSpec` expanded from provided ref name. Result specification
   is wildcard if and only if provided ref name is wildcard.
@@ -246,6 +275,7 @@ defmodule Xgit.Transport.RefSpec do
   Raises `ArgumentError` when the `RefSpec` was constructed with wildcard mode that
   doesn't require matching wildcards.
   """
+  @spec expand_from_destination(ref_spec :: t, r :: String.t()) :: t
   def expand_from_destination(
         %__MODULE__{src_name: src, dst_name: dst, allow_mismatched_wildcards?: false} = ref_spec,
         r
@@ -312,6 +342,7 @@ defmodule Xgit.Transport.RefSpec do
   @doc ~S"""
   Return `true` if this specification is actually a wildcard pattern.
   """
+  @spec wildcard?(ref_spec :: t) :: boolean
   def wildcard?(%__MODULE__{src_name: src_name, dst_name: dst_name}),
     do: wildcard?(src_name) || wildcard?(dst_name)
 

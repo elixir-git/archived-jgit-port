@@ -54,7 +54,7 @@ defmodule Xgit.DirCache.DirCacheBasicTest do
     idx = Path.join(Repository.git_dir!(db), "index")
     refute File.exists?(idx)
 
-    dc = Repository.read_dir_cache(db)
+    dc = Repository.read_dir_cache!(db)
     assert dc != nil
     assert DirCache.valid?(dc)
 

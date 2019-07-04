@@ -53,13 +53,17 @@ defmodule Xgit.RevWalk.RevObject do
 
   alias Xgit.Lib.Constants
 
+  @typedoc "Any struct that implements `Xgit.RevWalk.RevObject.Object`."
+  @type t :: struct
+
   defprotocol Object do
     @moduledoc ~S"""
     Objects made accessible via revision walking will implement this protocol.
     """
     alias Xgit.Lib.ObjectId
 
-    @type t :: term
+    @typedoc "Any struct that implements `Xgit.RevWalk.RevObject.Object`."
+    @type t :: Xgit.RevWalk.RevObject.t()
 
     @doc ~S"""
     Return the name (object ID) of this object.
@@ -76,9 +80,9 @@ defmodule Xgit.RevWalk.RevObject do
     @doc ~S"""
     Return the git object type of the object.
 
-    This will be one of the `obj_*` types defined in `Constants`.
+    This will be one of the `obj_*` types defined in `Xgit.Lib.Constants`.
     """
-    @spec type(object :: t) :: integer
+    @spec type(object :: t) :: Xgit.Lib.Constants.obj_type()
     def type(object)
 
     @doc ~S"""
@@ -103,13 +107,19 @@ defmodule Xgit.RevWalk.RevObject do
   defmodule Unparsed do
     @moduledoc ~S"""
     An object whose contents have not yet been parsed.
+    """
+
+    @typedoc ~S"""
+    Implements `Xgit.RevWalk.RevObject.Object` for an object that has not yet been parsed.
 
     ## Struct Members
 
-    * `flags`: (MapSet) flags associated with this object
-    * `id`: (String) object ID
-    * `type`: (integer) object type (one of `obj_*` constants)
+    * `flags`: (`MapSet`) flags associated with this object
+    * `id`: (string) object ID
+    * `type`: (integer) object type (one of `obj_*` constants from `Xgit.Lib.Constants`)
     """
+    @type t :: %__MODULE__{flags: MapSet.t(), id: String.t(), type: Xgit.Lib.Constants.obj_type()}
+
     @enforce_keys [:id, :type]
     defstruct [{:flags, MapSet.new()}, :id, :type]
 
@@ -150,18 +160,21 @@ defmodule Xgit.RevWalk.RevObject do
   @doc ~S"""
   Return the name (object ID) of this object.
   """
+  @spec object_id(object :: t) :: ObjectId.t()
   defdelegate object_id(object), to: Object
 
   @doc ~S"""
   Return the git object type of the object.
 
-  This will be one of the `obj_*` types defined in `Constants`.
+  This will be one of the `obj_*` types defined in `Xgit.Lib.Constants`.
   """
+  @spec type(object :: t) :: Xgit.Lib.Constants.obj_type()
   defdelegate type(object), to: Object
 
   @doc ~S"""
   Returns `true` if the given flag has been set on this object.
   """
+  @spec has_flag?(object :: t, flag :: atom) :: boolean
   def has_flag?(object, flag) when is_atom(flag) do
     flags = Object.flags(object)
     MapSet.member?(flags, flag)
@@ -170,6 +183,7 @@ defmodule Xgit.RevWalk.RevObject do
   @doc ~S"""
   Returns `true` if any of the flags in the list has been set on this object.
   """
+  @spec has_any_flag?(object :: t, test_flags :: MapSet.t()) :: boolean
   def has_any_flag?(object, %MapSet{} = test_flags) do
     flags = Object.flags(object)
 
@@ -184,6 +198,7 @@ defmodule Xgit.RevWalk.RevObject do
   @doc ~S"""
   Returns `true` if all of the flags in the list have been set on this object.
   """
+  @spec has_all_flags?(object :: t, test_flags :: MapSet.t()) :: boolean
   def has_all_flags?(object, %MapSet{} = test_flags) do
     flags = Object.flags(object)
 
@@ -193,53 +208,58 @@ defmodule Xgit.RevWalk.RevObject do
   end
 
   @doc ~S"""
-  Add a flag to this object.
+  Return a copy of this object with the given flag added.
   """
+  @spec add_flag(object :: t, flag :: atom) :: t
   def add_flag(object, flag) when is_atom(flag), do: add_flags(object, MapSet.new([flag]))
 
   @doc ~S"""
-  Add a set of flags to this object.
+  Return a copy of this object with the given flags added.
   """
+  @spec add_flags(object :: t, flags :: MapSet.t()) :: t
   defdelegate add_flags(object, flags), to: Object
 
   @doc ~S"""
-  Remove a flag from this object.
+  Return a copy of this object with the given flag removed.
   """
+  @spec remove_flag(object :: t, flag :: atom) :: t
   def remove_flag(object, flag) when is_atom(flag), do: remove_flags(object, MapSet.new([flag]))
 
   @doc ~S"""
-  Remove a set of flags from this object.
+  Return a copy of this object with the given flags removed.
   """
+  @spec remove_flags(object :: t, flags :: MapSet.t()) :: t
   defdelegate remove_flags(object, flags), to: Object
 
   @doc ~S"""
-  Render a string from any struct that implements the `RevObject.Object` protocol.
+  Render a string from any struct that implements the `Xgit.RevWalk.RevObject.Object` protocol.
 
   Intended to be called by those struct modules.
   """
-  def to_string(rev_object) do
+  @spec to_string(object :: t) :: String.t()
+  def to_string(object) do
     type_str =
-      rev_object
+      object
       |> type()
       |> Constants.type_string()
 
-    name = object_id(rev_object)
-    flags_str = core_flags_str(rev_object)
+    name = object_id(object)
+    flags_str = core_flags_str(object)
 
     "#{type_str} #{name} #{flags_str}"
   end
 
-  defp core_flags_str(rev_object) do
-    flag_str(rev_object, :topo_delay, "o") <>
-      flag_str(rev_object, :temp_mark, "t") <>
-      flag_str(rev_object, :rewrite, "r") <>
-      flag_str(rev_object, :uninteresting, "u") <>
-      flag_str(rev_object, :seen, "s") <>
-      flag_str(rev_object, :parsed, "p")
+  defp core_flags_str(object) do
+    flag_str(object, :topo_delay, "o") <>
+      flag_str(object, :temp_mark, "t") <>
+      flag_str(object, :rewrite, "r") <>
+      flag_str(object, :uninteresting, "u") <>
+      flag_str(object, :seen, "s") <>
+      flag_str(object, :parsed, "p")
   end
 
-  defp flag_str(rev_object, flag, flag_char) do
-    if has_flag?(rev_object, flag),
+  defp flag_str(object, flag, flag_char) do
+    if has_flag?(object, flag),
       do: flag_char,
       else: "-"
   end

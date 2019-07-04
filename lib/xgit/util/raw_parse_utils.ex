@@ -57,10 +57,13 @@ defmodule Xgit.Util.RawParseUtils do
   Does the charlist `b` start with the same characters as `str`?
 
   If so, returns `{true, next}` where `next` is the remaining portion of `b`
-  after the matched `str.
+  after the matched `str`.
 
   If not, returns `false`.
   """
+  @spec match_prefix?(b :: charlist, str :: charlist) :: {true, charlist} | false
+  def match_prefix?(b, str)
+
   def match_prefix?(b, []), do: {true, b}
   def match_prefix?([c | b], [c | str]), do: match_prefix?(b, str)
   def match_prefix?(_, _), do: false
@@ -119,7 +122,9 @@ defmodule Xgit.Util.RawParseUtils do
   # }
 
   @doc ~S"""
-  Parse a base 10 numeric from a charlist of ASCII digits into a number.
+  Parse a base-10 numeric value from a charlist of ASCII digits into a number.
+
+  Similar to `Integer.parse/2` but uses charlist instead.
 
   Digit sequences can begin with an optional run of spaces before the
   sequence, and may start with a `+` or a `-` to indicate sign position.
@@ -129,9 +134,8 @@ defmodule Xgit.Util.RawParseUtils do
   Returns `{number, new_buffer}` where `number` is the integer that was
   found (or 0 if no number found there) and `new_buffer` is the charlist
   following the number that was parsed.
-
-  Similar to `Integer.parse/2` but uses charlist instead.
   """
+  @spec parse_base_10(b :: charlist) :: {integer, charlist}
   def parse_base_10(b) when is_list(b) do
     b = skip_white_space(b)
     {sign, b} = parse_sign(b)
@@ -151,51 +155,63 @@ defmodule Xgit.Util.RawParseUtils do
   defp parse_digits(n, b), do: {n, b}
 
   @doc ~S"""
-  Parse 4 character base 16 (hex) formatted string to integer.
+  Parse 4 hex digits from a byte list to an integer.
 
   The number is read in network byte order, that is, most significant
   nybble first.
+
+  ## Return Value
 
   Returns `{number, new_buffer}` where `number` is the integer that was
   found (or 0 if no number found there) and `new_buffer` is the charlist
   following the number that was parsed.
   """
+  @spec parse_hex_int16(b :: charlist) :: {integer, charlist}
   def parse_hex_int16(b) when is_list(b), do: parse_hex_digits(b, 0, 4)
 
   @doc ~S"""
-  Parse 8 character base 16 (hex) formatted string to integer.
+  Parse 8 hex digits from a byte list to an integer.
 
   The number is read in network byte order, that is, most significant
   nybble first.
+
+  ## Return Value
 
   Returns `{number, new_buffer}` where `number` is the integer that was
   found (or 0 if no number found there) and `new_buffer` is the charlist
   following the number that was parsed.
   """
+  @spec parse_hex_int32(b :: charlist) :: {integer, charlist}
   def parse_hex_int32(b) when is_list(b), do: parse_hex_digits(b, 0, 8)
 
   @doc ~S"""
-  Parse 16 character base 16 (hex) formatted string to integer.
+  Parse 16 hex digits from a byte list to an integer.
 
   The number is read in network byte order, that is, most significant
   nybble first.
+
+  ## Return Value
 
   Returns `{number, new_buffer}` where `number` is the integer that was
   found (or 0 if no number found there) and `new_buffer` is the charlist
   following the number that was parsed.
   """
+  @spec parse_hex_int64(b :: charlist) :: {integer, charlist}
   def parse_hex_int64(b) when is_list(b), do: parse_hex_digits(b, 0, 16)
 
   @doc ~S"""
-  Parse a single hex digitto unsigned integer.
+  Parse a single hex digit from a byte list to an integer.
 
   The number is read in network byte order, that is, most significant
   nybble first.
+
+  ## Return Value
 
   Returns `{number, new_buffer}` where `number` is the integer that was
   found (or 0 if no number found there) and `new_buffer` is the charlist
   following the number that was parsed.
   """
+  @spec parse_hex_int4(b :: charlist) :: {integer, charlist}
   def parse_hex_int4(b) when is_list(b), do: parse_hex_digits(b, 0, 1)
 
   defp parse_hex_digits(b, n, 0), do: {n, b}
@@ -215,10 +231,13 @@ defmodule Xgit.Util.RawParseUtils do
   The sequence `-0315` will be parsed as the numeric value -195, as the
   lower two positions count minutes, not 100ths of an hour.
 
+  ## Return Value
+
   Returns `{number, new_buffer}` where `number` is the time zone offset in minutes
   that was found (or 0 if no number found there) and `new_buffer` is the charlist
   following the number that was parsed.
   """
+  @spec parse_timezone_offset(b :: charlist) :: {Xgit.Lib.Constants.tz_offset(), charlist}
   def parse_timezone_offset(b) when is_list(b) do
     {v, b} = parse_base_10(b)
 
@@ -231,6 +250,9 @@ defmodule Xgit.Util.RawParseUtils do
   @doc ~S"""
   Locate the first position after a given character.
   """
+  @spec next(b :: charlist, char :: char) :: charlist
+  def next(b, char)
+
   def next([char | b], char) when is_integer(char), do: b
   def next([_ | b], char) when is_integer(char), do: next(b, char)
   def next([], char) when is_integer(char), do: []
@@ -238,8 +260,9 @@ defmodule Xgit.Util.RawParseUtils do
   @doc ~S"""
   Locate the first position after the next LF.
 
-  This method stops on the first '\n' it finds.
+  This method stops on the first `\n` it finds.
   """
+  @spec next_lf(b :: charlist) :: charlist
   def next_lf(b), do: next(b, ?\n)
 
   @doc ~S"""
@@ -247,6 +270,9 @@ defmodule Xgit.Util.RawParseUtils do
 
   This method stops on the first match it finds from either `char` or `\n`.
   """
+  @spec next_lf(b :: charlist, char :: char) :: charlist
+  def next_lf(b, char)
+
   def next_lf([char | _] = b, char) when is_integer(char), do: b
   def next_lf([?\n | _] = b, char) when is_integer(char), do: b
   def next_lf([_ | b], char) when is_integer(char), do: next_lf(b, char)
@@ -255,12 +281,14 @@ defmodule Xgit.Util.RawParseUtils do
   @doc ~S"""
   Return the contents of the charlist up to, but not including, the next LF.
   """
+  @spec until_next_lf(b :: charlist) :: charlist
   def until_next_lf(b), do: Enum.take_while(b, fn c -> c != ?\n end)
 
   @doc ~S"""
   Return the contents of the charlist up to, but not including, the next instance
   of the given character or LF.
   """
+  @spec until_next_lf(b :: charlist, char :: char) :: charlist
   def until_next_lf(b, char), do: Enum.take_while(b, fn c -> c != ?\n and c != char end)
 
   @doc ~S"""
@@ -269,6 +297,9 @@ defmodule Xgit.Util.RawParseUtils do
   Returns charlist beginning just after the header. This is either `[]` or the
   charlist beginning with the `\n` character that terminates the header.
   """
+  @spec header_end(b :: charlist) :: charlist
+  def header_end(b)
+
   def header_end([?\n | [?\s | b]]), do: header_end(b)
   def header_end([?\n | _] = b), do: b
   def header_end([]), do: []
@@ -280,24 +311,25 @@ defmodule Xgit.Util.RawParseUtils do
   Returns charlist beginning at the start of the header's contents or `nil`
   if not found.
 
-  *IMPORTANT:* Unlike the git version of this function, it does not advance
+  _PORTING NOTE:_ Unlike the jgit version of this function, it does not advance
   to the beginning of the next line. Because the API speaks in charlists, we cannot
   differentiate between the beginning of the initial string buffer and a subsequent
   internal portion of the buffer. Clients may need to add their own call to `next_lf/1`
-  where it would not have been necessary in git.
+  where it would not have been necessary in jgit.
   """
+  @spec header_start(header_name :: charlist, b :: charlist) :: charlist | nil
   def header_start([_ | _] = header_name, b) when is_list(b),
     do: possible_header_match(header_name, header_name, b, b)
 
-  def possible_header_match(header_name, [c | rest_of_header], match_start, [c | rest_of_match]),
+  defp possible_header_match(header_name, [c | rest_of_header], match_start, [c | rest_of_match]),
     do: possible_header_match(header_name, rest_of_header, match_start, rest_of_match)
 
-  def possible_header_match(_header_name, [], _match_start, [?\s | header_content]),
+  defp possible_header_match(_header_name, [], _match_start, [?\s | header_content]),
     do: header_content
 
-  def possible_header_match(_header_name, _, [], _), do: nil
+  defp possible_header_match(_header_name, _, [], _), do: nil
 
-  def possible_header_match(header_name, _, [_ | b], _),
+  defp possible_header_match(header_name, _, [_ | b], _),
     do: possible_header_match(header_name, header_name, b, b)
 
   # Holding off on implementing prev and prev_lf. These are not feasible with the
@@ -371,6 +403,7 @@ defmodule Xgit.Util.RawParseUtils do
   the first character of the author's name. If no author header can be located,
   `nil` is returned.
   """
+  @spec author(b :: charlist) :: charlist | nil
   def author(b) when is_list(b), do: header_start('author', b)
 
   @doc ~S"""
@@ -380,6 +413,7 @@ defmodule Xgit.Util.RawParseUtils do
   the first character of the committer's name. If no committer header can be located,
   `nil` is returned.
   """
+  @spec committer(b :: charlist) :: charlist | nil
   def committer(b) when is_list(b), do: header_start('committer', b)
 
   @doc ~S"""
@@ -389,6 +423,7 @@ defmodule Xgit.Util.RawParseUtils do
   the first character of the tagger's name. If no tagger header can be located,
   `nil` is returned.
   """
+  @spec tagger(b :: charlist) :: charlist | nil
   def tagger(b) when is_list(b), do: header_start('tagger', b)
 
   @doc ~S"""
@@ -398,6 +433,7 @@ defmodule Xgit.Util.RawParseUtils do
   the first character of the encoding's name. If no encoding header can be located,
   `nil` is returned (ad UTF-8 should be assumed).
   """
+  @spec encoding(b :: charlist) :: charlist | nil
   def encoding(b) when is_list(b), do: header_start('encoding', b)
 
   @doc ~S"""
@@ -406,6 +442,7 @@ defmodule Xgit.Util.RawParseUtils do
   Returns the encoding header as specified in the commit or `nil` if the header
   was not present and should be assumed.
   """
+  @spec parse_encoding_name(b :: charlist) :: charlist | nil
   def parse_encoding_name(b) when is_list(b) do
     enc = encoding(b)
 
@@ -421,11 +458,13 @@ defmodule Xgit.Util.RawParseUtils do
   @doc ~S"""
   Parse the `encoding ` header into a character set reference.
 
-  Returns `:utf8` or `:latin`.
+  Returns `:utf8` or `:latin1`.
 
-  Raises `UnsupportedCharsetError` if the character set is unknown.
-  WARNING: Compared to jgit, the character set support in xgit is limited.
+  Raises `Xgit.Errors.UnsupportedCharsetError` if the character set is unknown.
+
+  _WARNING:_ Compared to jgit, the character set support in xgit is limited.
   """
+  @spec parse_encoding(b :: charlist) :: :utf8 | :latin1
   def parse_encoding(b) when is_list(b) do
     case b |> parse_encoding_name() |> trim_if_string() do
       nil -> :utf8
@@ -447,6 +486,7 @@ defmodule Xgit.Util.RawParseUtils do
 
   Returns `%PersonIdent{}` or `nil` in case the identity could not be parsed.
   """
+  @spec parse_person_ident(b :: charlist) :: Xgit.Lib.PersonIdent.t()
   def parse_person_ident(b) when is_list(b) do
     with [?< | email_start] <- next_lf(b, ?<),
          true <- has_closing_angle_bracket?(email_start),
@@ -593,12 +633,13 @@ defmodule Xgit.Util.RawParseUtils do
   Convert a list of bytes to an Elixir (UTF-8) string when the encoding is not
   definitively know. Try parsing as a UTF-8 byte array first, then try ISO-8859-1.
 
-  PORTING NOTE: A lot of the simplification of this compared to jgit's implementation
+  _PORTING NOTE:_ A lot of the simplification of this compared to jgit's implementation
   of RawParseUtils.decode comes from the observation that the only character set
   ever passed to jgit's decode was UTF-8. We've baked that assumption into this
   implementation. Should other character sets come into play, this will necessarily
   become more complicated.
   """
+  @spec decode(b :: [byte]) :: charlist
   def decode(b) when is_list(b) do
     raw = :erlang.list_to_binary(b)
 
@@ -614,6 +655,7 @@ defmodule Xgit.Util.RawParseUtils do
   TO DO: Remove this in favor of to_string/1 when the one external
   reference (in FileHeader) is ported.
   """
+  @spec extract_binary_string(b :: [byte]) :: String.t()
   def extract_binary_string(b) when is_list(b), do: to_string(b)
 
   # /**
@@ -666,6 +708,7 @@ defmodule Xgit.Util.RawParseUtils do
   Return the contents of the charlist up to, but not including, the next end-of-paragraph
   sequence.
   """
+  @spec until_end_of_paragraph(b :: [byte]) :: [byte]
   def until_end_of_paragraph(b) when is_list(b),
     do: until_end_of_paragraph([], b)
 
@@ -678,6 +721,7 @@ defmodule Xgit.Util.RawParseUtils do
   Return the portion of the byte array up to, but not including the last instance of
   `ch`, disregarding any trailing spaces.
   """
+  @spec until_last_instance_of_trim(b :: [byte], ch :: char) :: [byte]
   def until_last_instance_of_trim(b, ch) when is_list(b) do
     b
     |> Enum.reverse()

@@ -46,11 +46,11 @@
 
 defmodule Xgit.Lib.RefDatabase do
   @moduledoc ~S"""
-  Abstraction of name to `ObjectId` mapping.
+  Abstraction of name to object ID mapping.
 
-  A reference database stores a mapping of reference names to `ObjectId`.
-  Every `Repository` has a single reference database, mapping names to the
-  tips of the object graph contained by the `ObjectDatabase`.
+  A reference database stores a mapping of reference names to object ID.
+  Every `Xgit.Lib.Repository` has a single reference database, mapping names
+  to the tips of the object graph contained by the `Xgit.Lib.ObjectDatabase`.
   """
 
   require Logger
@@ -60,21 +60,26 @@ defmodule Xgit.Lib.RefDatabase do
   @doc """
   Starts a `RefDatabase` process linked to the current process.
 
-  Once the server is started, the `init/1` function of the given `module` is
-  called with `args` as its arguments to initialize the stage. To ensure a
-  synchronized start-up procedure, this function does not return until `init/1`
-  has returned.
+  ## Parameters
 
-  The lifetime of this process is similar to that for `GenServer` or `GenStage`
-  processes.
+  `module` is the name of a module that implements the callbacks defined in this module.
+
+  `init_arg` is passed to the `init/1` function of `module`.
+
+  `options` are passed to `GenServer.start_link/3`.
+
+  ## Return Value
+
+  See `GenServer.start_link/3`.
   """
-  @spec start_link(module, term, GenServer.options()) :: GenServer.on_start()
-  def start_link(module, args, options) when is_atom(module) and is_list(options),
-    do: GenServer.start_link(__MODULE__, {module, args}, options)
+  @spec start_link(module :: module, init_arg :: term, GenServer.options()) ::
+          GenServer.on_start()
+  def start_link(module, init_arg, options) when is_atom(module) and is_list(options),
+    do: GenServer.start_link(__MODULE__, {module, init_arg}, options)
 
   @doc false
-  def init({mod, args}) do
-    case mod.init(args) do
+  def init({mod, mod_init_arg}) do
+    case mod.init(mod_init_arg) do
       {:ok, state} -> {:ok, {mod, state}}
       {:stop, reason} -> {:stop, reason}
     end
@@ -116,21 +121,29 @@ defmodule Xgit.Lib.RefDatabase do
   @doc ~S"""
   Initialize a new reference database at this location.
 
-  May raise `File.Error` or similar if the database could not be created.
+  ## Return Value
 
   Returns `:ok`.
+
+  ## Error
+
+  May raise `File.Error` or similar if the database could not be created.
   """
-  @spec create(database :: t) :: t
-  def create(database) when is_pid(database), do: GenServer.call(database, :create)
+  @spec create!(database :: t) :: :ok
+  def create!(database) when is_pid(database), do: GenServer.call(database, :create)
 
   @doc ~S"""
-  Invoked when `create/1` is called on this database.
+  Invoked when `create!/1` is called on this database.
 
   Should initialize a new reference database at this location.
 
-  May raise `File.Error` or similar if the database could not be created.
+  ## Return Value
 
   Should returns `:ok` for function chaining or (TBD) if not.
+
+  ## Error
+
+  May raise `File.Error` or similar if the database could not be created.
   """
   @callback handle_create(state :: term) :: :ok
 
@@ -613,6 +626,7 @@ defmodule Xgit.Lib.RefDatabase do
   #   return null;
   # }
 
+  @doc false
   def handle_call(:create, _from, {mod, mod_state}) do
     case mod.handle_create(mod_state) do
       {:ok, mod_state} -> {:reply, :ok, {mod, mod_state}}

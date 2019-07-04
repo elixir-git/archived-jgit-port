@@ -48,21 +48,20 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 defmodule Xgit.Internal.Storage.File.RefDirectory do
-  @moduledoc ~S"""
-  Traditional file system-based `RefDatabase`.
-
-  This is the classical reference database representation for a git repository.
-  References are stored in two formats: loose, and packed.
-
-  Loose references are stored as individual files within the `refs/` directory.
-  The file name matches the reference name and the file contents is the current
-  `ObjectId` in string form.
-
-  Packed references are stored in a single text file named `packed-refs`.
-  In the packed format, each reference is stored on its own line. This file
-  reduces the number of files needed for large reference spaces, reducing the
-  overall size of a git repository on disk.
-  """
+  @moduledoc false
+  # Traditional file system-based `RefDatabase`.
+  #
+  # This is the classical reference database representation for a git repository.
+  # References are stored in two formats: loose, and packed.
+  #
+  # Loose references are stored as individual files within the `refs/` directory.
+  # The file name matches the reference name and the file contents is the current
+  # `ObjectId` in string form.
+  #
+  # Packed references are stored in a single text file named `packed-refs`.
+  # In the packed format, each reference is stored on its own line. This file
+  # reduces the number of files needed for large reference spaces, reducing the
+  # overall size of a git repository on disk.
 
   use Xgit.Lib.RefDatabase
 
@@ -137,11 +136,6 @@ defmodule Xgit.Internal.Storage.File.RefDirectory do
   #
   # private List<Integer> retrySleepMs = RETRY_SLEEP_MS;
 
-  @doc ~S"""
-  Start a `RefDirectory`.
-
-  Pass in the location of the `.git` directory.
-  """
   @spec start_link(git_dir :: binary, GenServer.options()) :: GenServer.on_start()
   def start_link(git_dir, opts \\ []) when is_binary(git_dir) and is_list(opts),
     do: RefDatabase.start_link(__MODULE__, git_dir, opts)

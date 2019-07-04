@@ -50,11 +50,21 @@
 
 defmodule Xgit.Lib.SmallObjectLoader do
   @moduledoc ~S"""
-  Simple loader for cached byte lists.
+  Implements `Xgit.Lib.ObjectLoader` for cached byte lists.
 
-  `ObjectReader` implementations can fall back to this implementation when the
-  object's content is small enough to be accessed as a single byte list.
+  `Xgit.Lib.ObjectReader` implementations can fall back to this implementation
+  when the  object's content is small enough to be accessed as a single byte list.
   """
+
+  @typedoc ~S"""
+  Contains the data to be loaded.
+
+  ## Struct Members
+
+  * `:type`: One of the `obj_*` values from `Xgit.Lib.Constants`.
+  * `:data`: (byte list) The full content of the data. Should be "reasonably" small.
+  """
+  @type t :: %__MODULE__{type: Xgit.Lib.Constants.obj_type(), data: [byte]}
 
   @enforce_keys [:type, :data]
   defstruct [:type, :data]

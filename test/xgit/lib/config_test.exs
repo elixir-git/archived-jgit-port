@@ -455,7 +455,7 @@ defmodule Xgit.Lib.ConfigTest do
           parse("[core]\nlogAllRefUpdates = true\n")
         )
 
-      assert Config.names_in_section(c, "core", recursive: true) == [
+      assert Config.names_in_section(c, "core", recursive?: true) == [
                "repositoryformatversion",
                "filemode",
                "logallrefupdates"
@@ -498,8 +498,8 @@ defmodule Xgit.Lib.ConfigTest do
           parse("[a \"sub1\"]\nx = 0\ny = false\n[a \"sub2\"]\nA=0\n")
         )
 
-      assert Config.names_in_subsection(c, "a", "sub1", recursive: true) == ["z", "x", "y"]
-      assert Config.names_in_subsection(c, "a", "sub2", recursive: true) == ["b", "a"]
+      assert Config.names_in_subsection(c, "a", "sub1", recursive?: true) == ["z", "x", "y"]
+      assert Config.names_in_subsection(c, "a", "sub2", recursive?: true) == ["b", "a"]
     end
   end
 

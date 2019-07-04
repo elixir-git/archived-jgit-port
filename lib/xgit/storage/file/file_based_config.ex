@@ -52,13 +52,20 @@
 
 defmodule Xgit.Storage.File.FileBasedConfig do
   @moduledoc ~S"""
-  Implements `Xgit.Lib.Config.Storage` by storing the config data in a file.
+  Implementation of `Xgit.Lib.Config.Storage` that stores the config data in a file.
   (This is the typical case.)
+  """
 
-  Struct members:
-  * `path`: Path to the config file.
+  @typedoc ~S"""
+  Information about the config storage mechanism.
+
+  ## Struct Members
+
+  * `path`: (string) Path to the config file.
   * `snapshot`: An `Xgit.Storage.File.FileSnapshot` for this path.
   """
+  @type t :: %__MODULE__{path: String.t(), snapshot: Xgit.Storage.File.FileSnapshot.t()}
+
   @enforce_keys [:path, :snapshot]
   defstruct [:path, :snapshot]
 
@@ -68,8 +75,13 @@ defmodule Xgit.Storage.File.FileBasedConfig do
   @doc ~S"""
   Create a configuration for a file path with no default fallback.
 
-  Options are as for `Xgit.Lib.Config.new/1`.
+  ## Parameters
+
+  `path` is the file location where the config information should be read from or written to.
+
+  `options` are as for `Xgit.Lib.Config.new/1`.
   """
+  @spec config_for_path(path :: String.t(), options :: Keyword.t()) :: Config.t()
   def config_for_path(path, options \\ []) when is_binary(path) do
     Config.new(
       Keyword.put(options, :storage, %__MODULE__{path: path, snapshot: snapshot_for_path(path)})
@@ -101,6 +113,9 @@ defmodule Xgit.Storage.File.FileBasedConfig do
   @doc ~S"""
   Returns `true` if the currently-loaded configuration file is outdated.
   """
+  @spec outdated?(storage :: t) :: boolean
+  def outdated?(storage)
+
   def outdated?(%Config{storage: %__MODULE__{path: path, snapshot: snapshot}}),
     do: FileSnapshot.modified?(snapshot, path)
 

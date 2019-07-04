@@ -53,9 +53,13 @@ defmodule Xgit.Util.Paths do
 
   alias Xgit.Lib.FileMode
 
+  @typedoc "Comparison result."
+  @type comparison_result :: :lt | :eq | :gt
+
   @doc ~S"""
   Remove trailing `/` if present.
   """
+  @spec strip_trailing_separator(path :: charlist) :: charlist
   def strip_trailing_separator([]), do: []
 
   def strip_trailing_separator(path) when is_list(path) do
@@ -72,11 +76,18 @@ defmodule Xgit.Util.Paths do
   @doc ~S"""
   Compare two paths according to git path sort ordering rules.
 
-  Returns:
+  ## Return Value
+
   * `:lt` if `path1` sorts before `path2`.
   * `:eq` if they are the same.
   * `:gt` if `path1` sorts after `path2`.
   """
+  @spec compare(
+          path1 :: charlist,
+          mode1 :: non_neg_integer,
+          path2 :: charlist,
+          mode2 :: non_neg_integer
+        ) :: comparison_result
   def compare(path1, mode1, path2, mode2)
       when is_list(path1) and is_integer(mode1) and is_list(path2) and is_integer(mode2) do
     case core_compare(path1, mode1, path2, mode2) do
@@ -92,6 +103,16 @@ defmodule Xgit.Util.Paths do
   the same characters in their names, even if the mode differs. It is
   intended for use in validation routines detecting duplicate entries.
 
+  ## Parameters
+
+  `mode2` is the mode of the second file. Trees are sorted as though
+  `List.last(path2) == ?/`, even if no such character exists.
+  Return `:lt` if no duplicate name could exist; `:eq` if the paths
+  have the same name; `:gt` if other `path2` should still be checked
+  by caller.
+
+  ## Return Value
+
   Returns `:eq` if the names are identical and a conflict exists
   between `path1` and `path2`, as they share the same name.
 
@@ -104,13 +125,9 @@ defmodule Xgit.Util.Paths do
   `path1` to appear later, after `path2`. Callers should
   continue to examine candidates for `path2` until the method returns
   one of the other return values.
-
-  `mode2` is the mode of the second file. Trees are sorted as though
-  `List.last(path2) == ?/`, even if no such character exists.
-  Return `:lt` if no duplicate name could exist; `:eq` if the paths
-  have the same name; `:gt` if other `path2` should still be checked
-  by caller.
   """
+  @spec compare_same_name(path1 :: charlist, path2 :: charlist, mode2 :: non_neg_integer) ::
+          comparison_result
   def compare_same_name(path1, path2, mode2),
     do: core_compare(path1, FileMode.type_tree(), path2, mode2)
 

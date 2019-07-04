@@ -46,17 +46,21 @@
 
 defmodule Xgit.Api.InitCommand do
   @moduledoc ~S"""
-  Create an empty git repository or reinitalize an existing one.
+  Creates an empty git repository or reinitalizes an existing one.
+  """
 
-  See [documentation for `git init` command](http://www.kernel.org/pub/software/scm/git/docs/git-init.html).
+  @typedoc ~S"""
+  Describes the operation to be performed.
 
-  Struct members:
+  ## Struct Members
+
   * `:dir` (optional, string): The directory associated with the init operation. If neither this
     not `:git_dir` are provided, we'll use the current directory.
   * `:git_dir` (optional, string): The repository meta directory (typically named `.git`).
   * `:bare?`(optional, boolean): Set to `true` if the repository should be bare (i.e. have
     no working directory)
   """
+  @type t :: %__MODULE__{dir: String.t() | nil, git_dir: String.t() | nil, bare?: boolean | nil}
 
   defstruct dir: nil, git_dir: nil, bare?: false
 
@@ -67,15 +71,30 @@ defmodule Xgit.Api.InitCommand do
   alias Xgit.Storage.File.FileRepositoryBuilder
 
   @doc ~S"""
-  Performs the `init` command to create a file-based repository.
+  Creates a file-based repository.
 
-  Returns an `Xgit.Lib.Repository` process corresponding to the newly-created
-  repository. The repository process will be linked to the calling process (`self()`).
+  This is analogous to running the
+  [`git init` command](http://www.kernel.org/pub/software/scm/git/docs/git-init.html).
 
-  You may provide a list of options (`opts`) which will be passed through to the
-  `GenServer.start_link/3` call.
+  ## Parameters
+
+  * `init_command` - See [Struct Members](#t:t/0-struct-members) above.
+
+  ## Options
+
+  Any options provided are passed to the `GenServer.start_link/3` call for the
+  repository process.
+
+  ## Return Values
+
+  Returns a PID for the new repository. Use the `Xgit.Lib.Repository` module to
+  interact with this repository. The repository process will be linked to the
+  calling process (`self()`).
+
+  Will raise an error if unable to create the repo.
   """
-  def run(%__MODULE__{dir: dir, git_dir: git_dir, bare?: bare?}, opts \\ [])
+  @spec run!(init_command :: t, opts :: Keyword.t()) :: pid
+  def run!(%__MODULE__{dir: dir, git_dir: git_dir, bare?: bare?}, opts \\ [])
       when (is_binary(dir) or is_nil(dir)) and (is_binary(git_dir) or is_nil(git_dir)) and
              is_boolean(bare?) and is_list(opts) do
     validate_dirs(dir, git_dir, bare?)

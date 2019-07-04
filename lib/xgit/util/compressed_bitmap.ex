@@ -40,9 +40,9 @@
 
 defmodule Xgit.Util.CompressedBitmap do
   @moduledoc ~S"""
-  Compressed bitmap similar to Java's BitSet class.
+  Compressed bitmap similar to Java's `BitSet` class.
 
-  Placeholder implementation for now based on Elixir's MapSet.
+  Placeholder implementation for now based on Elixir's `MapSet`.
 
   Hopefully eventually replaced with something as efficient
   as com.googlecode.javaewah.EWAHCompressedBitmap.
@@ -56,16 +56,20 @@ defmodule Xgit.Util.CompressedBitmap do
   * https://github.com/zambal/rb_sets
   * https://github.com/gausby/bit_field_set
   """
+
+  @opaque t :: %__MODULE__{}
   defstruct mapset: nil, max: 0
 
   @doc """
   Returns a new set.
   """
+  @spec new() :: t
   def new(), do: %__MODULE__{mapset: MapSet.new()}
 
   @doc """
   Creates a new set from an enumerable.
   """
+  @spec new(enumerable :: Enum.t()) :: t
   def new(enumerable)
 
   def new(%__MODULE__{} = bitmap), do: bitmap
@@ -83,6 +87,7 @@ defmodule Xgit.Util.CompressedBitmap do
   @doc """
   Inserts `value` into `bitmap` if `bitmap` doesn't already contain it.
   """
+  @spec put(bitmap :: t, value :: term) :: t
   def put(%__MODULE__{max: max_v, mapset: mapset} = bitmap, value)
       when is_integer(value) and value >= 0,
       do: %{bitmap | max: max(max_v, value), mapset: MapSet.put(mapset, value)}
@@ -90,18 +95,23 @@ defmodule Xgit.Util.CompressedBitmap do
   @doc """
   Removes `value` from `bitmap` if `bitmap` already contains it. (No-op otherwise.)
   """
+  @spec delete(bitmap :: t, value :: term) :: t
   def delete(%__MODULE__{mapset: mapset} = bitmap, value) when is_integer(value) and value >= 0,
     do: %{bitmap | mapset: MapSet.delete(mapset, value)}
 
   @doc """
   Returns the bitwise OR of the two bitmaps.
   """
+  @spec union(bitmap1 :: t, bitmap2 :: t) :: t
   def union(%__MODULE__{max: max1, mapset: mapset1}, %__MODULE__{max: max2, mapset: mapset2}),
     do: %__MODULE__{max: max(max1, max2), mapset: MapSet.union(mapset1, mapset2)}
 
   @doc """
   Returns the bitwise AND of the two bitmaps.
   """
+  @spec intersection(bitmap1 :: t, bitmap2 :: t) :: t
+  def intersection(bitmap1, bitmap2)
+
   def intersection(%__MODULE__{max: max1, mapset: mapset1}, %__MODULE__{
         max: max2,
         mapset: mapset2
@@ -111,6 +121,9 @@ defmodule Xgit.Util.CompressedBitmap do
   @doc """
   Returns the bitwise XOR of the two bitmaps.
   """
+  @spec xor(bitmap1 :: t, bitmap2 :: t) :: t
+  def xor(bitmap1, bitmap2)
+
   def xor(%__MODULE__{max: max1, mapset: mapset1}, %__MODULE__{max: max2, mapset: mapset2}) do
     union = MapSet.union(mapset1, mapset2)
     intersection = MapSet.intersection(mapset1, mapset2)
@@ -121,17 +134,19 @@ defmodule Xgit.Util.CompressedBitmap do
   @doc """
   Returns the bitwise NOT of the bitmap.
   """
-  def not (%__MODULE__{max: max} = mapset) do
+  @spec not (bitmap :: t) :: t
+  def not (%__MODULE__{max: max} = bitmap) do
     # TO DO: Replace with a more efficient implementation.
 
     0..max
     |> new()
-    |> xor(mapset)
+    |> xor(bitmap)
   end
 
   @doc """
   Returns the bitwise AND NOT of the two bitmaps.
   """
+  @spec and_not(bitmap1 :: t, bitmap2 :: t) :: t
   def and_not(%__MODULE__{} = bitmap1, %__MODULE__{} = bitmap2) do
     bitmap2
     |> __MODULE__.not()
