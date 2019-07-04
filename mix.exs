@@ -64,7 +64,7 @@ defmodule Xgit.MixProject do
   defp deps do
     [
       {:con_cache, "~> 0.13"},
-      {:credo, "~> 1.0", only: [:dev, :test]},
+      {:credo, "~> 1.1", only: [:dev, :test]},
       {:excoveralls, "~> 0.10", only: :test},
       {:ex_doc, "~> 0.20", only: :dev},
       {:gettext, "~> 0.16"},
