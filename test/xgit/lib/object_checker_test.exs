@@ -1416,12 +1416,10 @@ defmodule Xgit.Lib.ObjectCheckerTest do
   end
 
   defp valid_path?(path) do
-    try do
-      ObjectChecker.check_path!(%ObjectChecker{}, path)
-      true
-    rescue
-      _ -> false
-    end
+    ObjectChecker.check_path!(%ObjectChecker{}, path)
+    true
+  rescue
+    _ -> false
   end
 
   describe "check_path_segment!/2" do

@@ -68,12 +68,10 @@ defmodule Xgit.DirCache.DirCacheEntryTest do
   end
 
   defp valid_path?(path) do
-    try do
-      DirCacheEntry.new(path)
-      true
-    rescue
-      _ -> false
-    end
+    DirCacheEntry.new(path)
+    true
+  rescue
+    _ -> false
   end
 
   @very_long_path "#{String.duplicate("abc/", 1024)}abc"

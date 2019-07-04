@@ -580,11 +580,9 @@ defmodule Xgit.Lib.ObjectChecker do
   defp id_for(%__MODULE{skiplist: nil}, _obj_type, _raw), do: nil
 
   defp id_for(_chcker, obj_type, raw) do
-    try do
-      ObjectId.id_for(obj_type, raw)
-    rescue
-      _ -> nil
-    end
+    ObjectId.id_for(obj_type, raw)
+  rescue
+    _ -> nil
   end
 
   defp match_or_report!(%__MODULE__{} = checker, data,
