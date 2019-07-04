@@ -46,9 +46,9 @@
 
 defmodule Xgit.Util.Time.MonotonicSystemClock do
   @moduledoc ~S"""
-  An implementation of `MonotonicClock` that naively uses the system clock.
+  An implementation of `Xgit.Util.Time.MonotonicClock` that naively uses the system clock.
 
-  PORTING NOTE: We do not currently validate that the system clock has not
+  _PORTING NOTE:_ We do not currently validate that the system clock has not
   rolled back. See `nowMicros` in the jgit implementation.
   """
 
