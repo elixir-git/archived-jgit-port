@@ -140,7 +140,7 @@ defmodule Xgit.Internal.Storage.File.RefDirectory do
   def start_link(git_dir, opts \\ []) when is_binary(git_dir) and is_list(opts),
     do: RefDatabase.start_link(__MODULE__, git_dir, opts)
 
-  @doc false
+  @impl true
   def init(git_dir) do
     logs_dir = Path.join(git_dir, Constants.logs())
 
@@ -177,7 +177,7 @@ defmodule Xgit.Internal.Storage.File.RefDirectory do
   #   return new File(logsDir, name);
   # }
 
-  @doc false
+  @impl true
   def handle_create(%{refs_dir: refs_dir} = state) do
     File.mkdir_p!(refs_dir)
     File.mkdir_p!(Path.join(refs_dir, "heads"))

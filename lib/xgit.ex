@@ -47,6 +47,7 @@ defmodule Xgit do
   @doc """
   Start Xgit application.
   """
+  @impl true
   def start(_type, _args) do
     children = [
       {ConCache,

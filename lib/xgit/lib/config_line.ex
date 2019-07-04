@@ -109,6 +109,7 @@ defmodule Xgit.Lib.ConfigLine do
   defp maybe_downcase(s), do: String.downcase(s)
 
   defimpl String.Chars do
+    @impl true
     def to_string(%Xgit.Lib.ConfigLine{
           section: section,
           subsection: subsection,

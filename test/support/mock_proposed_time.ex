@@ -48,5 +48,6 @@ defmodule Xgit.Test.MockProposedTime do
 end
 
 defimpl Xgit.Util.Time.ProposedTimestamp.Impl, for: Xgit.Test.MockProposedTime do
+  @impl true
   def read(%{time: time}), do: time
 end

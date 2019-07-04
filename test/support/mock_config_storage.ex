@@ -62,6 +62,9 @@ defimpl Xgit.Lib.Config.Storage, for: Xgit.Test.MockConfigStorage do
   # to pollute the test state with whatever happens to be in the user or system
   # .gitconfig files. So we replace the file-based implementations with no-ops.
 
+  @impl true
   def load(_storage, _config), do: :ok
+
+  @impl true
   def save(_storage, _config), do: :ok
 end

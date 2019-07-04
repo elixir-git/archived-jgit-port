@@ -50,7 +50,7 @@ defmodule Xgit.Lib.ObjectChecker do
   Verifies that an object is formatted correctly.
 
   Verifications made by this module only check that the fields of an object are
-  formatted correctly. The `ObjectId` checksum of the object is not verified, and
+  formatted correctly. The object ID checksum of the object is not verified, and
   connectivity links between objects are also not verified. It's assumed that
   the caller can provide both of these validations on its own.
   """
@@ -63,6 +63,13 @@ defmodule Xgit.Lib.ObjectChecker do
   alias Xgit.Util.RawParseUtils
 
   defprotocol Strategy do
+    @moduledoc ~S"""
+    Implements some of the object-type checks for `Xgit.Lib.ObjectChecker`.
+    """
+
+    @typedoc "Any struct for which `Xgit.Lib.ObjectChecker.Strategy` is implemented."
+    @type t :: struct
+
     @doc ~S"""
     Check a commit for errors.
 
@@ -75,6 +82,7 @@ defmodule Xgit.Lib.ObjectChecker do
 
     Raise `Xgit.Errors.CorruptObjectError` if the commit is invalid.
     """
+    @spec check_commit!(strategy :: t, commit_data :: [byte]) :: :ok | :default
     def check_commit!(strategy, commit_data)
 
     @doc ~S"""
@@ -89,6 +97,7 @@ defmodule Xgit.Lib.ObjectChecker do
 
     Raise `Xgit.Errors.CorruptObjectError` if the blob is invalid.
     """
+    @spec check_blob!(strategy :: t, blob_data :: [byte]) :: :ok | :default
     def check_blob!(strategy, blob_data)
   end
 
@@ -112,7 +121,8 @@ defmodule Xgit.Lib.ObjectChecker do
     * `has_dotgit: true`: Ignore a file path that is `.git`
     * `tree_not_sorted: true`: Ignore a tree where the file paths are not sorted
     * `duplicate_entries: true`: Ignore duplicate entries in the tree
-  * `:allow_invalid_person_ident?`: (boolean) `true` to ignore errors in the formation of author / committer IDs
+  * `:allow_invalid_person_ident?`: (boolean) `true` to ignore errors in the
+    formation of author / committer IDs
   * `:windows?`: (boolean) `true` to enforce Windows file naming conventions.
   * `:macosx?`: (boolean) `true` to enforce Mac OS X file naming conventions.
   """
@@ -158,6 +168,8 @@ defmodule Xgit.Lib.ObjectChecker do
 
   Raises `Xgit.Errors.CorruptObjectError` if an error is identified.
   """
+  @spec check!(checker :: t, obj_type :: Constants.obj_type(), data :: [byte]) ::
+          {:ok, [{String.t(), String.t()}]} | :ok
   def check!(%__MODULE__{} = checker, obj_type, data)
       when is_integer(obj_type) and is_list(data) do
     check!(checker, id_for(checker, obj_type, data), obj_type, data)
@@ -168,9 +180,12 @@ defmodule Xgit.Lib.ObjectChecker do
 
   Like `check!/3` but `id` has already been calculated.
   """
+  @spec check!(checker :: t, id :: ObjectId.t(), obj_type :: Constants.obj_type(), data :: [byte]) ::
+          {:ok, [{String.t(), String.t()}]} | :ok
   def check!(checker, id, obj_type, data)
 
-  # def check(%ObjectChecker{} = checker, id, obj_type, data) when is_binary(id) is_integer(obj_type) and is_list(data) do
+  # def check(%ObjectChecker{} = checker, id, obj_type, data) when is_binary(id)
+  # ... is_integer(obj_type) and is_list(data) do
   # switch (objType) {
 
   # type 1 = commit
@@ -636,6 +651,7 @@ defmodule Xgit.Lib.ObjectChecker do
 
   Raises `Xgit.Errors.CorruptObjectError` if the path is invalid.
   """
+  @spec check_path!(checker :: t, path :: String.t() | charlist) :: :ok
   def check_path!(checker, path)
 
   def check_path!(%__MODULE__{} = checker, path) when is_binary(path),
@@ -672,6 +688,7 @@ defmodule Xgit.Lib.ObjectChecker do
 
   Raises `Xgit.Errors.CorruptObjectError` if the path is invalid.
   """
+  @spec check_path_segment!(checker :: t, data :: String.t() | charlist) :: :ok
   def check_path_segment!(%__MODULE__{} = checker, data) when is_list(data) do
     if Enum.any?(data, &(&1 == 0)),
       do: raise(CorruptObjectError, why: "name contains byte 0x00")

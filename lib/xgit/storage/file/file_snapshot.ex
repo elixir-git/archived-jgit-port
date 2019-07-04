@@ -203,6 +203,7 @@ defmodule Xgit.Storage.File.FileSnapshot do
   defimpl String.Chars do
     alias Xgit.Storage.File.FileSnapshot
 
+    @impl true
     def to_string(%FileSnapshot{last_modified: :dirty}), do: "DIRTY"
 
     def to_string(%FileSnapshot{last_modified: :missing}), do: "MISSING_FILE"

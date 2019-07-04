@@ -91,23 +91,36 @@ defmodule Xgit.Lib.ObjectIdRef do
   defimpl Xgit.Lib.Ref do
     alias Xgit.Lib.ObjectIdRef
 
+    @impl true
     def name(%ObjectIdRef{name: name}), do: name
+
+    @impl true
     def symbolic?(_), do: false
+
+    @impl true
     def leaf(ref), do: ref
+
+    @impl true
     def target(ref), do: ref
+
+    @impl true
     def object_id(%ObjectIdRef{object_id: object_id}), do: object_id
 
+    @impl true
     def peeled_object_id(%ObjectIdRef{tag?: true, peeled_object_id: peeled_object_id}),
       do: peeled_object_id
 
     def peeled_object_id(_), do: nil
 
+    @impl true
     def peeled?(%ObjectIdRef{peeled?: true}), do: true
     def peeled?(%ObjectIdRef{peeled_object_id: nil}), do: false
     def peeled?(_), do: true
 
+    @impl true
     def storage(%ObjectIdRef{storage: storage}), do: storage
 
+    @impl true
     def update_index(%ObjectIdRef{update_index: update_index})
         when is_integer(update_index) and update_index > 0,
         do: update_index
@@ -116,6 +129,7 @@ defmodule Xgit.Lib.ObjectIdRef do
   end
 
   defimpl String.Chars do
+    @impl true
     def to_string(%Xgit.Lib.ObjectIdRef{
           name: name,
           object_id: object_id,

@@ -70,6 +70,16 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   #
   # pack_checksum: (byte list) 20-byte checksum written after all of the above
 
+  @type t :: %__MODULE__{
+          object_count: non_neg_integer,
+          fanout_table: tuple,
+          names: tuple,
+          crc32: tuple,
+          offset32: tuple,
+          offset64: binary,
+          pack_checksum: [byte]
+        }
+
   @enforce_keys [
     :object_count,
     :fanout_table,
@@ -87,6 +97,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
 
   @fanout 256
 
+  @spec parse(file_pid :: pid) :: t
   def parse(file_pid) when is_pid(file_pid) do
     fanout_table =
       file_pid
@@ -279,10 +290,16 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
     alias Xgit.Internal.Storage.File.PackIndexV2
     alias Xgit.Lib.ObjectId
 
+    @impl true
     def count(_), do: {:error, PackIndexV2}
+
+    @impl true
     def member?(_, _), do: {:error, PackIndexV2}
+
+    @impl true
     def slice(_), do: {:error, PackIndexV2}
 
+    @impl true
     def reduce(%PackIndexV2{} = index, acc, fun), do: reduce(index, 0, 0, acc, fun)
 
     defp reduce(index, level1_idx, level2_idx, acc, fun)

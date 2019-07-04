@@ -50,9 +50,11 @@ defmodule Xgit.Test.SpyStorage do
 end
 
 defimpl Xgit.Lib.Config.Storage, for: Xgit.Test.SpyStorage do
+  @impl true
   def load(%Xgit.Test.SpyStorage{test_pid: test_pid}, config),
     do: send(test_pid, {:load, config})
 
+  @impl true
   def save(%Xgit.Test.SpyStorage{test_pid: test_pid}, config),
     do: send(test_pid, {:save, config})
 end

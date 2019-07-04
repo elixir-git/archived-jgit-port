@@ -50,6 +50,13 @@
 defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   @moduledoc false
 
+  @type t(%__MODULE__{
+          idx_header: tuple,
+          idx_data: [[byte]],
+          object_count: non_neg_integer,
+          pack_checksum: [byte]
+        })
+
   @enforce_keys [:idx_header, :idx_data, :object_count, :pack_checksum]
   defstruct [:idx_header, :idx_data, :object_count, :pack_checksum]
 
@@ -59,6 +66,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
 
   @index_header_length 1024
 
+  @spec parse(file_pid :: pid, header :: [byte]) :: t
   def parse(file_pid, header) when is_pid(file_pid) and is_list(header) do
     fanout_table_suffix = IO.read(file_pid, @index_header_length - length(header))
     fanout_table = header ++ fanout_table_suffix
@@ -136,10 +144,16 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
     alias Xgit.Internal.Storage.File.PackIndexV1
     alias Xgit.Lib.ObjectId
 
+    @impl true
     def count(_), do: {:error, PackIndexV1}
+
+    @impl true
     def member?(_, _), do: {:error, PackIndexV1}
+
+    @impl true
     def slice(_), do: {:error, PackIndexV1}
 
+    @impl true
     def reduce(%PackIndexV1{idx_data: idx_data}, acc, fun) when is_list(idx_data),
       do: reduce(idx_data, [], acc, fun)
 

@@ -158,6 +158,7 @@ defmodule Xgit.Storage.File.FileBasedConfig do
     If the file does not exist, this configuration is cleared, and thus
     behaves the same as though the file exists, but is empty.
     """
+    @impl true
     def load(%Xgit.Storage.File.FileBasedConfig{path: path}, config) do
       # PORTING NOTE: jgit's implementation contains a lot of logic to handle
       # cases where the file has moved, becomes stale, retrying in the event
@@ -177,6 +178,7 @@ defmodule Xgit.Storage.File.FileBasedConfig do
     @doc ~S"""
     Save the configuration as a git text-style configuration file.
     """
+    @impl true
     def save(%Xgit.Storage.File.FileBasedConfig{path: path}, config) do
       # PORTING NOTE: jgit's implementation contains logic to ensure that there
       # aren't multiple simultaneous writers to the file and that the UTF-8 BOM

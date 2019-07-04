@@ -50,6 +50,16 @@ defmodule Xgit.Test.MockSystemReader do
   @moduledoc false
   # Used for testing only.
 
+  alias Xgit.Lib.Config
+
+  @type t :: %__MODULE__{
+          hostname: String.t(),
+          env: map,
+          user_config: Config.t() | nil,
+          system_config: Config.t() | nil,
+          time_agent: pid | nil
+        }
+
   defstruct hostname: "fake.host.example.com",
             env: %{},
             user_config: nil,
@@ -59,6 +69,7 @@ defmodule Xgit.Test.MockSystemReader do
   alias Xgit.Lib.Config
   alias Xgit.Test.MockConfigStorage
 
+  @spec new() :: t
   def new do
     {:ok, time_agent} = Agent.start_link(fn -> 1_250_379_778_668_000 end)
     # ^ time is Sat Aug 15 20:12:58 GMT-03:30 2009
@@ -71,6 +82,7 @@ defmodule Xgit.Test.MockSystemReader do
   end
 
   # Adjust the current time by _n_ seconds.
+  @spec tick(t, integer) :: integer
   def tick(%{time_agent: time_agent}, seconds) do
     Agent.get_and_update(time_agent, fn existing_time ->
       new_time = existing_time + seconds * 1_000_000
@@ -83,9 +95,13 @@ defimpl Xgit.Util.SystemReader, for: Xgit.Test.MockSystemReader do
   alias Xgit.Lib.Config
   alias Xgit.Test.MockSystemReader
 
+  @impl true
   def hostname(%{hostname: hostname}), do: hostname
+
+  @impl true
   def get_env(%{env: env}, variable), do: Map.get(env, variable)
 
+  @impl true
   def user_config(%MockSystemReader{user_config: user_config} = _reader, nil = _parent_config),
     do: user_config
 
@@ -95,6 +111,7 @@ defimpl Xgit.Util.SystemReader, for: Xgit.Test.MockSystemReader do
   # Assume in this case that the idle system config will never be written to.
   # This is probably for testing.
 
+  @impl true
   def system_config(
         %MockSystemReader{system_config: system_config} = _reader,
         nil = _parent_config
@@ -102,15 +119,20 @@ defimpl Xgit.Util.SystemReader, for: Xgit.Test.MockSystemReader do
     system_config
   end
 
+  @impl true
   def current_time(%{time_agent: time_agent}) do
     time_agent
     |> Agent.get(& &1)
     |> Kernel.div(1000)
   end
 
+  @impl true
   def clock(reader), do: reader
 
+  @impl true
   def timezone_at_time(_, _time), do: -210
+
+  @impl true
   def timezone(_), do: -210
   # Offset in the mock is GMT-03:30.
 end
@@ -123,6 +145,7 @@ defimpl Xgit.Util.Time.MonotonicClock, for: Xgit.Test.MockSystemReader do
   alias Xgit.Test.MockSystemReader
   alias Xgit.Util.SystemReader
 
+  @impl true
   def propose(%MockSystemReader{} = system_reader) do
     t = SystemReader.current_time(system_reader)
     %Xgit.Test.MockProposedTime{time: t}

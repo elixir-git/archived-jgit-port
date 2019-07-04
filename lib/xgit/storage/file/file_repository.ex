@@ -92,10 +92,10 @@ defmodule Xgit.Storage.File.FileRepository do
   alias Xgit.Lib.ObjectDatabase
   alias Xgit.Lib.RefDatabase
   alias Xgit.Lib.RefDatabase
-  alias Xgit.Util.StringUtils
-  alias Xgit.Util.SystemReader
   alias Xgit.Storage.File.FileBasedConfig
   alias Xgit.Storage.File.FileRepositoryBuilder
+  alias Xgit.Util.StringUtils
+  alias Xgit.Util.SystemReader
 
   @doc ~S"""
   Start an on-disk git repository.
@@ -124,7 +124,7 @@ defmodule Xgit.Storage.File.FileRepository do
     do: Repository.start_link(__MODULE__, {builder, opts}, opts)
 
   # actually called by Xgit.Lib.Repository.init/1
-  @impl GenServer
+  @impl true
   def init(
         {%FileRepositoryBuilder{
            git_dir: git_dir,
@@ -271,7 +271,7 @@ defmodule Xgit.Storage.File.FileRepository do
   # }
 
   # @doc false
-  @impl Xgit.Lib.Repository
+  @impl true
   def handle_create(
         %{
           git_dir: git_dir,
@@ -383,23 +383,23 @@ defmodule Xgit.Storage.File.FileRepository do
     {:ok, state}
   end
 
-  @impl Xgit.Lib.Repository
+  @impl true
   def handle_git_dir(%{git_dir: git_dir} = state), do: {:ok, git_dir, state}
 
-  @impl Xgit.Lib.Repository
+  @impl true
   def handle_bare?(%{bare?: bare?} = state), do: {:ok, bare?, state}
 
-  @impl Xgit.Lib.Repository
+  @impl true
   def handle_work_tree(%{work_tree: work_tree} = state), do: {:ok, work_tree, state}
 
-  @impl Xgit.Lib.Repository
+  @impl true
   def handle_index_file(%{index_file: index_file} = state), do: {:ok, index_file, state}
 
-  @impl Xgit.Lib.Repository
+  @impl true
   def handle_object_database(%{object_database: object_database} = state),
     do: {:ok, object_database, state}
 
-  @impl Xgit.Lib.Repository
+  @impl true
   def handle_config(%{repo_config: repo_config} = state),
     do: {:ok, repo_config, state}
 

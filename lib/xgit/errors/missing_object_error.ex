@@ -55,6 +55,7 @@ defmodule Xgit.Errors.MissingObjectError do
 
   alias Xgit.Lib.Constants
 
+  @spec exception(Keyword.t()) :: struct
   def exception(object_id: object_id, type: type) when is_binary(object_id) and is_binary(type) do
     %__MODULE__{message: "Missing #{type} #{object_id}", missing_object_id: object_id}
   end

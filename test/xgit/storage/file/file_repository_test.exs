@@ -171,7 +171,10 @@ defmodule Xgit.Storage.File.FileRepositoryTest do
   defmodule NotARepository do
     use GenServer
 
+    @impl true
     def init(x), do: {:ok, x}
+
+    @impl true
     def handle_call(_, _, x), do: {:reply, :nope, x}
   end
 end

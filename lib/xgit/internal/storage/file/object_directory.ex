@@ -1133,6 +1133,7 @@ defmodule Xgit.Internal.Storage.File.ObjectDirectory do
   #   return new AlternateHandle.Id(objects);
   # }
 
+  @impl true
   def handle_extra_call(:directory, _from, %{objects: objects} = state),
     do: {:reply, objects, state}
 

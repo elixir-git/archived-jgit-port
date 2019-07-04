@@ -89,6 +89,7 @@ defmodule Xgit.Test.PackIndexTestCase do
   Test results of iterator comparing to content of well-known (prepared)
   small index.
   """
+  @spec assert_results_for_pack_34be9032_are_expected(pack_index :: Enum.t()) :: term
   def assert_results_for_pack_34be9032_are_expected(pack_index) do
     assert Enum.to_list(pack_index) == [
              "4b825dc642cb6eb9a060e54bf8d69288fbee4904",

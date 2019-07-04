@@ -53,7 +53,7 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   A temporary directory is created for each test, allowing each test to use a
   fresh environment. The temporary directory is cleaned up after the test ends.
 
-  PORTING NOTE: I'm still figuring out a porting strategy for the hierarchy
+  _PORTING NOTE:_ I'm still figuring out a porting strategy for the hierarchy
   of test case classes in jgit. So, for now, I'm keeping this fairly minimal.
   """
 
@@ -106,12 +106,19 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
 
   For test cases that `use` this module, this is done implicitly via `setup`.
 
-  Returns a map containing:
+  ## Return Value
+
   * `mock_system_reader`: A `MockSystemReader` with environment variables set.
   * `author`: A `PersonIdent` for a fake author.
   * `committer`: A `PersonIdent` for a fake committer.
   * `tmp`: A temporary directory, which will be deleted after the test is done.
   """
+  @spec setup_test!() :: %{
+          mock_system_reader: MockSystemReader.t(),
+          author: PersonIdent.t(),
+          committer: PersonIdent.t(),
+          tmp: String.t()
+        }
   def setup_test! do
     Temp.track!()
     tmp = Temp.mkdir!(prefix: "tmp_")
@@ -300,6 +307,7 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
 
   Returns the PID for the new repository.
   """
+  @spec create_bare_repository!() :: Repository.t()
   def create_bare_repository!, do: create_repository!(bare: true)
 
   @doc ~S"""
@@ -307,6 +315,7 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
 
   Returns the PID for the new repository.
   """
+  @spec create_work_repository!() :: Repository.t()
   def create_work_repository!, do: create_repository!(bare?: false)
 
   @doc ~S"""
@@ -317,6 +326,7 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
 
   Returns the PID for the new repository.
   """
+  @spec create_repository!(bare?: boolean) :: Repository.t()
   def create_repository!(bare?: bare?) do
     git_dir = create_unique_test_git_dir!(bare?: bare?)
 
@@ -338,6 +348,7 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
 
   Returns the path to the new directory.
   """
+  @spec create_unique_test_git_dir!(bare?: boolean) :: String.t()
   def create_unique_test_git_dir!(bare?: bare?) do
     Temp.track!()
     tmp = Temp.mkdir!(prefix: "tmp_")

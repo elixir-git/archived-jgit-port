@@ -82,7 +82,7 @@ defmodule Xgit.Lib.ConfigTest do
   end
 
   test "read with subsection" do
-    c = parse("[foo \"zip\"]\nbar\n[foo \"zap\"]\nbar=false\nn=3\n")
+    c = parse(~s([foo "zip"]\nbar\n[foo "zap"]\nbar=false\nn=3\n))
     assert Config.get_boolean(c, "foo", "zip", "bar", false) == true
     assert Config.get_string(c, "foo", "zip", "bar") == ""
     assert Config.get_boolean(c, "foo", "zap", "bar", true) == false
@@ -97,7 +97,7 @@ defmodule Xgit.Lib.ConfigTest do
       |> Config.set_string("sec", "ext", "name", "value")
       |> Config.set_string("sec", "ext", "name2", "value2")
 
-    assert Config.to_text(c) == "[sec \"ext\"]\n\tname = value\n\tname2 = value2\n"
+    assert Config.to_text(c) == ~s("[sec "ext"]\n\tname = value\n\tname2 = value2\n)
   end
 
   test "put+get simple" do
@@ -382,7 +382,7 @@ defmodule Xgit.Lib.ConfigTest do
         |> Config.unset_section("branch", "remove")
 
       assert Config.to_text(c) ==
-               "[branch \"keep\"]\n" <>
+               ~s([branch "keep"]\n) <>
                  "  merge = master.branch.to.keep.in.the.file\n" <>
                  "\n" <>
                  "[core-section-not-to-remove-in-test]\n" <>
@@ -405,7 +405,7 @@ defmodule Xgit.Lib.ConfigTest do
         |> Config.unset_section("single")
 
       assert Config.to_text(c) ==
-               "[branch \"keep\"]\n" <>
+               ~s([branch "keep"]\n) <>
                  "  merge = master.branch.to.keep.in.the.file\n" <>
                  "\n" <>
                  "[core-section-not-to-remove-in-test]\n" <>
@@ -483,8 +483,8 @@ defmodule Xgit.Lib.ConfigTest do
     test "base config, but not recursive" do
       c =
         parse(
-          "[a \"sub1\"]\nz = true\n[a \"sub2\"]\nB=1\n",
-          parse("[a \"sub1\"]\nx = 0\ny = false\n[a \"sub2\"]\nA=0\n")
+          ~s([a "sub1"]\nz = true\n[a "sub2"]\nB=1\n),
+          parse(~s([a "sub1"]\nx = 0\ny = false\n[a "sub2"]\nA=0\n))
         )
 
       assert Config.names_in_subsection(c, "a", "sub1") == ["z"]
@@ -494,8 +494,8 @@ defmodule Xgit.Lib.ConfigTest do
     test "recursive" do
       c =
         parse(
-          "[a \"sub1\"]\nz = true\n[a \"sub2\"]\nB=1\n",
-          parse("[a \"sub1\"]\nx = 0\ny = false\n[a \"sub2\"]\nA=0\n")
+          ~s([a "sub1"]\nz = true\n[a "sub2"]\nB=1\n),
+          parse(~s([a "sub1"]\nx = 0\ny = false\n[a "sub2"]\nA=0\n))
         )
 
       assert Config.names_in_subsection(c, "a", "sub1", recursive?: true) == ["z", "x", "y"]
@@ -1149,27 +1149,27 @@ defmodule Xgit.Lib.ConfigTest do
       # Empty string is read back as nil, so this doesn't round trip.
       assert Config.escape_value("") == ""
 
-      assert_value_round_trip(" ", "\" \"")
-      assert_value_round_trip("  ", "\"  \"")
+      assert_value_round_trip(" ", ~s(" "))
+      assert_value_round_trip("  ", ~s("  "))
     end
 
     test "quotes if leading space" do
       assert_value_round_trip("x", "x")
-      assert_value_round_trip(" x", "\" x\"")
-      assert_value_round_trip("  x", "\"  x\"")
+      assert_value_round_trip(" x", ~s(" x"))
+      assert_value_round_trip("  x", ~s("  x"))
     end
 
     test "quotes if trailing space" do
       assert_value_round_trip("x", "x")
-      assert_value_round_trip("x  ", "\"x  \"")
-      assert_value_round_trip("x ", "\"x \"")
+      assert_value_round_trip("x  ", ~s("x  "))
+      assert_value_round_trip("x ", ~s("x "))
     end
 
     test "quotes if leading and trailing space" do
-      assert_value_round_trip(" x ", "\" x \"")
-      assert_value_round_trip("  x ", "\"  x \"")
-      assert_value_round_trip(" x  ", "\" x  \"")
-      assert_value_round_trip("  x  ", "\"  x  \"")
+      assert_value_round_trip(" x ", ~s(" x "))
+      assert_value_round_trip("  x ", ~s("  x "))
+      assert_value_round_trip(" x  ", ~s(" x  "))
+      assert_value_round_trip("  x  ", ~s("  x  "))
     end
 
     test "does not quote if internal space" do
@@ -1211,7 +1211,7 @@ defmodule Xgit.Lib.ConfigTest do
   end
 
   test "parse multiple quoted regions" do
-    assert parse_escaped_value("b\" a\"\" z; \\n\"") == "b a z; \n"
+    assert parse_escaped_value(~s(b" a"" z; \\n")) == "b a z; \n"
   end
 
   test "parse comments" do
@@ -1258,7 +1258,7 @@ defmodule Xgit.Lib.ConfigTest do
     assert_subsection_round_trip("x y", "\"x y\"")
     assert_subsection_round_trip("x  y", "\"x  y\"")
     assert_subsection_round_trip("x\\y", "\"x\\\\y\"")
-    assert_subsection_round_trip("x\"y", "\"x\\\"y\"")
+    assert_subsection_round_trip("x\"y", ~s("x\"y"))
 
     # Unlike for values, \b and \t are not escaped.
     assert_subsection_round_trip("x\by", "\"x\by\"")

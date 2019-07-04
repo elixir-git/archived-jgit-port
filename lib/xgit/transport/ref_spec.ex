@@ -351,6 +351,7 @@ defmodule Xgit.Transport.RefSpec do
   def wildcard?(s) when is_binary(s), do: String.contains?(s, "*")
 
   defimpl String.Chars do
+    @impl true
     def to_string(%Xgit.Transport.RefSpec{force?: force?, src_name: src_name, dst_name: dst_name}),
       do: "#{force_str(force?)}#{src_str(src_name)}#{dst_str(dst_name)}"
 
