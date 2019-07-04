@@ -52,7 +52,7 @@ defprotocol Xgit.Util.Time.MonotonicClock do
   source, such as the local system clock.
 
   `MonotonicClock`s provide the following behavior, with the assertion always
-  being true if `ProposedTimestamp.block_until/2` (not yet implemented) is used:
+  being true if `ProposedTimestamp.block_until/2` _(not yet implemented)_ is used:
 
   ```
   clk = ... # struct that implements MonotonicClock
@@ -80,11 +80,12 @@ defprotocol Xgit.Util.Time.MonotonicClock do
   by NTP) and return that proposal, concurrently sending network messages
   to closely collaborating peers in the same cluster to also ensure their
   system clocks are ahead of this time. In such an implementation the
-  `ProposedTimestamp.block_until/2` implementation would wait for replies
-  from the peers indicating their own system clocks have moved past the
+  `ProposedTimestamp.block_until/2` implementation would wait for
+  replies from the peers indicating their own system clocks have moved past the
   proposed time.
 
-  Should return a struct that implements `ProposedTimestamp`.
+  Should return a struct that implements `Xgit.Util.Time.ProposedTimestamp`.
   """
+  @spec propose(clock :: term) :: Xgit.Util.Time.ProposedTimestamp.t()
   def propose(clock)
 end
