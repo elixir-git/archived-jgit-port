@@ -13,7 +13,6 @@ RevWalk
   RevTag DEFER?
   RevTree
   StartGenerator DEFER?
-  TestRepository
   TreeFilter
 
 ---
@@ -98,22 +97,6 @@ RevQueueTestCase
 
 RevTree
   RevWalk
-
-TestRepository
-  (plan to do this as a partial?)
-  DirCache
-  DirCacheBuilder
-  InMemoryRepository DEFER?
-  ObjectInserter
-  PathEdit (part of DirCacheEditor)
-  RefUpdate
-  RefWriter
-  RevBlob
-  RevTag DEFER?
-  RevWalk
-  TagBuilder DEFER?
-  ThreeWayMerger DEFER?
-  TreeWalk DEFER?
 
 TreeFilter
   EmptyTreeIterator
