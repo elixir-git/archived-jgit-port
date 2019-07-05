@@ -175,6 +175,12 @@ defmodule Xgit.RevWalk.RevObject do
   defdelegate type(object), to: Object
 
   @doc ~S"""
+  Returns `true` if this object has been parsed.
+  """
+  @spec parsed?(object :: t) :: boolean
+  defdelegate parsed?(object), to: Object
+
+  @doc ~S"""
   Returns `true` if the given flag has been set on this object.
   """
   @spec has_flag?(object :: t, flag :: atom) :: boolean

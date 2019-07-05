@@ -106,4 +106,9 @@ defmodule Xgit.RevWalk.RevBlob do
     #     parseHeaders(walk);
     # }
   end
+
+  defimpl String.Chars do
+    @impl true
+    defdelegate to_string(object), to: Xgit.RevWalk.RevObject
+  end
 end
