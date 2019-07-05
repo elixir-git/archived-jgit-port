@@ -47,7 +47,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-defmodule Xgit.Internal.Storage.File.RefDirectory do
+defmodule Xgit.Storage.File.Internal.RefDirectory do
   @moduledoc false
   # Traditional file system-based `RefDatabase`.
   #

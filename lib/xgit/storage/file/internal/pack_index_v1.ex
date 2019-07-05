@@ -47,7 +47,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-defmodule Xgit.Internal.Storage.File.PackIndexV1 do
+defmodule Xgit.Storage.File.Internal.PackIndexV1 do
   @moduledoc false
 
   @type t :: %__MODULE__{
@@ -60,8 +60,8 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   @enforce_keys [:idx_header, :idx_data, :object_count, :pack_checksum]
   defstruct [:idx_header, :idx_data, :object_count, :pack_checksum]
 
-  alias Xgit.Internal.Storage.File.PackIndex.Reader
   alias Xgit.Lib.Constants
+  alias Xgit.Storage.File.Internal.PackIndex.Reader
   alias Xgit.Util.NB
 
   @index_header_length 1024
@@ -140,9 +140,9 @@ defmodule Xgit.Internal.Storage.File.PackIndexV1 do
   # }
 
   defimpl Enumerable do
-    alias Xgit.Internal.Storage.File.PackIndex.Entry
-    alias Xgit.Internal.Storage.File.PackIndexV1
     alias Xgit.Lib.ObjectId
+    alias Xgit.Storage.File.Internal.PackIndex.Entry
+    alias Xgit.Storage.File.Internal.PackIndexV1
 
     @impl true
     def count(_), do: {:error, PackIndexV1}

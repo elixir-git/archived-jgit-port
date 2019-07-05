@@ -18,6 +18,12 @@ jgit has its own localization mechanism (see class `JGitText`). I've decided not
 
 In keeping with Elixir convention, jgit class names that end with `Exception` are renamed to Elixir modules that end with `Error`.
 
+## Package/Module Naming
+
+In general, xgit modules are named in the same fashion as jgit classes with a simplified and title-cased version of the Java package name prepended. Thus the jgit class `Repository` in the package `org.eclipse.jgit.lib` gets ported to an Elixir module named `Xgit.Lib.Repository`.
+
+**Exception:** In jgit `internal` is a top-level package namespace (after `org.eclipse.jgit`). In Xgit, we retain the `Internal` naming, but move it to the end of the hierarchy so as to keep related code closer together. Thus the jgit class `ObjectDirectory` in the package `org.eclipse.jgit.internal.storage.file` gets ported to an Elixir module named `Xgit.Storage.File.Internal.ObjectDirectory`.
+
 ## Listeners
 
 Instead of porting the `Listener` and `ListenerList` mechanism from jgit, we use [`pg2`](http://erlang.org/doc/man/pg2.html) to manage inter-process messaging and the related lifetime issues.

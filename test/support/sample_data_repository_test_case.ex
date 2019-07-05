@@ -60,8 +60,8 @@ defmodule Xgit.Test.SampleDataRepositoryTestCase do
     end
   end
 
-  alias Xgit.Internal.Storage.File.ObjectDirectory
   alias Xgit.Lib.Repository
+  alias Xgit.Storage.File.Internal.ObjectDirectory
   alias Xgit.Test.RepositoryTestCase
 
   setup do

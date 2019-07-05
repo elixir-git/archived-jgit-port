@@ -46,12 +46,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-defmodule Xgit.Internal.Storage.File.PackIndexV1Test do
+defmodule Xgit.Storage.File.Internal.PackIndexV1Test do
   use ExUnit.Case, async: true
 
   alias Xgit.Errors.UnsupportedOperationError
-  alias Xgit.Internal.Storage.File.PackIndex
-  alias Xgit.Internal.Storage.File.PackIndex.Entry
+  alias Xgit.Storage.File.Internal.PackIndex
+  alias Xgit.Storage.File.Internal.PackIndex.Entry
 
   defp path_for_pack_34be9032 do
     # aka "small index"

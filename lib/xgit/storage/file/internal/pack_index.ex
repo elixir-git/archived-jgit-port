@@ -45,18 +45,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-defmodule Xgit.Internal.Storage.File.PackIndex do
+defmodule Xgit.Storage.File.Internal.PackIndex do
   @moduledoc false
   # Access path to locate objects by `Xgit.Lib.ObjectId` in a
-  # `Xgit.Internal.Storage.File.PackFile`.
+  # `Xgit.Storage.File.Internal.PackFile`.
   #
   # Indexes are strictly redundant information in that we can rebuild all of the
   # data held in the index file from the on-disk representation of the pack file
   # itself, but it is faster to access for random requests because data is stored
   # by `ObjectId`.
 
-  alias Xgit.Internal.Storage.File.PackIndexV1
-  alias Xgit.Internal.Storage.File.PackIndexV2
+  alias Xgit.Storage.File.Internal.PackIndexV1
+  alias Xgit.Storage.File.Internal.PackIndexV2
   alias Xgit.Util.NB
 
   defprotocol Reader do

@@ -45,7 +45,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-defmodule Xgit.Internal.Storage.File.ObjectDirectory do
+defmodule Xgit.Storage.File.Internal.ObjectDirectory do
   @moduledoc false
   # _INTERNAL:_ Traditional file-system based `ObjectDatabase`.
   #

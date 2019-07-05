@@ -47,7 +47,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-defmodule Xgit.Internal.Storage.File.T0003BasicTest do
+defmodule Xgit.Storage.File.Internal.T0003BasicTest do
   use ExUnit.Case, async: true
 
   # public class T0003_BasicTest extends SampleDataRepositoryTestCase {
