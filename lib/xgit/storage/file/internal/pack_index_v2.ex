@@ -91,8 +91,8 @@ defmodule Xgit.Storage.File.Internal.PackIndexV2 do
   ]
   defstruct [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64, :pack_checksum]
 
-  alias Xgit.Storage.File.Internal.PackIndex.Reader
   alias Xgit.Lib.Constants
+  alias Xgit.Storage.File.Internal.PackIndex.Reader
   alias Xgit.Util.NB
 
   @fanout 256
@@ -286,9 +286,9 @@ defmodule Xgit.Storage.File.Internal.PackIndexV2 do
   # }
 
   defimpl Enumerable do
+    alias Xgit.Lib.ObjectId
     alias Xgit.Storage.File.Internal.PackIndex.Entry
     alias Xgit.Storage.File.Internal.PackIndexV2
-    alias Xgit.Lib.ObjectId
 
     @impl true
     def count(_), do: {:error, PackIndexV2}

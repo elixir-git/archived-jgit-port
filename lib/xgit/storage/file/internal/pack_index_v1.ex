@@ -60,8 +60,8 @@ defmodule Xgit.Storage.File.Internal.PackIndexV1 do
   @enforce_keys [:idx_header, :idx_data, :object_count, :pack_checksum]
   defstruct [:idx_header, :idx_data, :object_count, :pack_checksum]
 
-  alias Xgit.Storage.File.Internal.PackIndex.Reader
   alias Xgit.Lib.Constants
+  alias Xgit.Storage.File.Internal.PackIndex.Reader
   alias Xgit.Util.NB
 
   @index_header_length 1024
@@ -140,9 +140,9 @@ defmodule Xgit.Storage.File.Internal.PackIndexV1 do
   # }
 
   defimpl Enumerable do
+    alias Xgit.Lib.ObjectId
     alias Xgit.Storage.File.Internal.PackIndex.Entry
     alias Xgit.Storage.File.Internal.PackIndexV1
-    alias Xgit.Lib.ObjectId
 
     @impl true
     def count(_), do: {:error, PackIndexV1}

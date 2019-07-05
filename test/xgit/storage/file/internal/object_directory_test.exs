@@ -46,9 +46,9 @@
 defmodule Xgit.Storage.File.Internal.ObjectDirectoryTest do
   use ExUnit.Case, async: true
 
-  alias Xgit.Storage.File.Internal.ObjectDirectory
   alias Xgit.Lib.Config
   alias Xgit.Lib.ObjectDatabase
+  alias Xgit.Storage.File.Internal.ObjectDirectory
 
   import ExUnit.CaptureLog
 

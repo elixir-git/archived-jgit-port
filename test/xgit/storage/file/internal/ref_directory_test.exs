@@ -47,8 +47,8 @@
 defmodule Xgit.Storage.File.Internal.RefDirectoryTest do
   use ExUnit.Case, async: true
 
-  alias Xgit.Storage.File.Internal.RefDirectory
   alias Xgit.Lib.RefDatabase
+  alias Xgit.Storage.File.Internal.RefDirectory
 
   import ExUnit.CaptureLog
 
