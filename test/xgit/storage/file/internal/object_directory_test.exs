@@ -43,10 +43,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-defmodule Xgit.Internal.Storage.File.ObjectDirectoryTest do
+defmodule Xgit.Storage.File.Internal.ObjectDirectoryTest do
   use ExUnit.Case, async: true
 
-  alias Xgit.Internal.Storage.File.ObjectDirectory
+  alias Xgit.Storage.File.Internal.ObjectDirectory
   alias Xgit.Lib.Config
   alias Xgit.Lib.ObjectDatabase
 

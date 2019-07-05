@@ -84,8 +84,8 @@ defmodule Xgit.Storage.File.FileRepository do
 
   use Xgit.Lib.Repository
 
-  alias Xgit.Internal.Storage.File.ObjectDirectory
-  alias Xgit.Internal.Storage.File.RefDirectory
+  alias Xgit.Storage.File.Internal.ObjectDirectory
+  alias Xgit.Storage.File.Internal.RefDirectory
   alias Xgit.Lib.Config
   alias Xgit.Lib.ConfigConstants
   alias Xgit.Lib.Constants

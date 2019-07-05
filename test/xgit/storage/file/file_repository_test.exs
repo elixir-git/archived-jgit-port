@@ -41,7 +41,7 @@
 defmodule Xgit.Storage.File.FileRepositoryTest do
   use ExUnit.Case, async: true
 
-  alias Xgit.Internal.Storage.File.ObjectDirectory
+  alias Xgit.Storage.File.Internal.ObjectDirectory
   alias Xgit.Lib.Config
   alias Xgit.Lib.Constants
   alias Xgit.Lib.Repository

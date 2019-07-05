@@ -44,7 +44,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-defmodule Xgit.Internal.Storage.File.PackIndexV2 do
+defmodule Xgit.Storage.File.Internal.PackIndexV2 do
   @moduledoc false
 
   # Struct members:
@@ -91,7 +91,7 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   ]
   defstruct [:object_count, :fanout_table, :names, :crc32, :offset32, :offset64, :pack_checksum]
 
-  alias Xgit.Internal.Storage.File.PackIndex.Reader
+  alias Xgit.Storage.File.Internal.PackIndex.Reader
   alias Xgit.Lib.Constants
   alias Xgit.Util.NB
 
@@ -286,8 +286,8 @@ defmodule Xgit.Internal.Storage.File.PackIndexV2 do
   # }
 
   defimpl Enumerable do
-    alias Xgit.Internal.Storage.File.PackIndex.Entry
-    alias Xgit.Internal.Storage.File.PackIndexV2
+    alias Xgit.Storage.File.Internal.PackIndex.Entry
+    alias Xgit.Storage.File.Internal.PackIndexV2
     alias Xgit.Lib.ObjectId
 
     @impl true
