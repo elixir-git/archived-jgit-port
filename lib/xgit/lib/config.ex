@@ -1482,12 +1482,10 @@ defmodule Xgit.Lib.Config do
 
   @impl true
   def handle_call({:from_text, text}, _from, %__MODULE__.State{} = s) when is_binary(text) do
-    try do
-      new_config_lines = from_text_impl(text, 1, nil)
-      {:reply, :ok, %{s | config_lines: new_config_lines}}
-    rescue
-      e in ConfigInvalidError -> {:reply, {:error, e}, s}
-    end
+    new_config_lines = from_text_impl(text, 1, nil)
+    {:reply, :ok, %{s | config_lines: new_config_lines}}
+  rescue
+    e in ConfigInvalidError -> {:reply, {:error, e}, s}
   end
 
   @impl true

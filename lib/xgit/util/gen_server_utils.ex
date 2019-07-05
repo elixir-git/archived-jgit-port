@@ -75,15 +75,13 @@ defmodule Xgit.Util.GenServerUtils do
   @spec wrap_call(mod :: module, function :: atom, args :: term, prev_state :: term) ::
           {:reply, term, term}
   def wrap_call(mod, function, args, prev_state) do
-    try do
-      case apply(mod, function, args) do
-        {:ok, state} -> {:reply, :ok, state}
-        {:ok, response, state} -> {:reply, {:ok, response}, state}
-        {:error, reason, state} -> {:reply, {:error, reason}, state}
-      end
-    rescue
-      e -> {:reply, {:error, e}, prev_state}
+    case apply(mod, function, args) do
+      {:ok, state} -> {:reply, :ok, state}
+      {:ok, response, state} -> {:reply, {:ok, response}, state}
+      {:error, reason, state} -> {:reply, {:error, reason}, state}
     end
+  rescue
+    e -> {:reply, {:error, e}, prev_state}
   end
 
   @doc ~S"""
@@ -97,14 +95,12 @@ defmodule Xgit.Util.GenServerUtils do
   @spec delegate_call_to(mod :: module, function :: atom, args :: term, mod_state :: term) ::
           {:reply, term, {module, term}}
   def delegate_call_to(mod, function, args, mod_state) do
-    try do
-      case apply(mod, function, args) do
-        {:ok, mod_state} -> {:reply, :ok, {mod, mod_state}}
-        {:ok, response, mod_state} -> {:reply, {:ok, response}, {mod, mod_state}}
-        {:error, reason, mod_state} -> {:reply, {:error, reason}, {mod, mod_state}}
-      end
-    rescue
-      e -> {:reply, {:error, e}, {mod, mod_state}}
+    case apply(mod, function, args) do
+      {:ok, mod_state} -> {:reply, :ok, {mod, mod_state}}
+      {:ok, response, mod_state} -> {:reply, {:ok, response}, {mod, mod_state}}
+      {:error, reason, mod_state} -> {:reply, {:error, reason}, {mod, mod_state}}
     end
+  rescue
+    e -> {:reply, {:error, e}, {mod, mod_state}}
   end
 end

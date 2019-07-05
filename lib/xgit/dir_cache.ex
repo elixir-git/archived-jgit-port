@@ -319,7 +319,7 @@ defmodule Xgit.DirCache do
   # /** Repository containing this index */
   # private Repository repository;
 
-  @impl GenServer
+  @impl true
   def init(index_location) when is_binary(index_location),
     do:
       {:ok,
@@ -395,7 +395,7 @@ defmodule Xgit.DirCache do
   def read!(dir_cache) when is_pid(dir_cache),
     do: GenServerUtils.call!(dir_cache, :read)
 
-  @doc false
+  @spec handle_read(state :: term) :: {:ok, term}
   def handle_read(%{live_file: nil}) do
     raise ArgumentError, "DirCache does not have a backing file"
   end
@@ -852,6 +852,7 @@ defmodule Xgit.DirCache do
     do: GenServerUtils.call!(dir_cache, :entry_count)
 
   @doc false
+  @spec handle_entry_count(term) :: {:ok, non_neg_integer, term}
   def handle_entry_count(%{entry_count: entry_count} = state), do: {:ok, entry_count, state}
 
   # /**
@@ -1010,7 +1011,7 @@ defmodule Xgit.DirCache do
   #   }
   # }
 
-  @impl GenServer
+  @impl true
   def handle_call(:valid_dir_cache?, _from, state), do: {:reply, :valid_dir_cache, state}
 
   def handle_call(:read, _from, state),

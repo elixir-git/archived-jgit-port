@@ -64,7 +64,7 @@ defmodule Xgit.Util.CompressedBitmap do
   Returns a new set.
   """
   @spec new() :: t
-  def new(), do: %__MODULE__{mapset: MapSet.new()}
+  def new, do: %__MODULE__{mapset: MapSet.new()}
 
   @doc """
   Creates a new set from an enumerable.
@@ -158,14 +158,18 @@ defmodule Xgit.Util.CompressedBitmap do
   defimpl Enumerable do
     alias Xgit.Util.CompressedBitmap
 
+    @impl true
     def count(%CompressedBitmap{mapset: mapset}), do: {:ok, MapSet.size(mapset)}
 
+    @impl true
     def member?(%CompressedBitmap{mapset: mapset}, value),
       do: {:ok, MapSet.member?(mapset, value)}
 
+    @impl true
     def slice(%CompressedBitmap{mapset: mapset}),
       do: {:ok, MapSet.size(mapset), &Enumerable.List.slice(MapSet.to_list(mapset), &1, &2)}
 
+    @impl true
     def reduce(%CompressedBitmap{mapset: mapset}, acc, fun),
       do: Enumerable.List.reduce(MapSet.to_list(mapset), acc, fun)
   end

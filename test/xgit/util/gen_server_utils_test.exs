@@ -120,10 +120,16 @@ defmodule Xgit.Util.GenServerUtilsTest do
   end
 
   defmodule TestDelegate do
+    @spec delegate_ok(term) :: term
     def delegate_ok(state), do: {:ok, state}
+
+    @spec delegate_ok_foo(term) :: term
     def delegate_ok_foo(state), do: {:ok, "foo", state}
+
+    @spec delegate_error_bogus(term) :: term
     def delegate_error_bogus(state), do: {:error, "bogus", state}
 
+    @spec delegate_raise_error(term) :: term
     def delegate_raise_error(state) do
       case state do
         1 -> :first
@@ -139,12 +145,19 @@ defmodule Xgit.Util.GenServerUtilsTest do
 
     import Xgit.Util.GenServerUtils
 
+    @impl true
     def init(_), do: {:ok, nil}
 
+    @spec wrap_ok(term) :: {:ok, term}
     def wrap_ok(state), do: {:ok, state}
+
+    @spec wrap_ok_foo(term) :: {:ok, term}
     def wrap_ok_foo(state), do: {:ok, "foo", state}
+
+    @spec wrap_error_bogus(term) :: {:error, String.t(), term}
     def wrap_error_bogus(state), do: {:error, "bogus", state}
 
+    @spec wrap_raise_error(term) :: :ok | :first
     def wrap_raise_error(state) do
       case state do
         1 -> :first
@@ -152,6 +165,7 @@ defmodule Xgit.Util.GenServerUtilsTest do
       end
     end
 
+    @impl true
     def handle_call(:respond_ok, _from, _state), do: {:reply, :ok, nil}
     def handle_call(:respond_ok_value, _from, _state), do: {:reply, {:ok, 42}, nil}
     def handle_call(:respond_error_foo, _from, _state), do: {:reply, {:error, "foo"}, nil}

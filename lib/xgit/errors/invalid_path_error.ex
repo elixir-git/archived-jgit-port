@@ -50,6 +50,7 @@ defmodule Xgit.Errors.InvalidPathError do
   """
   defexception [:message, :path]
 
+  @spec exception(path: String.t()) :: struct
   def exception(path: path) when is_binary(path),
     do: %__MODULE__{message: "Invalid path: #{path}", path: path}
 end

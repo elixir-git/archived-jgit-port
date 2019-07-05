@@ -50,6 +50,7 @@ defmodule Xgit.Errors.NoWorkTreeError do
   """
   defexception [:message]
 
+  @spec exception(any) :: struct
   def exception(_),
     do: %__MODULE__{message: "Bare Repository has neither a working tree, nor an index"}
 end

@@ -86,9 +86,16 @@ defmodule Xgit.Lib.RepositoryTest do
 
     use Xgit.Lib.Repository
 
+    @spec start_link() :: GenServer.on_start()
     def start_link, do: Repository.start_link(__MODULE__, nil, [])
+
+    @impl true
     def init(_), do: {:ok, nil}
+
+    @impl true
     def handle_config(_), do: {:ok, nil, nil}
+
+    @impl true
     def handle_create(_, _opts), do: {:ok, nil}
   end
 end

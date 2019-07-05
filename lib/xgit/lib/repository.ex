@@ -57,6 +57,8 @@ defmodule Xgit.Lib.Repository do
   be any type of file, but source code is what SCMs are typically used for.)
   """
 
+  use GenServer
+
   alias Xgit.DirCache
   alias Xgit.Errors.NoWorkTreeError
   alias Xgit.Util.GenServerUtils
@@ -123,7 +125,7 @@ defmodule Xgit.Lib.Repository do
   def start_link(module, init_arg, options) when is_atom(module) and is_list(options),
     do: GenServer.start_link(__MODULE__, {module, init_arg}, options)
 
-  @doc false
+  @impl true
   def init({mod, mod_init_arg}) do
     case mod.init(mod_init_arg) do
       {:ok, state} -> {:ok, {mod, state}}
@@ -194,7 +196,7 @@ defmodule Xgit.Lib.Repository do
 
   ## Return Value
 
-  Should return `:ok`.
+  `{:ok, state}` if successful; `{:error, reason}` if not.
 
   ## Error
 
@@ -219,14 +221,16 @@ defmodule Xgit.Lib.Repository do
   @doc ~S"""
   Invoked when `git_dir!/1` is called on this repository.
 
-  Should return the path to the `.git` directory if applicable, or `nil` if not.
+  ## Return Value
+
+  `{:ok, git_dir_path, state}` where path is the `.git` directory if applicable
+  or `nil` if not.
   """
-  @callback handle_git_dir(state :: term) :: String.t() | nil
+  @callback handle_git_dir(state :: term) ::
+              {:ok, git_dir_path :: String.t() | nil, state :: term}
 
   @doc ~S"""
   Get the object database which stores this repository's data.
-
-  ## Return Value
 
   PID for the object database process. Use `Xgit.Lib.ObjectDatabase` to interact
   with this process.
@@ -238,9 +242,12 @@ defmodule Xgit.Lib.Repository do
   @doc ~S"""
   Invoked when `object_database!/1` is called on this repository.
 
-  Must return the PID for the object database or raise if unable.
+  ## Return Value
+
+  {:ok, object_database, state}` where `object_database` is the PID for the object
+  database process.
   """
-  @callback handle_object_database(state :: term) :: pid
+  @callback handle_object_database(state :: term) :: {:ok, object_database :: pid, state :: term}
 
   # /**
   #  * Create a new inserter to create objects in {@link #getObjectDatabase()}.
@@ -284,9 +291,11 @@ defmodule Xgit.Lib.Repository do
   @doc ~S"""
   Invoked when `config!/1` is called on this repository.
 
-  Should return the `Xgit.Lib.Config` instance for this repository.
+  ## Return Value
+
+  `{:ok, config, state}` where `config` is an `Xgit.Lib.Config` struct.
   """
-  @callback handle_config(state :: term) :: Xgit.Lib.Config.t() | nil
+  @callback handle_config(state :: term) :: {:ok, Xgit.Lib.Config.t() | nil, state :: term}
 
   # /**
   #  * Create a new {@link org.eclipse.jgit.attributes.AttributesNodeProvider}.
@@ -1187,9 +1196,13 @@ defmodule Xgit.Lib.Repository do
   @doc ~S"""
   Invoked when `index_file!/1` is called on this repository.
 
-  Should return the path to the index file if applicable or `nil` if not.
+  ## Return Value
+
+  `{:ok, index_file, state}` where `index_file` is the path to the index file
+  if applicable or `nil` if not.
   """
-  @callback handle_index_file(state :: term) :: String.t() | nil
+  @callback handle_index_file(state :: term) ::
+              {:ok, index_file :: String.t() | nil, state :: term}
 
   # /**
   #  * Locate a reference to a commit and immediately parse its content.
@@ -1557,9 +1570,11 @@ defmodule Xgit.Lib.Repository do
   @doc ~S"""
   Invoked when `bare?/1` is called on this repository.
 
-  Should return `{bare?, state}` where `bare?` is a boolean response.
+  ## Return Value
+
+  `{:ok, bare?, state}` where `bare?` is a boolean response.
   """
-  @callback handle_bare?(state :: term) :: {bare? :: boolean, state :: term}
+  @callback handle_bare?(state :: term) :: {:ok, bare? :: boolean, state :: term}
 
   @doc ~S"""
   Get the root directory of the working tree.
@@ -1576,9 +1591,12 @@ defmodule Xgit.Lib.Repository do
   @doc ~S"""
   Invoked when `work_tree!/1` is called on this repository.
 
-  Should return the path to working tree directory if applicable, or `nil` if not.
+  ## Return Value
+
+  `{:ok, work_tree, state}` where `work_tree` is the path to working tree directory
+  if applicable, or `nil` if not.
   """
-  @callback handle_work_tree(state :: term) :: String.t() | nil
+  @callback handle_work_tree(state :: term) :: {:ok, work_tree :: String.t() | nil, state :: term}
 
   # /**
   #  * Force a scan for changed refs. Fires an IndexChangedEvent(false) if
@@ -2101,7 +2119,7 @@ defmodule Xgit.Lib.Repository do
   #   // default does nothing
   # }
 
-  @doc false
+  @impl true
   def handle_call(:valid_repository?, _from, state), do: {:reply, :valid_repository, state}
 
   def handle_call({:create, opts}, _from, {mod, mod_state}) when is_list(opts),
@@ -2139,10 +2157,19 @@ defmodule Xgit.Lib.Repository do
 
       @behaviour Repository
 
+      @impl true
       def handle_git_dir(state), do: {:ok, nil, state}
+
+      @impl true
       def handle_bare?(state), do: {:ok, true, state}
+
+      @impl true
       def handle_work_tree(state), do: {:ok, nil, state}
+
+      @impl true
       def handle_index_file(state), do: raise(NoWorkTreeError, [])
+
+      @impl true
       def handle_object_database(state), do: raise(NoWorkTreeError, [])
 
       defoverridable handle_git_dir: 1,

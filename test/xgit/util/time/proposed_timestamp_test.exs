@@ -41,8 +41,8 @@
 defmodule Xgit.Util.Time.ProposedTimestampTest do
   use ExUnit.Case, async: true
 
-  alias Xgit.Util.Time.ProposedTimestamp
   alias Xgit.Test.MockProposedTime
+  alias Xgit.Util.Time.ProposedTimestamp
 
   describe "read/2" do
     setup do

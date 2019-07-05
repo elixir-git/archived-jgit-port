@@ -121,6 +121,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
 
   A copy of the builder struct with any updates from environment variables applied.
   """
+  @spec read_environment(builder :: t, system_reader :: SystemReader.t() | nil) :: t
   def read_environment(%__MODULE__{} = builder, system_reader \\ nil) do
     builder
     |> maybe_update_git_dir(system_reader)
@@ -198,6 +199,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
 
   Returns a copy of the builder struct with `:git_dir` populated if successful.
   """
+  @spec find_git_dir(builder :: t, current :: String.t()) :: t
   def find_git_dir(builder, current)
 
   def find_git_dir(%__MODULE__{git_dir: dir} = builder, _current) when is_binary(dir),
@@ -243,6 +245,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilder do
 
   Returns a copy of the builder struct with all members populated if successful.
   """
+  @spec setup!(builder :: t) :: t
   def setup!(%__MODULE__{} = builder) do
     builder
     |> require_git_dir_or_work_tree!()

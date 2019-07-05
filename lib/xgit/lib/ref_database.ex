@@ -55,6 +55,8 @@ defmodule Xgit.Lib.RefDatabase do
 
   require Logger
 
+  use GenServer
+
   @type t :: pid
 
   @doc """
@@ -77,7 +79,7 @@ defmodule Xgit.Lib.RefDatabase do
   def start_link(module, init_arg, options) when is_atom(module) and is_list(options),
     do: GenServer.start_link(__MODULE__, {module, init_arg}, options)
 
-  @doc false
+  @impl true
   def init({mod, mod_init_arg}) do
     case mod.init(mod_init_arg) do
       {:ok, state} -> {:ok, {mod, state}}
@@ -626,7 +628,7 @@ defmodule Xgit.Lib.RefDatabase do
   #   return null;
   # }
 
-  @doc false
+  @impl true
   def handle_call(:create, _from, {mod, mod_state}) do
     case mod.handle_create(mod_state) do
       {:ok, mod_state} -> {:reply, :ok, {mod, mod_state}}
@@ -643,6 +645,8 @@ defmodule Xgit.Lib.RefDatabase do
     quote location: :keep, bind_quoted: [opts: opts] do
       use GenServer, opts
       alias Xgit.Lib.RefDatabase
+
+      @behaviour RefDatabase
     end
   end
 end

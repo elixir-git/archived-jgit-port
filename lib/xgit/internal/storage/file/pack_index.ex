@@ -126,13 +126,11 @@ defmodule Xgit.Internal.Storage.File.PackIndex do
   """
   @spec open(idx_file_path :: String.t()) :: Reader.t()
   def open(idx_file_path) when is_binary(idx_file_path) do
-    try do
-      idx_file_path
-      |> File.open!([:read, :charlist])
-      |> read()
-    catch
-      _ -> raise "Unreadable pack index: #{idx_file_path}"
-    end
+    idx_file_path
+    |> File.open!([:read, :charlist])
+    |> read()
+  catch
+    _ -> raise "Unreadable pack index: #{idx_file_path}"
   end
 
   @doc ~S"""

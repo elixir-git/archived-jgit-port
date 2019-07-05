@@ -64,11 +64,13 @@ defmodule Xgit.Util.Time.MonotonicSystemClock do
     defstruct [:now]
 
     defimpl Xgit.Util.Time.ProposedTimestamp.Impl do
+      @impl true
       def read(%{now: now}), do: now
     end
   end
 
   defimpl Xgit.Util.Time.MonotonicClock do
+    @impl true
     def propose(_clock) do
       %Xgit.Util.Time.MonotonicSystemClock.FixedTimestamp{now: System.os_time(:microsecond)}
     end

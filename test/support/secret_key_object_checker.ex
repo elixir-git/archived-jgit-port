@@ -56,14 +56,14 @@ end
 defimpl Xgit.Lib.ObjectChecker.Strategy, for: Xgit.Test.SecretKeyCheckerStrategy do
   alias Xgit.Errors.CorruptObjectError
 
-  @impl Xgit.Lib.ObjectChecker.Strategy
+  @impl true
   def check_commit!(_strategy, commit_data) do
     s = to_string(commit_data)
 
     if String.contains?(s, "mumble"), do: :mumble, else: :default
   end
 
-  @impl Xgit.Lib.ObjectChecker.Strategy
+  @impl true
   def check_blob!(_strategy, blob_data) do
     s = to_string(blob_data)
 

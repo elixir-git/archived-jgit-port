@@ -77,12 +77,13 @@ defmodule Xgit.Transport.RefSpec do
           force?: boolean
         }
 
-  defstruct src_name: Xgit.Lib.Constants.head(),
+  alias Xgit.Lib.Constants
+  alias Xgit.Lib.Ref
+
+  defstruct src_name: Constants.head(),
             dst_name: nil,
             allow_mismatched_wildcards?: true,
             force?: false
-
-  alias Xgit.Lib.Ref
 
   @doc ~S"""
   Suffix for wildcard ref spec component, that indicates matching all refs
@@ -350,6 +351,7 @@ defmodule Xgit.Transport.RefSpec do
   def wildcard?(s) when is_binary(s), do: String.contains?(s, "*")
 
   defimpl String.Chars do
+    @impl true
     def to_string(%Xgit.Transport.RefSpec{force?: force?, src_name: src_name, dst_name: dst_name}),
       do: "#{force_str(force?)}#{src_str(src_name)}#{dst_str(dst_name)}"
 

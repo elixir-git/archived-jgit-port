@@ -52,6 +52,7 @@ defimpl Xgit.Lib.ObjectReader.Strategy, for: Xgit.Test.MockObjectReader do
   alias Xgit.Lib.SmallObjectLoader
   alias Xgit.Test.MockObjectReader
 
+  @impl true
   def resolve(%MockObjectReader{objects: objects} = _reader, abbreviated_id) do
     objects
     |> Enum.filter(&object_matches_abbrev?(&1, abbreviated_id))
@@ -61,9 +62,11 @@ defimpl Xgit.Lib.ObjectReader.Strategy, for: Xgit.Test.MockObjectReader do
   defp object_matches_abbrev?({object_id, _object}, abbreviated_id),
     do: AbbreviatedObjectId.prefix_compare(abbreviated_id, object_id) == :eq
 
+  @impl true
   def has_object?(%MockObjectReader{objects: objects} = _reader, object_id, _type_hint),
     do: Map.has_key?(objects, object_id)
 
+  @impl true
   def open(%MockObjectReader{objects: objects} = _reader, object_id, type_hint) do
     case Map.get(objects, object_id) do
       %{type: type, data: data} ->
@@ -74,6 +77,7 @@ defimpl Xgit.Lib.ObjectReader.Strategy, for: Xgit.Test.MockObjectReader do
     end
   end
 
+  @impl true
   def object_size(
         %MockObjectReader{skip_default_object_size?: true} = _reader,
         _object_id,
@@ -83,6 +87,7 @@ defimpl Xgit.Lib.ObjectReader.Strategy, for: Xgit.Test.MockObjectReader do
     # probably wrong, but useful for testing
   end
 
+  @impl true
   def object_size(%MockObjectReader{objects: _objects} = _reader, _object_id, _type_hint),
     do: :default
 end

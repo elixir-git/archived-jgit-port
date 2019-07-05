@@ -44,6 +44,7 @@ defmodule Xgit.Errors.UnsupportedCharsetError do
   """
   defexception [:message]
 
+  @spec exception(charset: any) :: struct
   def exception(charset: charset),
     do: %__MODULE__{message: "Character set is unsupported: #{charset}"}
 end

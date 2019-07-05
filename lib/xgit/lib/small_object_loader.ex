@@ -72,10 +72,19 @@ defmodule Xgit.Lib.SmallObjectLoader do
   defimpl Xgit.Lib.ObjectLoader do
     alias Xgit.Lib.SmallObjectLoader
 
+    @impl true
     def type(%SmallObjectLoader{type: type}), do: type
+
+    @impl true
     def size(%SmallObjectLoader{data: data}), do: Enum.count(data)
+
+    @impl true
     def large?(_), do: false
+
+    @impl true
     def cached_bytes(%SmallObjectLoader{data: data}), do: data
+
+    @impl true
     def stream(%SmallObjectLoader{data: data}), do: data
   end
 end

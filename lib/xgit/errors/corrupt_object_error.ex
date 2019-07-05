@@ -53,6 +53,7 @@ defmodule Xgit.Errors.CorruptObjectError do
   """
   defexception [:message, :error_type]
 
+  @spec exception(Keyword.t()) :: struct
   def exception(id: id, error_type: error_type, why: why),
     do: %__MODULE__{message: "Object #{id} is corrupt: #{why}", error_type: error_type}
 

@@ -48,7 +48,7 @@ defmodule Xgit.Lib.RepositoryCache do
   @moduledoc false
   # MOSTLY UNIMPLEMENTED FOR NOW
   # TO DO: https://github.com/elixir-git/xgit/issues/135
-  # 
+  #
   # /**
   #  * Cache of active {@link org.eclipse.jgit.lib.Repository} instances.
   #  */
@@ -459,6 +459,7 @@ defmodule Xgit.Lib.RepositoryCache do
     This method guesses by looking for the existence of some key files
     and directories.
     """
+    @spec contains_git_repository?(path :: String.t()) :: boolean
     def contains_git_repository?(path) when is_binary(path) do
       File.dir?(Path.join(path, "objects")) &&
         File.dir?(Path.join(path, "refs")) &&
