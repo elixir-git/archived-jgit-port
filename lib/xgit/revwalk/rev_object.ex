@@ -151,6 +151,9 @@ defmodule Xgit.RevWalk.RevObject do
     end
   end
 
+  # TO DO: Finish implementation of RevObject and related modules.
+  # https://github.com/elixir-git/xgit/issues/181
+
   # abstract void parseHeaders(RevWalk walk) throws MissingObjectException,
   #     IncorrectObjectTypeException, IOException;
   #
