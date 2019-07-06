@@ -53,6 +53,8 @@ defmodule Xgit.Lib.ObjectDatabase do
   """
   use GenServer
 
+  alias Xgit.Lib.ObjectReader
+
   require Logger
 
   @type t :: pid
@@ -154,41 +156,37 @@ defmodule Xgit.Lib.ObjectDatabase do
   #  * @return writer the caller can use to create objects in this database.
   #  */
   # public abstract ObjectInserter newInserter();
-  #
-  # /**
-  #  * Create a new {@code ObjectReader} to read existing objects.
-  #  * <p>
-  #  * The returned reader is not itself thread-safe, but multiple concurrent
-  #  * reader instances created from the same {@code ObjectDatabase} must be
-  #  * thread-safe.
-  #  *
-  #  * @return reader the caller can use to load objects from this database.
-  #  */
-  # public abstract ObjectReader newReader();
-  #
-  # /**
-  #  * Close any resources held by this database.
-  #  */
-  # public abstract void close();
-  #
-  # /**
-  #  * Does the requested object exist in this database?
-  #  * <p>
-  #  * This is a one-shot call interface which may be faster than allocating a
-  #  * {@link #newReader()} to perform the lookup.
-  #  *
-  #  * @param objectId
-  #  *            identity of the object to test for existence of.
-  #  * @return true if the specified object is stored in this database.
-  #  * @throws java.io.IOException
-  #  *             the object store cannot be accessed.
-  #  */
-  # public boolean has(AnyObjectId objectId) throws IOException {
-  #   try (ObjectReader or = newReader()) {
-  #     return or.has(objectId);
-  #   }
-  # }
-  #
+
+  @doc ~S"""
+  Create a new `Xgit.Lib.ObjectReader` to read existing objects.
+  """
+  @spec new_reader!(database :: t) :: ObjectReader.t()
+  def new_reader!(database) when is_pid(database), do: GenServer.call(database, :new_reader)
+
+  @doc ~S"""
+  Invoked when `new_reader!/1` is called on this database.
+
+  ## Return Value
+
+  Should return `{:ok, reader, mod_state}` where `reader` is an appropriate
+  `Xgit.Lib.ObjectReader` instance.
+  """
+  @callback handle_new_reader(state :: term) :: {:ok, reader :: ObjectReader.t(), state :: term}
+
+  @doc ~S"""
+  Returns `true` if the requested object exist in this database?
+
+  This is a one-shot call interface which may be faster than allocating a
+  `new_reader!/1` to perform the lookup. It should *not* be used frequently
+  for any given repo.
+  """
+  @spec has_object?(database :: t, object_id :: ObjectID.t()) :: boolean
+  def has_object?(database, object_id) do
+    database
+    |> new_reader!()
+    |> ObjectReader.has_object?(object_id)
+  end
+
   # /**
   #  * Open an object from this database.
   #  * <p>
@@ -266,6 +264,11 @@ defmodule Xgit.Lib.ObjectDatabase do
       {:ok, mod_state} -> {:reply, :ok, {mod, mod_state}}
       {:error, reason} -> {:stop, reason}
     end
+  end
+
+  def handle_call(:new_reader, _from, {mod, mod_state}) do
+    {:ok, reader, mod_state} = mod.handle_new_reader(mod_state)
+    {:reply, reader, {mod, mod_state}}
   end
 
   def handle_call(message, from, {mod, mod_state}) do
