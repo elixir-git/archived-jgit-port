@@ -508,6 +508,9 @@ defmodule Xgit.Lib.Config do
   defp names_in_subsection_recurse(names, section, subsection, base_config, _recursive?),
     do: names ++ names_in_subsection(base_config, section, subsection, recursive?: true)
 
+  # TO DO: Cache section parser results like Config.SectionParser in jgit?
+  # https://github.com/elixir-git/xgit/issues/183
+
   # /**
   #  * Obtain a handle to a parsed set of configuration values.
   #  *
