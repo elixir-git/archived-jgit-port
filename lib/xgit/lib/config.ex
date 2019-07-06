@@ -306,6 +306,7 @@ defmodule Xgit.Lib.Config do
 
   defp to_boolean(nil, _default), do: true
   defp to_boolean(:empty, _default), do: true
+  defp to_boolean(:missing, default), do: default
   defp to_boolean("false", _default), do: false
   defp to_boolean("no", _default), do: false
   defp to_boolean("off", _default), do: false

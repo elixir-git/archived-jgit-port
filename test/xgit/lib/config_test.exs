@@ -318,6 +318,13 @@ defmodule Xgit.Lib.ConfigTest do
       assert Config.get_boolean(c, "s", "a", false) == true
       assert Config.get_boolean(c, "s", "b", true) == false
     end
+
+    test "defaults properly when value missing" do
+      c = parse("[s]\na =42\nb = 51\n")
+
+      assert Config.get_boolean(c, "s", "c", false) == false
+      assert Config.get_boolean(c, "s", "c", true) == true
+    end
   end
 
   test "read integer with g/m/k notation" do
