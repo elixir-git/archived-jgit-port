@@ -49,6 +49,7 @@ defmodule Xgit.Storage.File.Internal.ObjectDirectoryTest do
   alias Xgit.Lib.Config
   alias Xgit.Lib.ObjectDatabase
   alias Xgit.Storage.File.Internal.ObjectDirectory
+  alias Xgit.Storage.File.Internal.WindowCursor
 
   import ExUnit.CaptureLog
 
@@ -85,6 +86,17 @@ defmodule Xgit.Storage.File.Internal.ObjectDirectoryTest do
       assert File.dir?(objects_dir)
       assert File.dir?(Path.join(objects_dir, "info"))
       assert File.dir?(Path.join(objects_dir, "pack"))
+    end
+  end
+
+  describe "new_reader!/1" do
+    test "returns PID to an ObjectReader process", %{objects_dir: objects_dir} do
+      assert {:ok, pid} = ObjectDirectory.start_link(config: Config.new(), objects: objects_dir)
+      assert is_pid(pid)
+
+      assert :ok = ObjectDatabase.create!(pid)
+
+      assert %WindowCursor{} = ObjectDatabase.new_reader!(pid)
     end
   end
 

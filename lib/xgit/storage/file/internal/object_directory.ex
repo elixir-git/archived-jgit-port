@@ -69,6 +69,8 @@ defmodule Xgit.Storage.File.Internal.ObjectDirectory do
 
   use Xgit.Lib.ObjectDatabase
 
+  alias Xgit.Storage.File.Internal.WindowCursor
+
   require Logger
 
   # TO DO: Finish incomplete implementation: https://github.com/elixir-git/xgit/issues/126
@@ -76,13 +78,7 @@ defmodule Xgit.Storage.File.Internal.ObjectDirectory do
   # static enum InsertLooseObjectResult {
   #   INSERTED, EXISTS_PACKED, EXISTS_LOOSE, FAILURE;
   # }
-  #
-  # /** {@inheritDoc} */
-  # @Override
-  # public ObjectReader newReader() {
-  #   return new WindowCursor(this);
-  # }
-  #
+
   # /** {@inheritDoc} */
   # @Override
   # public ObjectDirectoryInserter newInserter() {
@@ -212,7 +208,10 @@ defmodule Xgit.Storage.File.Internal.ObjectDirectory do
   # public PackInserter newPackInserter() {
   #   return new PackInserter(this);
   # }
-  #
+
+  @impl true
+  def handle_new_reader(state), do: {:ok, %WindowCursor{db: self()}, state}
+
   # /** {@inheritDoc} */
   # @Override
   # public void close() {
