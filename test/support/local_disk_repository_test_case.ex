@@ -57,7 +57,7 @@ defmodule Xgit.Test.LocalDiskRepositoryTestCase do
   of test case classes in jgit. So, for now, I'm keeping this fairly minimal.
   """
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/145
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/145
 
   # /**
   #  * Callers should not use {@link org.eclipse.jgit.lib.RepositoryCache} from

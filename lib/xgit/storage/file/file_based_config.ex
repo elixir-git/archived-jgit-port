@@ -94,7 +94,7 @@ defmodule Xgit.Storage.File.FileBasedConfig do
       else: FileSnapshot.missing_file()
   end
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/137
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/137
 
   # /** {@inheritDoc} */
   # @Override

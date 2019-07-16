@@ -122,7 +122,7 @@ defmodule Xgit.Lib.CommitBuilderTest do
     end
   end
 
-  # TO DO: Add support for GPG signatures. https://github.com/elixir-git/xgit/issues/171
+  # TO DO: Add support for GPG signatures. https://github.com/elixir-git/archived-jgit-port/issues/171
 
   # private void assertGpgSignatureStringOutcome(String signature,
   #     String expectedOutcome) throws IOException {

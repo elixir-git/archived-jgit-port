@@ -57,7 +57,7 @@ defmodule Xgit.Test.PackIndexTestCase do
     end
   end
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/146
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/146
 
   # /**
   #  * Test contracts of Iterator methods and this implementation remove()

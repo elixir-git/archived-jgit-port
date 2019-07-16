@@ -51,7 +51,7 @@ defmodule Xgit.Util.StringUtils do
   _PORTING NOTE:_ This jgit class is being ported on an as-needed basis.
   """
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/143
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/143
 
   # private static final char[] LC;
   #

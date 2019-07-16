@@ -102,7 +102,7 @@ defmodule Xgit.Storage.File.Internal.PackIndexV1 do
     {IO.read(file_pid, bytes_to_read), item}
   end
 
-  # TO DO: Finish implementation of `resolve`: https://github.com/elixir-git/xgit/issues/127
+  # TO DO: Finish implementation of `resolve`: https://github.com/elixir-git/archived-jgit-port/issues/127
   # /** {@inheritDoc} */
   # @Override
   # public void resolve(Set<ObjectId> matches, AbbreviatedObjectId id,

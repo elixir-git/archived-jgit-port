@@ -62,7 +62,7 @@ defmodule Xgit.Lib.CommitBuilder do
   * encodings other than UTF-8
   * GPG signatures
 
-  https://github.com/elixir-git/xgit/issues/171
+  https://github.com/elixir-git/archived-jgit-port/issues/171
   """
 
   @typedoc ~S"""

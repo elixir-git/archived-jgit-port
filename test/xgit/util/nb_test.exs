@@ -49,7 +49,7 @@ defmodule Xgit.Util.NBTest do
 
   alias Xgit.Util.NB
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/141
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/141
 
   # @Test
   # public void testCompareUInt32() {

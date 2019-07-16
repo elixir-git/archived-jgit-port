@@ -51,7 +51,7 @@ defmodule Xgit.Lib.ObjectReader do
   Readers that can support efficient reuse of pack encoded objects should also
   implement the companion protocol `ObjectReuseAsIs` _(not yet ported)_.
 
-  TO DO: https://github.com/elixir-git/xgit/issues/133
+  TO DO: https://github.com/elixir-git/archived-jgit-port/issues/133
 
   PORTING NOTE: Is this necessarily tied to a single process in Elixir?
 

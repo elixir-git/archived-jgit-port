@@ -88,7 +88,7 @@ defmodule Xgit.RevWalk.RevBlob do
       do: %{object | flags: MapSet.difference(flags, new_flags)}
 
     # TO DO: Finish implementation of RevObject and related modules.
-    # https://github.com/elixir-git/xgit/issues/181
+    # https://github.com/elixir-git/archived-jgit-port/issues/181
 
     # @Override
     # void parseHeaders(RevWalk walk) throws MissingObjectException,

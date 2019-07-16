@@ -164,7 +164,7 @@ defmodule Xgit.Storage.File.Internal.PackIndex do
   defp toc?([0xFF, ?t, ?O, ?c | _]), do: true
   defp toc?(_), do: false
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/127
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/127
 
   # /**
   #  * Determine if an object is contained within the pack file.

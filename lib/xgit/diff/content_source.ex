@@ -61,7 +61,7 @@ defmodule Xgit.Diff.ContentSource do
 
   @type t :: ObjectReader.t()
   # PORTING NOTE: add WorkingTreeIterator.t(), whenever that is defined.
-  # https://github.com/elixir-git/xgit/issues/124
+  # https://github.com/elixir-git/archived-jgit-port/issues/124
 
   @doc ~S"""
   Determine the size of the object.

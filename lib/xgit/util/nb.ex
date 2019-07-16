@@ -49,7 +49,7 @@ defmodule Xgit.Util.NB do
   Conversion utilities for network byte order handling.
   """
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/141
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/141
 
   use Bitwise
 

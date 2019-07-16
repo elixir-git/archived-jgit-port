@@ -588,7 +588,7 @@ defmodule Xgit.Storage.File.FileRepositoryBuilderTest do
                     {%ArgumentError{message: "RefTreeDatabase not yet implemented"}, _}}
   end
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/138
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/138
 
   # @Test
   # public void absoluteGitDirRef() throws Exception {

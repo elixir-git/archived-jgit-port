@@ -124,7 +124,7 @@ defprotocol Xgit.Util.SystemReader do
   @spec timezone(reader :: term) :: integer
   def timezone(reader \\ nil)
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/144
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/144
 
   # /**
   #  * Get the locale to use
