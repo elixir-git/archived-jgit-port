@@ -71,7 +71,7 @@ defmodule Xgit.Test.RepositoryTestCase do
     setup_test!()
   end
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/147
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/147
 
   # /**
   #  * Copy a file

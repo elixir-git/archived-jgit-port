@@ -98,7 +98,7 @@ defmodule Xgit.Lib.ObjectDatabase do
 
   def valid?(_), do: false
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/132
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/132
 
   @doc ~S"""
   Returns `true` if this database exists.
@@ -138,7 +138,7 @@ defmodule Xgit.Lib.ObjectDatabase do
 
   Should return `{:ok, mod_state}` for function chaining or (TBD) if not.
 
-  _TO DO:_ Finalize error-handling strategy here. https://github.com/elixir-git/xgit/issues/132
+  _TO DO:_ Finalize error-handling strategy here. https://github.com/elixir-git/archived-jgit-port/issues/132
 
   ## Error
 

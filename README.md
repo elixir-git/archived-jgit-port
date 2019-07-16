@@ -1,7 +1,21 @@
+
+## ARCHIVED? WHAT?!?
+
+After careful consideration, I am setting aside this project for now. I am finding that porting from the jgit implementation is leading to an approach that is more complicated than I had hoped. Patterns that are appropriate in Java (complex object hierarchies, shared state across threads) do not translate well into the Erlang / OTP world.
+
+From the ashes of this effort, there arises a new one. I am currently working on a new version of the project which is a from-the-ground-up implementation of git in Elixir. That project will occasionally draw upon work done here, so all is not lost.
+
+I'm happy enough with the new effort to let it take on the mantle of being called [xgit](https://github.com/elixir-git/archived-jgit-port).
+
+I hope to see you there.
+
+What follows is the README before I undertook this decision:
+
+----
+
 # Xgit
 
-Pure Elixir native implementation of git [![Build Status](https://travis-ci.org/elixir-git/xgit.svg?branch=master)](https://travis-ci.org/elixir-git/xgit) [![Coverage Status](https://coveralls.io/repos/github/elixir-git/xgit/badge.svg?branch=master)](https://coveralls.io/github/elixir-git/xgit?branch=master)
-
+Pure Elixir native implementation of git [![Build Status](https://travis-ci.org/elixir-git/archived-jgit-port.svg?branch=master)](https://travis-ci.org/elixir-git/archived-jgit-port) [![Coverage Status](https://coveralls.io/repos/github/elixir-git/archived-jgit-port/badge.svg?branch=master)](https://coveralls.io/github/elixir-git/archived-jgit-port?branch=master)
 
 ## WORK IN PROGRESS
 
@@ -14,13 +28,13 @@ Pure Elixir native implementation of git [![Build Status](https://travis-ci.org/
 **The current major infrastructure being targeted is porting the jgit `RevWalk` class.** This provides core infrastructure for walking commit history and object graphs. Progress on this project is tracked as follows:
 
 * [Porting Roadmap](./notes/porting_roadmap.txt)
-* [GitHub project for porting `RevWalk`](https://github.com/elixir-git/xgit/projects/3)
+* [GitHub project for porting `RevWalk`](https://github.com/elixir-git/archived-jgit-port/projects/3)
 
 **There is also important work to be done in backfilling existing porting work.** Please see:
 
-* [Issues tagged "good first issue"](https://github.com/elixir-git/xgit/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
-* [Issues tagged "help wanted"](https://github.com/elixir-git/xgit/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) _more issues, but potentially more challenging_
-* [Project "Backfill incomplete implementations"](https://github.com/elixir-git/xgit/projects/2)
+* [Issues tagged "good first issue"](https://github.com/elixir-git/archived-jgit-port/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+* [Issues tagged "help wanted"](https://github.com/elixir-git/archived-jgit-port/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) _more issues, but potentially more challenging_
+* [Project "Backfill incomplete implementations"](https://github.com/elixir-git/archived-jgit-port/projects/2)
 
 
 ## Why an All-Elixir Implementation?

@@ -73,7 +73,7 @@ defmodule Xgit.Storage.File.Internal.ObjectDirectory do
 
   require Logger
 
-  # TO DO: Finish incomplete implementation: https://github.com/elixir-git/xgit/issues/126
+  # TO DO: Finish incomplete implementation: https://github.com/elixir-git/archived-jgit-port/issues/126
 
   # static enum InsertLooseObjectResult {
   #   INSERTED, EXISTS_PACKED, EXISTS_LOOSE, FAILURE;

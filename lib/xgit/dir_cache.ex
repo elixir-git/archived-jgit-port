@@ -66,7 +66,7 @@ defmodule Xgit.DirCache do
   # alias Xgit.Storage.File.FileSnapshot
   alias Xgit.Util.GenServerUtils
 
-  # TO DO: Finish porting this module. https://github.com/elixir-git/xgit/issues/164
+  # TO DO: Finish porting this module. https://github.com/elixir-git/archived-jgit-port/issues/164
 
   # private static final byte[] SIG_DIRC = { 'D', 'I', 'R', 'C' };
   #

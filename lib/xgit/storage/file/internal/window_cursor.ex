@@ -57,7 +57,7 @@ defmodule Xgit.Storage.File.Internal.WindowCursor do
   defstruct [:db]
 
   # TO DO: Finish implementation of this module.
-  # https://github.com/elixir-git/xgit/issues/188
+  # https://github.com/elixir-git/archived-jgit-port/issues/188
 
   # /** Temporary buffer large enough for at least one raw object id. */
   # final byte[] tempId = new byte[Constants.OBJECT_ID_LENGTH];

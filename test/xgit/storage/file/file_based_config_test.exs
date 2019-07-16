@@ -55,7 +55,7 @@ defmodule Xgit.Storage.File.FileBasedConfigTest do
   @user "user"
   @name "name"
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/148
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/148
 
   # private static final String EMAIL = "email";
 

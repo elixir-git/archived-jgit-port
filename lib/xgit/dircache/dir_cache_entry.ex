@@ -128,7 +128,7 @@ defmodule Xgit.DirCache.DirCacheEntry do
   # /** In-core flag signaling that the entry should be considered as modified. */
   # private static final int UPDATE_NEEDED = 0x1;
 
-  # TO DO: Finish porting this module. https://github.com/elixir-git/xgit/issues/157
+  # TO DO: Finish porting this module. https://github.com/elixir-git/archived-jgit-port/issues/157
 
   # DirCacheEntry(final byte[] sharedInfo, final MutableInteger infoAt,
   #     final InputStream in, final MessageDigest md, final int smudge_s,

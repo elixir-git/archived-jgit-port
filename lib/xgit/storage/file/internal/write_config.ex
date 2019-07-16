@@ -49,7 +49,7 @@ defmodule Xgit.Storage.File.Internal.WriteConfig do
   # INTERNAL: Parse some write configuration variables from config file.
 
   # TO DO: Cache section parser results like Config.SectionParser in jgit?
-  # https://github.com/elixir-git/xgit/issues/183
+  # https://github.com/elixir-git/archived-jgit-port/issues/183
 
   alias Xgit.Lib.Config
   alias Xgit.Lib.ConfigConstants

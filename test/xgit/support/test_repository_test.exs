@@ -53,7 +53,7 @@ defmodule Xgit.Test.TestRepositoryTest do
   alias Xgit.Test.TestRepository
 
   # TO DO: Transition this to using InMemoryRepository when that's available.
-  # https://github.com/elixir-git/xgit/issues/174
+  # https://github.com/elixir-git/archived-jgit-port/issues/174
 
   setup do
     git_dir = LocalDiskRepositoryTestCase.create_work_repository!()

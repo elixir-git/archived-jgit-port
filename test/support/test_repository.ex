@@ -94,7 +94,7 @@ defmodule Xgit.Test.TestRepository do
   end
 
   # TO DO: Port the rest of this module.
-  # https://github.com/elixir-git/xgit/issues/179
+  # https://github.com/elixir-git/archived-jgit-port/issues/179
 
   # /**
   #  * Get date

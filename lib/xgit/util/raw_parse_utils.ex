@@ -68,7 +68,7 @@ defmodule Xgit.Util.RawParseUtils do
   def match_prefix?([c | b], [c | str]), do: match_prefix?(b, str)
   def match_prefix?(_, _), do: false
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/142
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/142
 
   # /**
   #  * Format a base 10 numeric into a temporary buffer.

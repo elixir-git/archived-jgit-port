@@ -87,7 +87,7 @@ defmodule Xgit.Lib.RefDatabase do
     end
   end
 
-  # TO DO: https://github.com/elixir-git/xgit/issues/134
+  # TO DO: https://github.com/elixir-git/archived-jgit-port/issues/134
 
   # /**
   #  * Order of prefixes to search when using non-absolute references.
